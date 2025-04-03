@@ -2,6 +2,7 @@
 --- for Neovim.
 local ui = {};
 
+--- Maps event names to modules.
 ---@type table<string, "cmdline" | "linegrid" | "message">
 ui.event_map = {
 	grid_resize = "linegrid",
