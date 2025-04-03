@@ -52,7 +52,7 @@ ui.attach = function ()
 	vim.ui_attach(ui.namespace, {
 		ext_cmdline = true,
 		ext_messages = true,
-		ext_linegrid = true
+		-- ext_linegrid = true
 	}, function (event, ...)
 		local mod_name = ui.event_map[event];
 		if not mod_name then return; end
@@ -69,6 +69,7 @@ ui.detach = function ()
 end
 
 ui.setup = function ()
+	ui.attach();
 end
 
 return ui;
