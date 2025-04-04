@@ -1,10 +1,14 @@
 --- Custom command-line for
 --- Neovim.
 local cmdline = {};
+
+local spec = require("ui.spec");
 local log = require("ui.log");
+local utils = require("ui.utils");
 
 ------------------------------------------------------------------------------
 
+cmdline.config = nil;
 cmdline.state = {};
 
 cmdline.get_state = function (key, fallback)
@@ -40,11 +44,132 @@ cmdline.__prepare = function ()
 	if not cmdline.buffer or vim.api.nvim_buf_is_valid(cmdline.buffer) == false then
 		cmdline.buffer = vim.api.nvim_create_buf(false, true);
 	end
+end
 
+cmdline.__lines = function ()
+	local lines, extmarks = utils.process_content(
+		cmdline.get_state("content", {})
+	);
+
+	if #lines == 0 then
+		table.insert(lines, "");
+		table.insert(extmarks, {});
+	end
+
+	for l, line in ipairs(lines) do
+		lines[l] = line .. " ";
+	end
+
+	if cmdline.config and cmdline.config.title then
+		local _title, _extmarks = utils.process_virt(cmdline.config.title);
+
+		return vim.list_extend(_title, lines), vim.list_extend(_extmarks, extmarks);
+	else
+		return lines, extmarks;
+	end
+end
+
+--- Sets the cursor.
+cmdline.__cursor = function ()
+	---|fS
+
+	local lines, _ = cmdline.__lines();
+
+	if #lines == 0 then
+		table.insert(lines, "");
+	end
+
+	for l, line in ipairs(lines) do
+		lines[l] = line .. " ";
+	end
+
+	local pos = cmdline.get_state("pos", 0);
+	local line = lines[#lines] or "";
+
+	---@type integer
+	local to = #vim.fn.strcharpart(string.sub(line, pos, #line), 0, 1);
+
+	vim.api.nvim_win_set_cursor(cmdline.window, {
+		vim.api.nvim_buf_line_count(cmdline.buffer),
+		pos
+	})
+
+	vim.api.nvim_buf_clear_namespace(cmdline.buffer, cmdline.cursor_ns, 0, -1);
+	vim.api.nvim_buf_set_extmark(cmdline.buffer, cmdline.cursor_ns, #lines - 1, pos, {
+		end_col = pos + to,
+		hl_group = "@comment.todo"
+	});
+
+	---|fE
 end
 
 cmdline.__render = function ()
 	cmdline.__prepare();
+
+	local _lines, _ = utils.process_content(
+		cmdline.get_state("content", {})
+	);
+
+	cmdline.config = spec.get_cmdline_config(cmdline.state, _lines);
+
+	local lines, extmarks = cmdline.__lines();
+	local H = #lines;
+
+	---|fS
+
+	table.insert(log.entries, vim.inspect(lines));
+
+	local win_config = {
+		relative = "editor",
+		style = "minimal",
+		zindex = 300,
+
+		row = vim.o.lines - (cmdline.__statualine_visible and 1 or 1) - (vim.o.cmdheight + H),
+		col = 0,
+
+		width = vim.o.columns,
+		height = H,
+	};
+
+	vim.schedule(function ()
+		--- Clear the buffer of old decorations.
+		vim.api.nvim_buf_clear_namespace(cmdline.buffer, cmdline.namespace, 0, -1);
+
+		--- Set new content(with filetype).
+		vim.api.nvim_buf_set_lines(cmdline.buffer, 0, -1, false, lines);
+		vim.bo[cmdline.buffer].ft = cmdline.config.filetype or "vim";
+
+		for l, line in ipairs(extmarks) do
+			for _, ext in ipairs(line) do
+				vim.api.nvim_buf_set_extmark(cmdline.buffer, cmdline.namespace, l - 1, ext[1], {
+					end_col = ext[2],
+					hl_group = ext[3]
+				});
+			end
+		end
+
+		if cmdline.config.icon then
+			vim.api.nvim_buf_set_extmark(cmdline.buffer, cmdline.namespace, #lines - 1, 0, {
+				virt_text_pos = "inline",
+				virt_text = cmdline.config.icon
+			});
+		end
+
+		if not cmdline.window or vim.api.nvim_win_is_valid(cmdline.window) == false then
+			cmdline.window = vim.api.nvim_open_win(cmdline.buffer, false, win_config);
+		else
+			local _, e = pcall(vim.api.nvim_win_set_config, cmdline.window, win_config);
+			-- if e then vim.print(e); end
+		end
+
+		cmdline.__cursor()
+
+		vim.wo[cmdline.window].winhl = cmdline.config.winhl or "";
+		vim.wo[cmdline.window].sidescrolloff = math.floor(vim.o.columns * 0.5) or 36;
+		vim.api.nvim__redraw({ flush = true, win = cmdline.window })
+	end);
+
+	---|fE
 end
 
 ------------------------------------------------------------------------------
@@ -66,9 +191,41 @@ cmdline.cmdline_show = function (content, pos, firstc, prompt, indent, level)
 		level = level
 	});
 
-	table.insert(log.entries, vim.inspect(cmdline.state));
-	-- cmdline.__update_ui();
+	cmdline.__render();
 end
+
+cmdline.cmdline_pos = function (pos, level)
+	cmdline.set_state({
+		pos = pos,
+		level = level
+	});
+
+	table.insert(log.entries, vim.inspect({ pos, level }));
+	vim.schedule(function ()
+		cmdline.__cursor();
+		vim.api.nvim__redraw({ flush = true, win = cmdline.window })
+	end)
+end
+
+cmdline.cmdline_hide = function ()
+	pcall(vim.api.nvim_win_close, cmdline.window, true);
+	cmdline.window = nil;
+
+	if vim.g.__ui_cursorline ~= nil then
+		vim.o.cursorline = vim.g.__ui_cursorline;
+		vim.g.__ui_cursorline = nil;
+	end
+
+	vim.api.nvim__redraw({
+		flush = true,
+		valid = true,
+		cursor = true,
+
+		statusline = true
+	});
+end
+
+------------------------------------------------------------------------------
 
 --- Handles command-line events.
 ---@param event string
@@ -76,6 +233,11 @@ end
 cmdline.handle = function (event, ...)
 	local _, err = pcall(cmdline[event], ...);
 	table.insert(log.entries, string.format("Received: %s", event));
+	if not err then
+		return;
+	end
+
+	table.insert(log.entries, string.format("Error: %s", err));
 end
 
 return cmdline;
