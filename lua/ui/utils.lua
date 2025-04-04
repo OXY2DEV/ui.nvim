@@ -1,10 +1,42 @@
 local utils = {};
 
+---@param virt_lines ( [ string, string? ][] )[]
+---@return string[]
+---@return table
+utils.process_virt = function (virt_lines)
+	---|fS
+
+	local lines, extmarks = {}, {};
+
+	for _, line in ipairs(virt_lines) do
+		table.insert(lines, "");
+		table.insert(extmarks, {});
+
+		for _, entry in ipairs(line) do
+			if type(entry[2]) == "string" then
+				table.insert(extmarks[#extmarks], {
+					#lines[#lines],
+					#(lines[#lines] .. entry[1]),
+					entry[2]
+				});
+			end
+
+			lines[#lines] = lines[#lines] .. entry[1];
+		end
+	end
+
+	return lines, extmarks;
+
+	---|fE
+end
+
 --- Processes UI contents.
 ---@param content [ integer, string ][]
 ---@return string[]
 ---@return integer[]
 utils.process_content = function (content)
+	---|fS
+
 	local lines = {};
 	local extmarks = {};
 
@@ -60,6 +92,8 @@ utils.process_content = function (content)
 	end
 
 	return lines, extmarks;
+
+	---|fE
 end
 
 --- Turns attribute ID to highlight group.
