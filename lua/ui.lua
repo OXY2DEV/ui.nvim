@@ -2,6 +2,8 @@
 --- for Neovim.
 local ui = {};
 
+local log = require('ui.log');
+
 --- Maps event names to modules.
 ---@type table<string, "cmdline" | "linegrid" | "message">
 ui.event_map = {
@@ -49,11 +51,16 @@ ui.attach = function ()
 		message = require("ui.message"),
 	};
 
+	for _, v in pairs(modules) do
+		pcall(v["setup"])
+	end
+
 	vim.ui_attach(ui.namespace, {
 		ext_cmdline = true,
 		ext_messages = true,
 		-- ext_linegrid = true
 	}, function (event, ...)
+		table.insert(log.entries, string.format("Event: %s", event));
 		local mod_name = ui.event_map[event];
 		if not mod_name then return; end
 
