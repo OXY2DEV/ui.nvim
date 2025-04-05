@@ -137,8 +137,6 @@ cmdline.__render = function ()
 
 	---|fS
 
-	table.insert(log.entries, vim.inspect(lines));
-
 	local win_config = {
 		relative = "editor",
 		style = "minimal",
@@ -149,6 +147,8 @@ cmdline.__render = function ()
 
 		width = vim.o.columns,
 		height = H,
+
+		hide = false
 	};
 
 	vim.schedule(function ()
@@ -195,7 +195,7 @@ end
 
 ------------------------------------------------------------------------------
 
---- Cmdline draw event
+--- Cmdline draw.
 ---@param content [ string[], string ][]
 ---@param pos integer
 ---@param firstc string
@@ -216,22 +216,27 @@ cmdline.cmdline_show = function (content, pos, firstc, prompt, indent, level, hl
 	cmdline.__render();
 end
 
+--- Cmdline cursor position change.
+---@param pos any
+---@param level any
 cmdline.cmdline_pos = function (pos, level)
 	cmdline.set_state({
 		pos = pos,
 		level = level
 	});
 
-	table.insert(log.entries, vim.inspect({ pos, level }));
 	vim.schedule(function ()
 		cmdline.__cursor();
 		vim.api.nvim__redraw({ flush = true, win = cmdline.window })
 	end)
 end
 
+--- Exited cmdline.
 cmdline.cmdline_hide = function ()
-	pcall(vim.api.nvim_win_close, cmdline.window, true);
-	cmdline.window = nil;
+	--- We can't open/close windows.
+	--- But, we can hide them here.
+	local _, _ = pcall(vim.api.nvim_win_set_config, cmdline.window, { hide = true });
+	-- if e then vim.print(e); end
 
 	if vim.g.__ui_cursorline ~= nil then
 		vim.o.cursorline = vim.g.__ui_cursorline;
@@ -247,6 +252,8 @@ cmdline.cmdline_hide = function ()
 	});
 end
 
+--- Cmdline block event.
+---@param lines any
 cmdline.cmdline_block_show = function (lines)
 	cmdline.set_state({
 		lines = lines,
@@ -255,6 +262,8 @@ cmdline.cmdline_block_show = function (lines)
 	cmdline.__render();
 end
 
+--- Added new line to the block.
+---@param line any
 cmdline.cmdline_block_append = function (line)
 	local old = cmdline.get_state("lines", {});
 	table.insert(old, line);
@@ -266,10 +275,12 @@ cmdline.cmdline_block_append = function (line)
 	cmdline.__render();
 end
 
+--- Exited cmdline block.
 cmdline.cmdline_block_hide = function ()
 	cmdline.set_state({
 		lines = {},
 	});
+	cmdline.state.lines = nil;
 
 	cmdline.cmdline_hide();
 end
@@ -281,12 +292,29 @@ end
 ---@param ... any
 cmdline.handle = function (event, ...)
 	local _, err = pcall(cmdline[event], ...);
-	table.insert(log.entries, string.format("Received: %s", event));
 	if not err then
 		return;
 	end
 
 	table.insert(log.entries, string.format("Error: %s", err));
+end
+
+--- Sets up the cmdline module.
+cmdline.setup = function ()
+	cmdline.__prepare();
+
+	cmdline.window = vim.api.nvim_open_win(cmdline.buffer, false, {
+		relative = "editor",
+
+		row = 0,
+		col = 0,
+
+		width = 1,
+		height = 1,
+
+		hide = true
+	});
+	vim.wo[cmdline.window].sidescrolloff = math.floor(vim.o.columns * 0.5) or 36;
 end
 
 return cmdline;
