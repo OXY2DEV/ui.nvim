@@ -47,26 +47,46 @@ cmdline.__prepare = function ()
 end
 
 cmdline.__lines = function ()
-	local lines, extmarks = utils.process_content(
+	local current_lines, current_exts = utils.process_content(
 		cmdline.get_state("content", {})
 	);
 
-	if #lines == 0 then
-		table.insert(lines, "");
-		table.insert(extmarks, {});
+	--- Add an extra for the *fake* cursor.
+	for l, line in ipairs(current_lines) do
+		current_lines[l] = line .. " ";
 	end
 
-	for l, line in ipairs(lines) do
-		lines[l] = line .. " ";
+	local context_lines, context_exts = {}, {};
+	local context = cmdline.get_state("lines", {});
+
+	--- Process each line of context.
+	for _, line in ipairs(context) do
+		local tmp_lines, tmp_exts = utils.process_content(line);
+
+		context_lines = vim.list_extend(context_lines, tmp_lines);
+		context_exts = vim.list_extend(context_exts, tmp_exts);
 	end
 
+	local title_lines, title_exts = {}, {};
+
+	--- If title exists then process it.
 	if cmdline.config and cmdline.config.title then
-		local _title, _extmarks = utils.process_virt(cmdline.config.title);
-
-		return vim.list_extend(_title, lines), vim.list_extend(_extmarks, extmarks);
-	else
-		return lines, extmarks;
+		title_lines, title_exts = utils.process_virt(cmdline.config.title);
 	end
+
+	--- Output structure should be,
+	--- * Title
+	--- * Context
+	--- * Command-line
+	local output_lines, output_exts = title_lines, title_exts;
+
+	output_lines = vim.list_extend(output_lines, context_lines);
+	output_exts = vim.list_extend(output_exts, context_exts);
+
+	output_lines = vim.list_extend(output_lines, current_lines);
+	output_exts = vim.list_extend(output_exts, current_exts);
+
+	return output_lines, output_exts;
 end
 
 --- Sets the cursor.
@@ -157,6 +177,7 @@ cmdline.__render = function ()
 
 		if not cmdline.window or vim.api.nvim_win_is_valid(cmdline.window) == false then
 			cmdline.window = vim.api.nvim_open_win(cmdline.buffer, false, win_config);
+			vim.wo[cmdline.window].sidescrolloff = math.floor(vim.o.columns * 0.5) or 36;
 		else
 			local _, e = pcall(vim.api.nvim_win_set_config, cmdline.window, win_config);
 			-- if e then vim.print(e); end
@@ -165,7 +186,7 @@ cmdline.__render = function ()
 		cmdline.__cursor()
 
 		vim.wo[cmdline.window].winhl = cmdline.config.winhl or "";
-		vim.wo[cmdline.window].sidescrolloff = math.floor(vim.o.columns * 0.5) or 36;
+
 		vim.api.nvim__redraw({ flush = true, win = cmdline.window })
 	end);
 
@@ -181,14 +202,15 @@ end
 ---@param prompt string
 ---@param indent integer
 ---@param level integer
-cmdline.cmdline_show = function (content, pos, firstc, prompt, indent, level)
+cmdline.cmdline_show = function (content, pos, firstc, prompt, indent, level, hl_id)
 	cmdline.set_state({
 		content = content,
 		pos = pos,
 		firstc = firstc,
 		prompt = prompt,
 		indent = indent,
-		level = level
+		level = level,
+		hl_id = hl_id,
 	});
 
 	cmdline.__render();
@@ -223,6 +245,33 @@ cmdline.cmdline_hide = function ()
 
 		statusline = true
 	});
+end
+
+cmdline.cmdline_block_show = function (lines)
+	cmdline.set_state({
+		lines = lines,
+	});
+
+	cmdline.__render();
+end
+
+cmdline.cmdline_block_append = function (line)
+	local old = cmdline.get_state("lines", {});
+	table.insert(old, line);
+
+	cmdline.set_state({
+		lines = old,
+	});
+
+	cmdline.__render();
+end
+
+cmdline.cmdline_block_hide = function ()
+	cmdline.set_state({
+		lines = {},
+	});
+
+	cmdline.cmdline_hide();
 end
 
 ------------------------------------------------------------------------------
