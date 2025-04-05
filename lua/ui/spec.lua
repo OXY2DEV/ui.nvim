@@ -1,17 +1,38 @@
 local spec = {};
+local log = require("ui.log")
 
 spec.default = {
 	cmdline = {
 		styles = {
 			default = {
-				icon = "",
-				icon_hl = "",
-
 				winhl = "Normal:Color4T",
 
 				filetype = "vim",
-				offset = 0
+				offset = 0,
+
+				icon = { { "  " } },
+				--
+				-- title = {
+				-- 	{
+				-- 		{ "Run", "Special" }
+				-- 	}
+				-- }
 			},
+
+			prompt = {
+				condition = function (state)
+					return state.prompt ~= "";
+				end,
+
+				title = function (state)
+					table.insert(log.entries, vim.inspect(state));
+					return {
+						{
+							{ state.prompt, "Comment" }
+						}
+					}
+				end
+			}
 		}
 	}
 };
@@ -54,7 +75,7 @@ spec.get_cmdline_config = function (state, lines)
 			local can_run, val = pcall(v, state, lines);
 
 			if can_run and val ~= nil then
-				output[k] = v;
+				output[k] = val;
 			end
 		end
 	end
