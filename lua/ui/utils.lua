@@ -1,5 +1,22 @@
 local utils = {};
 
+--- Gets length of virtual text.
+---@param virt_text [ string, string | nil ][]
+---@return integer
+utils.virt_len = function (virt_text)
+	---|fS
+
+	local len = 0;
+
+	for _, part in ipairs(virt_text) do
+		len = len + vim.fn.strdisplaywidth(part[1]);
+	end
+
+	return len;
+
+	---|fE
+end
+
 ---@param virt_lines ( [ string, string? ][] )[]
 ---@return string[]
 ---@return table
