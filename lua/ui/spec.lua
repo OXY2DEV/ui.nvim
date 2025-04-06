@@ -25,7 +25,6 @@ spec.default = {
 				end,
 
 				title = function (state)
-					table.insert(log.entries, vim.inspect(state));
 					return {
 						{
 							{ state.prompt, "Comment" }
