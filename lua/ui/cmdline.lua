@@ -51,10 +51,19 @@ cmdline.__lines = function ()
 		cmdline.get_state("content", {})
 	);
 
+	--- Remove decorations from the command-line text.
+	--- We will use syntax highlighting instead.
+	for e, _ in ipairs(current_exts) do
+		current_exts[e] = {};
+	end
+
 	--- Add an extra for the *fake* cursor.
 	for l, line in ipairs(current_lines) do
 		current_lines[l] = line .. " ";
 	end
+
+	--- Update config.
+	cmdline.config = spec.get_cmdline_config(cmdline.state, current_lines);
 
 	local context_lines, context_exts = {}, {};
 	local context = cmdline.get_state("lines", {});
@@ -78,7 +87,7 @@ cmdline.__lines = function ()
 	--- * Title
 	--- * Context
 	--- * Command-line
-	local output_lines, output_exts = title_lines, title_exts;
+	local output_lines, output_exts = vim.deepcopy(title_lines), vim.deepcopy(title_exts);
 
 	output_lines = vim.list_extend(output_lines, context_lines);
 	output_exts = vim.list_extend(output_exts, context_exts);
@@ -86,7 +95,7 @@ cmdline.__lines = function ()
 	output_lines = vim.list_extend(output_lines, current_lines);
 	output_exts = vim.list_extend(output_exts, current_exts);
 
-	return output_lines, output_exts;
+	return output_lines, output_exts, { #title_lines, #context_lines, #current_lines };
 end
 
 --- Sets the cursor.
@@ -126,13 +135,7 @@ end
 cmdline.__render = function ()
 	cmdline.__prepare();
 
-	local _lines, _ = utils.process_content(
-		cmdline.get_state("content", {})
-	);
-
-	cmdline.config = spec.get_cmdline_config(cmdline.state, _lines);
-
-	local lines, extmarks = cmdline.__lines();
+	local lines, extmarks, stat = cmdline.__lines();
 	local H = #lines;
 
 	---|fS
@@ -161,18 +164,37 @@ cmdline.__render = function ()
 
 		for l, line in ipairs(extmarks) do
 			for _, ext in ipairs(line) do
+				if ext == "" then
+					goto continue;
+				end
+
 				vim.api.nvim_buf_set_extmark(cmdline.buffer, cmdline.namespace, l - 1, ext[1], {
 					end_col = ext[2],
 					hl_group = ext[3]
 				});
+
+			    ::continue::
 			end
 		end
 
 		if cmdline.config.icon then
-			vim.api.nvim_buf_set_extmark(cmdline.buffer, cmdline.namespace, #lines - 1, 0, {
-				virt_text_pos = "inline",
-				virt_text = cmdline.config.icon
-			});
+			for l, _ in ipairs(lines) do
+				if l == #lines then
+					vim.api.nvim_buf_set_extmark(cmdline.buffer, cmdline.namespace, l - 1, 0, {
+						virt_text_pos = "inline",
+						virt_text = cmdline.config.icon
+					});
+				elseif l > stat[1] then
+					local size = utils.virt_len(cmdline.config.icon);
+
+					vim.api.nvim_buf_set_extmark(cmdline.buffer, cmdline.namespace, l - 1, 0, {
+						virt_text_pos = "inline",
+						virt_text = {
+							{ string.rep(" ", size) },
+						}
+					});
+				end
+			end
 		end
 
 		if not cmdline.window or vim.api.nvim_win_is_valid(cmdline.window) == false then
@@ -184,7 +206,6 @@ cmdline.__render = function ()
 		end
 
 		cmdline.__cursor()
-
 		vim.wo[cmdline.window].winhl = cmdline.config.winhl or "";
 
 		vim.api.nvim__redraw({ flush = true, win = cmdline.window })
