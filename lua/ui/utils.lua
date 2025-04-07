@@ -71,7 +71,7 @@ utils.process_content = function (content)
 			lines[#lines] = lines[#lines] .. part[2];
 		end
 
-		table.insert(extmarks[#extmarks], { X, X + #part[2], utils.attr_to_hl(part[2]) });
+		table.insert(extmarks[#extmarks], { X, X + #part[2], utils.attr_to_hl(part[1]) });
 		X = X + #part[2];
 
 		---|fE
@@ -86,13 +86,13 @@ utils.process_content = function (content)
 		for l, line in ipairs(vim.split(part[2], "\n", { trimempty = true })) do
 			if l == 1 and #lines > 0 then
 				lines[#lines] = lines[#lines] .. line;
-				table.insert(extmarks[#extmarks], { X, X + #line, part[1] });
+				table.insert(extmarks[#extmarks], { X, X + #line, utils.attr_to_hl(part[3] or part[1]) });
 
 				X = 0;
 			else
 				table.insert(lines, line);
 				table.insert(extmarks, {
-					{ 0, #line, part[1] }
+					{ 0, #line, utils.attr_to_hl(part[3] or part[1]) }
 				});
 			end
 		end
