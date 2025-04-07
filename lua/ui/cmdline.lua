@@ -254,23 +254,21 @@ end
 
 --- Exited cmdline.
 cmdline.cmdline_hide = function ()
-	--- We can't open/close windows.
-	--- But, we can hide them here.
-	local _, _ = pcall(vim.api.nvim_win_set_config, cmdline.window, { hide = true });
-	-- if e then vim.print(e); end
+	vim.schedule(function ()
+		--- We can't open/close windows.
+		--- But, we can hide them here.
+		pcall(vim.api.nvim_win_set_config, cmdline.window, { hide = true });
 
-	if vim.g.__ui_cursorline ~= nil then
-		vim.o.cursorline = vim.g.__ui_cursorline;
-		vim.g.__ui_cursorline = nil;
-	end
+		if vim.g.__ui_cursorline ~= nil then
+			vim.o.cursorline = vim.g.__ui_cursorline;
+			vim.g.__ui_cursorline = nil;
+		end
 
-	vim.api.nvim__redraw({
-		flush = true,
-		valid = true,
-		cursor = true,
-
-		statusline = true
-	});
+		vim.api.nvim__redraw({
+			flush = true,
+			statusline = true
+		});
+	end)
 end
 
 --- Cmdline block event.
