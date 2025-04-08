@@ -15,7 +15,7 @@ message.namespace = vim.api.nvim_create_namespace("ui.message")
 message.msg_buffer, message.msg_window = nil, nil;
 
 ---@type integer, integer Buffer & window for showing stuff.
-message.show_buffer, message.show_window = nil, nil;
+-- message.show_buffer, message.show_window = nil, nil;
 
 ---@type integer, integer Buffer & window for showing stuff.
 message.confirm_buffer, message.confirm_window = nil, nil;
@@ -61,13 +61,13 @@ message.__prepare = function ()
 		message.msg_window = vim.api.nvim_open_win(message.msg_buffer, false, win_config);
 	end
 
-	if not message.show_buffer or vim.api.nvim_buf_is_valid(message.show_buffer) == false then
-		message.show_buffer = vim.api.nvim_create_buf(false, true);
-	end
-
-	if not message.show_window or vim.api.nvim_win_is_valid(message.show_window) == false then
-		message.show_window = vim.api.nvim_open_win(message.show_buffer, false, win_config);
-	end
+	-- if not message.show_buffer or vim.api.nvim_buf_is_valid(message.show_buffer) == false then
+	-- 	message.show_buffer = vim.api.nvim_create_buf(false, true);
+	-- end
+	--
+	-- if not message.show_window or vim.api.nvim_win_is_valid(message.show_window) == false then
+	-- 	message.show_window = vim.api.nvim_open_win(message.show_buffer, false, win_config);
+	-- end
 
 	if not message.confirm_buffer or vim.api.nvim_buf_is_valid(message.confirm_buffer) == false then
 		message.confirm_buffer = vim.api.nvim_create_buf(false, true);
@@ -99,22 +99,6 @@ message.timer = function (callback, duration, interval)
 end
 
 message.__append = function (obj, duration)
-	local current_id = message.id;
-
-	message.history[message.id] = obj;
-	message.visible[message.id] = vim.tbl_extend("force", obj, {
-		timer = message.timer(function ()
-			message.__remove(current_id);
-		end, duration)
-	});
-
-	message.last = message.id;
-	message.id = message.id + 1;
-
-	vim.schedule(function ()
-		local _, e = pcall(message.__render);
-		table.insert(log.entries, e)
-	end)
 end
 
 message.__remove = function (id)
@@ -222,7 +206,15 @@ message.__render = function ()
 	vim.api.nvim_buf_clear_namespace(message.msg_buffer, message.namespace, 0, -1);
 	vim.api.nvim_buf_set_lines(message.msg_buffer, 0, -1, false, lines);
 
+	local W = 5;
+
 	for l, line in ipairs(exts) do
+		local text = lines[l];
+
+		if vim.fn.strchars(text) > W then
+			W = vim.fn.strchars(text);
+		end
+
 		for _, ext in ipairs(line) do
 			vim.api.nvim_buf_set_extmark(message.msg_buffer, message.namespace, l - 1, ext[1], {
 				end_col = ext[2],
@@ -234,13 +226,12 @@ message.__render = function ()
 	local window_config = {
 		relative = "editor",
 
-		row = 0,
+		row = vim.o.lines - (vim.o.cmdheight + 1) - math.min(#lines, 5),
 		col = vim.o.columns,
 
-		width = 50,
-		height = 5,
+		width = W,
+		height = math.min(#lines, 5),
 
-		border = "rounded",
 		style = "minimal",
 
 		hide = false
@@ -251,6 +242,8 @@ message.__render = function ()
 	else
 		message.msg_window = vim.api.nvim_open_win(message.msg_buffer, false, window_config);
 	end
+
+	vim.wo[message.msg_window].winhl = "Normal:Normal";
 
 	vim.wo[message.msg_window].wrap = true;
 	vim.wo[message.msg_window].linebreak = true;
@@ -344,10 +337,37 @@ message.msg_show = function (kind, content, replace_last)
 			vim.api.nvim_feedkeys(vim.api.nvim_replace_termcodes("<ESC>", true, false, true), "n", false);
 			return;
 		else
-			message.__append({
+			local current_id = message.id;
+			local lines = utils.to_lines(content);
+
+			local processor = spec.get_msg_processor(kind, content, lines) or {};
+			local duration = processor.duration or 600;
+
+			message.history[message.id] = {
 				kind = kind,
-				content = content,
-			}, 5000);
+				content = content
+			};
+			message.visible[message.id] = vim.tbl_extend("force", {
+				kind = kind,
+				content = content
+			}, {
+				timer = message.timer(function ()
+					message.__remove(current_id);
+				end, duration)
+			});
+
+			message.last = message.id;
+			message.id = message.id + 1;
+
+			vim.schedule(function ()
+				local _, e = pcall(message.__render);
+				table.insert(log.entries, e)
+			end)
+
+			-- message.__append({
+			-- 	kind = kind,
+			-- 	content = content,
+			-- }, 5000);
 		end
 	end
 end
@@ -393,6 +413,8 @@ message.setup = function ()
 				--- redraw it.
 				message.__confirm(vim.g.__confirm_msg);
 			end
+
+			message.__render();
 		end
 	});
 end
