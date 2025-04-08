@@ -121,10 +121,15 @@ end
 
 ------------------------------------------------------------------------------
 
+--- Confirmation message.
+---@param obj table
 message.__confirm = function (obj)
-	local lines, exts = utils.process_content(obj.content);
-
+	--- All logic must be run outside of
+	--- fast event.
 	vim.schedule(function ()
+		local lines, exts = utils.process_content(obj.content);
+		vim.g.__confirm_msg = obj;
+
 		message.__prepare();
 		local config = spec.get_confirm_config(obj, lines);
 
@@ -146,6 +151,7 @@ message.__confirm = function (obj)
 		vim.api.nvim_buf_clear_namespace(message.confirm_buffer, message.namespace, 0, -1);
 		vim.api.nvim_buf_set_lines(message.confirm_buffer, 0, -1, false, lines);
 
+		table.insert(log.entries, vim.inspect(obj.content))
 		for l, line in ipairs(exts) do
 			for _, ext in ipairs(line) do
 				vim.api.nvim_buf_set_extmark(message.confirm_buffer, message.namespace, l - 1, ext[1], {
@@ -167,6 +173,14 @@ message.__confirm = function (obj)
 		if config.winhl then
 			vim.wo[message.confirm_window].winhl = config.winhl;
 		end
+
+		--- Auto hide on next keypress.
+		vim.on_key(function ()
+			pcall(vim.api.nvim_win_set_config, message.confirm_window, { hide = true });
+			vim.on_key(nil, message.namespace);
+
+			vim.g.__confirm_msg = nil;
+		end, message.namespace);
 	end)
 end
 
@@ -271,6 +285,16 @@ end
 
 message.setup = function ()
 	message.__prepare();
+
+	vim.api.nvim_create_autocmd("VimResized", {
+		callback = function ()
+			if vim.g.__confirm_msg then
+				--- If a confirmation window is active,
+				--- redraw it.
+				message.__confirm(vim.g.__confirm_msg);
+			end
+		end
+	});
 end
 
 return message;
