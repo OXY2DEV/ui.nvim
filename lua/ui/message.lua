@@ -20,6 +20,9 @@ message.show_buffer, message.show_window = nil, nil;
 ---@type integer, integer Buffer & window for showing stuff.
 message.confirm_buffer, message.confirm_window = nil, nil;
 
+---@type integer, integer Buffer & window for showing stuff.
+message.history_buffer, message.history_window = nil, nil;
+
 message.state = {};
 
 message.get_state = function (key, fallback)
@@ -73,6 +76,14 @@ message.__prepare = function ()
 	if not message.confirm_window or vim.api.nvim_win_is_valid(message.confirm_window) == false then
 		message.confirm_window = vim.api.nvim_open_win(message.confirm_buffer, false, win_config);
 	end
+
+	if not message.history_buffer or vim.api.nvim_buf_is_valid(message.history_buffer) == false then
+		message.history_buffer = vim.api.nvim_create_buf(false, true);
+	end
+
+	if not message.history_window or vim.api.nvim_win_is_valid(message.history_window) == false then
+		message.history_window = vim.api.nvim_open_win(message.history_buffer, false, win_config);
+	end
 end
 
 message.timer = function (callback, duration, interval)
@@ -89,7 +100,6 @@ end
 
 message.__append = function (obj, duration)
 	local current_id = message.id;
-	table.insert(log.entries, "Added " .. (vim.uv.hrtime() / 1e6))
 
 	message.history[message.id] = obj;
 	message.visible[message.id] = vim.tbl_extend("force", obj, {
@@ -108,7 +118,6 @@ message.__append = function (obj, duration)
 end
 
 message.__remove = function (id)
-	table.insert(log.entries, "Removed " .. (vim.uv.hrtime() / 1e6))
 	if message.visible[id] then
 		message.visible[id] = nil;
 
@@ -127,8 +136,8 @@ message.__confirm = function (obj)
 	--- All logic must be run outside of
 	--- fast event.
 	vim.schedule(function ()
-		local lines, exts = utils.process_content(obj.content);
 		vim.g.__confirm_msg = obj;
+		local lines, exts = utils.process_content(obj.content);
 
 		message.__prepare();
 		local config = spec.get_confirm_config(obj, lines);
@@ -142,7 +151,7 @@ message.__confirm = function (obj)
 			width = config.width or 20,
 			height = config.height or 5,
 
-			-- border = "rounded",
+			border = "rounded",
 			style = "minimal",
 
 			hide = false
@@ -151,7 +160,7 @@ message.__confirm = function (obj)
 		vim.api.nvim_buf_clear_namespace(message.confirm_buffer, message.namespace, 0, -1);
 		vim.api.nvim_buf_set_lines(message.confirm_buffer, 0, -1, false, lines);
 
-		table.insert(log.entries, vim.inspect(obj.content))
+		table.insert(log.entries, vim.inspect(lines))
 		for l, line in ipairs(exts) do
 			for _, ext in ipairs(line) do
 				vim.api.nvim_buf_set_extmark(message.confirm_buffer, message.namespace, l - 1, ext[1], {
@@ -228,7 +237,7 @@ message.__render = function ()
 		row = 0,
 		col = vim.o.columns,
 
-		width = 20,
+		width = 50,
 		height = 5,
 
 		border = "rounded",
@@ -247,10 +256,76 @@ message.__render = function ()
 	vim.wo[message.msg_window].linebreak = true;
 end
 
+message.__history = function (entries)
+	vim.g.__history_src = vim.g.__history_src or "vim";
+	message.__prepare();
+
+	vim.api.nvim_buf_set_keymap(message.history_buffer, "n", "t", "", {
+		callback = function ()
+			vim.g.__history_src = vim.g.__history_src == "vim" and "internal" or "vim";
+			message.__history(entries);
+		end
+	});
+
+	local lines, exts = {}, {};
+
+	if vim.g.__history_src == "vim" and entries then
+		for _, entry in ipairs(entries) do
+			local _lines, _exts = utils.process_content(entry[2]);
+
+			lines = vim.list_extend(lines, _lines);
+			exts = vim.list_extend(exts, _exts);
+		end
+	else
+		local keys = vim.tbl_keys(message.history);
+		table.sort(keys);
+
+		for _, key in ipairs(keys) do
+			local entry = message.history[key];
+			local _lines, _exts = utils.process_content(entry.content);
+
+			lines = vim.list_extend(lines, _lines);
+			exts = vim.list_extend(exts, _exts);
+		end
+	end
+
+	vim.api.nvim_buf_clear_namespace(message.history_buffer, message.namespace, 0, -1);
+	vim.api.nvim_buf_set_lines(message.history_buffer, 0, -1, false, lines);
+
+	for l, line in ipairs(exts) do
+		for _, ext in ipairs(line) do
+			vim.api.nvim_buf_set_extmark(message.history_buffer, message.namespace, l - 1, ext[1], {
+				end_col = ext[2],
+				hl_group = ext[3]
+			});
+		end
+	end
+
+	local window_config = {
+		split = "below",
+		height = 10,
+
+		style = "minimal",
+
+		hide = false
+	}
+
+	if message.history_window and vim.api.nvim_win_is_valid(message.history_window) then
+		vim.api.nvim_win_set_config(message.history_window, window_config);
+		vim.api.nvim_set_current_win(message.history_window);
+	else
+		message.msg_window = vim.api.nvim_open_win(message.history_buffer, true, window_config);
+	end
+
+	vim.wo[message.history_window].wrap = true;
+	vim.wo[message.history_window].linebreak = true;
+
+	vim.api.nvim__redraw({ flush = true, win = message.history_window });
+end
+
 ------------------------------------------------------------------------------
 
 message.msg_show = function (kind, content, replace_last)
-	table.insert(log.entries, kind)
 	if replace_last then
 	else
 		if kind == "confirm" then
@@ -260,6 +335,14 @@ message.msg_show = function (kind, content, replace_last)
 			});
 
 			table.insert(log.entries, e)
+		elseif kind == "search_count" then
+			--- Do not handle search count as messages.
+			return;
+		elseif kind == "return_prompt" then
+			--- Hit `<ESC>` on hit-enter prompts.
+			--- or else we get stuck.
+			vim.api.nvim_feedkeys(vim.api.nvim_replace_termcodes("<ESC>", true, false, true), "n", false);
+			return;
 		else
 			message.__append({
 				kind = kind,
@@ -267,6 +350,23 @@ message.msg_show = function (kind, content, replace_last)
 			}, 5000);
 		end
 	end
+end
+
+message.msg_history_show = function (entries)
+	vim.api.nvim_feedkeys(vim.api.nvim_replace_termcodes("<CR>", true, false, true), "n", false);
+
+	vim.schedule(function ()
+		local _, e = pcall(message.__history, entries);
+		table.insert(log.entries, e)
+	end)
+end
+
+-- message.msg_showmode = function (content)
+-- 	table.insert(log.entries, vim.inspect(content))
+-- end
+
+message.msg_showcmd = function (content)
+	table.insert(log.entries, vim.inspect(content))
 end
 
 ------------------------------------------------------------------------------
