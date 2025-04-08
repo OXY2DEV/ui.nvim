@@ -113,6 +113,51 @@ utils.process_content = function (content)
 	---|fE
 end
 
+utils.to_lines = function (content)
+	local lines = {};
+
+	--- Handles a part of {content}.
+	---@param part [ integer, string ]
+	local function handle_part(part)
+		---|fS
+
+		if #lines == 0 then
+			table.insert(lines, part[2]);
+		else
+			lines[#lines] = lines[#lines] .. part[2];
+		end
+
+		---|fE
+	end
+
+	--- Handles a part of {content} containing
+	--- newlines.
+	---@param part [ integer, string ]
+	local function handle_newline(part)
+		---|fS
+
+		for l, line in ipairs(vim.split(part[2], "\n", { trimempty = true })) do
+			if l == 1 and #lines > 0 then
+				lines[#lines] = lines[#lines] .. line;
+			else
+				table.insert(lines, line);
+			end
+		end
+
+		---|fE
+	end
+
+	for _, entry in ipairs(content) do
+		if string.match(entry[2], "\n") then
+			handle_newline(entry);
+		else
+			handle_part(entry);
+		end
+	end
+
+	return lines;
+end
+
 --- Turns attribute ID to highlight group.
 ---@param attr integer
 ---@return string
