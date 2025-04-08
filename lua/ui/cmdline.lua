@@ -124,9 +124,17 @@ cmdline.__cursor = function ()
 	})
 
 	vim.api.nvim_buf_clear_namespace(cmdline.buffer, cmdline.cursor_ns, 0, -1);
+
+	if cmdline.config.offset and cmdline.get_state("pos", 0) >= cmdline.config.offset then
+		vim.api.nvim_buf_set_extmark(cmdline.buffer, cmdline.cursor_ns, #lines - 1, 0, {
+			end_col = #vim.fn.strcharpart(line, 0, cmdline.config.offset),
+			conceal = ""
+		});
+	end
+
 	vim.api.nvim_buf_set_extmark(cmdline.buffer, cmdline.cursor_ns, #lines - 1, pos, {
 		end_col = pos + to,
-		hl_group = "@comment.todo"
+		hl_group = cmdline.config.cursor or "Cursor"
 	});
 
 	---|fE
@@ -207,6 +215,9 @@ cmdline.__render = function ()
 
 		cmdline.__cursor()
 		vim.wo[cmdline.window].winhl = cmdline.config.winhl or "";
+
+		vim.wo[cmdline.window].conceallevel = 3;
+		vim.wo[cmdline.window].concealcursor = "nvic";
 
 		vim.api.nvim__redraw({ flush = true, win = cmdline.window })
 	end);

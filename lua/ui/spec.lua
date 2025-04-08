@@ -10,13 +10,23 @@ spec.default = {
 				filetype = "vim",
 				offset = 0,
 
-				icon = { { "  " } },
+				icon = { { "  ", "Color4" } },
 				--
 				-- title = {
 				-- 	{
 				-- 		{ "Run", "Special" }
 				-- 	}
 				-- }
+			},
+
+			lua = {
+				condition = function (_, lines)
+					return string.match(lines[#lines], "^lua") ~= nil;
+				end,
+
+				offset = 4,
+
+				icon = { { "  ", "Color4" } },
 			},
 
 			prompt = {
