@@ -245,6 +245,7 @@ cmdline.cmdline_show = function (content, pos, firstc, prompt, indent, level, hl
 		hl_id = hl_id,
 	});
 
+	utils.confirm_keys(prompt, content);
 	cmdline.__render();
 end
 
@@ -265,6 +266,8 @@ end
 
 --- Exited cmdline.
 cmdline.cmdline_hide = function ()
+	utils.confirm_keys();
+
 	vim.schedule(function ()
 		--- We can't open/close windows.
 		--- But, we can hide them here.

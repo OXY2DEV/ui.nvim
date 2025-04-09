@@ -1,4 +1,5 @@
 local utils = {};
+local log = require("ui.log")
 
 --- Gets length of virtual text.
 ---@param virt_text [ string, string | nil ][]
@@ -186,6 +187,20 @@ end
 ---@return string
 utils.attr_to_hl = function (attr)
 	return vim.fn.synIDattr(vim.fn.synIDtrans(attr), "name")
+end
+
+utils.confirm_keys = function (prompt, text)
+	if not prompt and not text then
+		vim.g.__confirm_keys = {};
+	elseif prompt then
+		local keys = {};
+
+		for key in string.gmatch(prompt, "[%[%(](.)[%]%)]") do
+			table.insert(keys, string.lower(key));
+		end
+
+		vim.g.__confirm_keys = keys;
+	end
 end
 
 return utils;

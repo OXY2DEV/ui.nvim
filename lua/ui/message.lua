@@ -169,7 +169,11 @@ message.__confirm = function (obj)
 		end
 
 		--- Auto hide on next keypress.
-		vim.on_key(function ()
+		vim.on_key(function (key)
+			if vim.list_contains(vim.g.__confirm_keys or {}, key) == false then
+				return;
+			end
+
 			pcall(vim.api.nvim_win_set_config, message.confirm_window, { hide = true });
 			vim.on_key(nil, message.namespace);
 
