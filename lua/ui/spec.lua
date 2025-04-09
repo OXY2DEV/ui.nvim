@@ -46,42 +46,55 @@ spec.default = {
 	},
 
 	message = {
+		processors = {
+			default = {
+				callback = function (kind, msg, lines)
+				end,
+				duration = function (kind)
+					if kind == "write" then
+						--- Write messages run frequently.
+						--- Reduce duration.
+						return 1000;
+					elseif kind == "confirm" then
+						--- Currently not in use.
+						return 4500;
+					elseif vim.list_contains({ "emsg", "echoerr", "lua_error", "rpc_error", "shell_err" }, kind) then
+						--- Error messages.
+						return 3000;
+					end
+
+					return 1500;
+				end
+			}
+		},
+
 		confirm = {
 			default = {
-				width = function (_, lines)
-					local w;
-
-					for _, line in ipairs(lines) do
-						if w == nil or vim.fn.strdisplaywidth(line) > w then
-							w = vim.fn.strdisplaywidth(line);
-						end
-					end
-
-					return w;
-				end,
-
-				height = function (_, lines)
-					return #lines;
-				end,
-
-				row = function (_, lines)
-					return math.ceil((vim.o.lines - #lines) / 2);
-				end,
-
-				col = function (_, lines)
-					local w;
-
-					for _, line in ipairs(lines) do
-						if not w or vim.fn.strdisplaywidth(line) > w then
-							w = vim.fn.strdisplaywidth(line);
-						end
-					end
-
-					return math.ceil((vim.o.columns - w) / 2);
-				end,
-
 				winhl = "Normal:Normal"
 			},
+
+			["^Save changes to "] = {
+				condition = function (_, lines)
+					return string.match(lines[1] or "", '^Save changes to "([^"]+)"') ~= nil
+				end,
+
+				modifier = function (_, lines)
+					local file = string.match(lines[1] or "", 'Save changes to "([^"]+)"')
+
+					return {
+						lines = {
+							string.format("Save as %s?", " " .. file .. " ")
+						},
+						extmarks = {
+							{
+								{ 0, 8, "Comment" },
+								{ 8, 10 + #file, "DiagnosticVirtualTextHint" },
+								{ 10 + #file, 11 + #file, "Comment" },
+							}
+						}
+					};
+				end
+			}
 		}
 	}
 };
@@ -151,6 +164,54 @@ spec.get_confirm_config = function (msg, lines)
 	for _, key in ipairs(keys) do
 		if key == "default" then goto continue; end
 		local entry = styles[key] or {};
+		local can_validate, valid = pcall(entry.condition, msg, lines);
+
+		if can_validate and valid ~= false then
+			_output = vim.tbl_extend("force", _output, entry);
+			break;
+		end
+
+	    ::continue::
+	end
+
+	local output = {};
+
+	--- Turn dynamic values into static
+	--- values
+	for k, v in pairs(_output) do
+		if type(v) ~= "function" then
+			output[k] = v;
+		elseif k ~= "condition" then
+			local can_run, val = pcall(v, msg, lines);
+
+			if can_run and val ~= nil then
+				output[k] = val;
+			else
+				output[k] = nil;
+			end
+		end
+	end
+
+	return output;
+
+	---|fE
+end
+
+spec.get_msg_processor = function (msg, lines)
+	---|fS
+
+	local processors= spec.config.message.processors or {};
+	local _output = processors.default or {};
+
+	---@type string[]
+	local keys = vim.tbl_keys(processors);
+	table.sort(keys);
+
+	--- Iterate over keys and get the first
+	--- match.
+	for _, key in ipairs(keys) do
+		if key == "default" then goto continue; end
+		local entry = processors[key] or {};
 		local can_validate, valid = pcall(entry.condition, msg, lines);
 
 		if can_validate and valid ~= false then
