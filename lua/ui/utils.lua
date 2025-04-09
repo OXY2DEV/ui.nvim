@@ -71,7 +71,7 @@ utils.process_content = function (content)
 			lines[#lines] = lines[#lines] .. part[2];
 		end
 
-		table.insert(extmarks[#extmarks], { X, X + #part[2], utils.attr_to_hl(part[1]) });
+		table.insert(extmarks[#extmarks], { X, X + #part[2], utils.attr_to_hl(part[3] or part[1]) });
 		X = X + #part[2];
 
 		---|fE
@@ -113,7 +113,12 @@ utils.process_content = function (content)
 	---|fE
 end
 
+--- Processes UI contents.
+---@param content [ integer, string ][]
+---@return string[]
 utils.to_lines = function (content)
+	---|fS
+
 	local lines = {};
 
 	--- Handles a part of {content}.
@@ -156,6 +161,24 @@ utils.to_lines = function (content)
 	end
 
 	return lines;
+
+	---|fE
+end
+
+---@param lines string[]
+---@return integer
+utils.max_len = function (lines)
+	---|fS
+
+	local W = 1;
+
+	for _, line in ipairs(lines) do
+		W = math.max(vim.fn.strchars(line), W);
+	end
+
+	return W;
+
+	---|fE
 end
 
 --- Turns attribute ID to highlight group.

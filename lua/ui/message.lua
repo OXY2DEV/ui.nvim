@@ -98,9 +98,6 @@ message.timer = function (callback, duration, interval)
 	return timer;
 end
 
-message.__append = function (obj, duration)
-end
-
 message.__remove = function (id)
 	if message.visible[id] then
 		message.visible[id] = nil;
@@ -126,16 +123,21 @@ message.__confirm = function (obj)
 		message.__prepare();
 		local config = spec.get_confirm_config(obj, lines);
 
+		if config.modifier then
+			lines = config.modifier.lines or lines;
+			exts = config.modifier.extmarks or exts;
+		end
+
 		local window_config = {
 			relative = "editor",
 
-			row = config.row or 5,
-			col = config.col or 5,
+			row = config.row or math.ceil((vim.o.lines - #lines) / 2),
+			col = config.col or math.ceil((vim.o.columns - utils.max_len(lines)) / 2),
 
-			width = config.width or 20,
-			height = config.height or 5,
+			width = config.width or utils.max_len(lines),
+			height = config.height or #lines,
 
-			border = "rounded",
+			border = config.border,
 			style = "minimal",
 
 			hide = false
@@ -144,7 +146,6 @@ message.__confirm = function (obj)
 		vim.api.nvim_buf_clear_namespace(message.confirm_buffer, message.namespace, 0, -1);
 		vim.api.nvim_buf_set_lines(message.confirm_buffer, 0, -1, false, lines);
 
-		table.insert(log.entries, vim.inspect(lines))
 		for l, line in ipairs(exts) do
 			for _, ext in ipairs(line) do
 				vim.api.nvim_buf_set_extmark(message.confirm_buffer, message.namespace, l - 1, ext[1], {
@@ -198,6 +199,8 @@ message.__render = function ()
 	for _, key in ipairs(keys) do
 		local value = message.visible[key];
 		local m_lines, m_exts = utils.process_content(value.content);
+
+	table.insert(log.entries, vim.inspect(value.content))
 
 		lines = vim.list_extend(lines, m_lines)
 		exts = vim.list_extend(exts, m_exts)
