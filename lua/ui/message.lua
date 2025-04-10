@@ -104,7 +104,6 @@ message.__remove = function (id)
 
 		vim.schedule(function ()
 			local _, e = pcall(message.__render);
-			table.insert(log.entries, e)
 		end)
 	end
 end
@@ -246,7 +245,6 @@ message.__render = function ()
 		end
 
 		for l = entry.from, entry.to - 1, 1 do
-			table.insert(log.entries, vim.inspect(decorations))
 			if l == entry.from then
 				vim.api.nvim_buf_set_extmark(message.msg_buffer, message.namespace, l, 0, {
 					virt_text_pos = "inline",
@@ -274,7 +272,7 @@ message.__render = function ()
 	local window_config = {
 		relative = "editor",
 
-		row = vim.o.lines - (vim.o.cmdheight + 1) - utils.wrapped_height(lines, W),
+		row = vim.o.lines - (vim.o.cmdheight + (vim.g.__cmdline_height or 0) + 1) - utils.wrapped_height(lines, W),
 		col = vim.o.columns,
 
 		width = W + sign_width,
@@ -375,7 +373,6 @@ message.msg_show = function (kind, content, replace_last)
 				content = content,
 			});
 
-			table.insert(log.entries, e)
 		elseif kind == "search_count" then
 			--- Do not handle search count as messages.
 			return;
@@ -409,7 +406,6 @@ message.msg_show = function (kind, content, replace_last)
 				message.id = message.id + 1;
 
 				local _, e = pcall(message.__render);
-				table.insert(log.entries, e)
 			end);
 		end
 	end
@@ -420,7 +416,6 @@ message.msg_history_show = function (entries)
 
 	vim.schedule(function ()
 		local _, e = pcall(message.__history, entries);
-		table.insert(log.entries, e)
 	end)
 end
 

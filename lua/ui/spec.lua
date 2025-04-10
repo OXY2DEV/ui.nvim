@@ -150,12 +150,11 @@ spec.default = {
 				}
 			},
 
-			echo = {
-				condition = function (msg)
-					table.insert(log.entries, vim.inspect(msg.kind == "echo"))
-					return msg.kind == "echo";
-				end,
-			}
+			-- echo = {
+			-- 	condition = function (msg)
+			-- 		return msg.kind == "echo";
+			-- 	end,
+			-- }
 		},
 
 		confirm = {
@@ -343,7 +342,6 @@ spec.get_msg_processor = function (msg, lines, extmarks)
 		if k == "duration" then
 			local modified = get_val(_output.modifier);
 
-			table.insert(log.entries, "dura")
 			if modified then
 				output.duration = get_val(v, msg, modified.lines or lines, modified.extmarks or extmarks);
 			else

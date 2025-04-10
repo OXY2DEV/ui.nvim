@@ -162,6 +162,8 @@ cmdline.__render = function ()
 		hide = false
 	};
 
+	vim.g.__cmdline_height = H;
+
 	vim.schedule(function ()
 		--- Clear the buffer of old decorations.
 		vim.api.nvim_buf_clear_namespace(cmdline.buffer, cmdline.namespace, 0, -1);
@@ -219,6 +221,10 @@ cmdline.__render = function ()
 		vim.wo[cmdline.window].conceallevel = 3;
 		vim.wo[cmdline.window].concealcursor = "nvic";
 
+		if package.loaded["ui.message"] then
+			pcall(package.loaded["ui.message"].__render);
+		end
+
 		vim.api.nvim__redraw({ flush = true, win = cmdline.window })
 	end);
 
@@ -267,6 +273,7 @@ end
 --- Exited cmdline.
 cmdline.cmdline_hide = function ()
 	utils.confirm_keys();
+	vim.g.__cmdline_height = 0;
 
 	vim.schedule(function ()
 		--- We can't open/close windows.
@@ -276,6 +283,10 @@ cmdline.cmdline_hide = function ()
 		if vim.g.__ui_cursorline ~= nil then
 			vim.o.cursorline = vim.g.__ui_cursorline;
 			vim.g.__ui_cursorline = nil;
+		end
+
+		if package.loaded["ui.message"] then
+			pcall(package.loaded["ui.message"].__render);
 		end
 
 		vim.api.nvim__redraw({
