@@ -76,20 +76,22 @@ spec.default = {
 	message = {
 		processors = {
 			default = {
-				duration = function (kind)
-					if kind == "write" then
+				duration = function (msg, lines)
+					local duration = 1500;
+
+					if msg.kind == "write" then
 						--- Write messages run frequently.
 						--- Reduce duration.
-						return 1000;
-					elseif kind == "confirm" then
+						duration = 1000;
+					elseif msg.kind == "confirm" then
 						--- Currently not in use.
-						return 4500;
-					elseif vim.list_contains({ "emsg", "echoerr", "lua_error", "rpc_error", "shell_err" }, kind) then
+						duration = 2000;
+					elseif vim.list_contains({ "emsg", "echoerr", "lua_error", "rpc_error", "shell_err" }, msg.kind) then
 						--- Error messages.
-						return 3000;
+						duration = 2500;
 					end
 
-					return 1500;
+					return duration + utils.read_time(lines);
 				end,
 				decorations = function ()
 					return {
@@ -312,19 +314,43 @@ spec.get_msg_processor = function (msg, lines, extmarks)
 
 	local output = {};
 
+	---@param val any
+	---@param ...? any
+	---@return any
+	local function get_val(val, ...)
+		---|fS
+
+		if type(val) == "function" then
+			local can_call, new_val;
+
+			if ... then
+				can_call, new_val = pcall(val, ...);
+			else
+				can_call, new_val = pcall(val, msg, lines, extmarks);
+			end
+
+			return can_call and new_val or nil;
+		else
+			return val;
+		end
+
+		---|fE
+	end
+
 	--- Turn dynamic values into static
 	--- values
 	for k, v in pairs(_output) do
-		if type(v) ~= "function" then
-			output[k] = v;
-		elseif k ~= "condition" then
-			local can_run, val = pcall(v, msg, lines, extmarks);
+		if k == "duration" then
+			local modified = get_val(_output.modifier);
 
-			if can_run and val ~= nil then
-				output[k] = val;
+			table.insert(log.entries, "dura")
+			if modified then
+				output.duration = get_val(v, msg, modified.lines or lines, modified.extmarks or extmarks);
 			else
-				output[k] = nil;
+				output.duration = get_val(v);
 			end
+		else
+			output[k] = get_val(v);
 		end
 	end
 

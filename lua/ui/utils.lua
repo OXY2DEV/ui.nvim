@@ -1,5 +1,5 @@
 local utils = {};
-local log = require("ui.log")
+-- local log = require("ui.log")
 
 --- Gets length of virtual text.
 ---@param virt_text [ string, string | nil ][]
@@ -233,6 +233,9 @@ utils.wrapped_height = function (lines, width)
 	---|fE
 end
 
+--- Gets data type of given string.
+---@param str string
+---@return "constant" | "number" | "boolean" | "string"
 utils.get_type = function (str)
 	if not str then
 		return "constant";
@@ -243,6 +246,49 @@ utils.get_type = function (str)
 	else
 		return "string";
 	end
+end
+
+---@param lines string[]
+---@return integer
+utils.read_time = function (lines)
+	---|fS
+
+	--- Gets line complexity.
+	---@param line string
+	---@return number
+	---@return integer
+	local function line_complexity (line)
+		---|fS
+
+		local line_count = #vim.split(line, "[%?%!%.%;]", { trimempty = true });
+		local words = vim.split(line, " ", { trimempty = true });
+
+		local total_word_length = 0;
+
+		for _, word in ipairs(words) do
+			total_word_length = total_word_length + vim.fn.strchars(word);
+		end
+
+		local avg_word_per_sentence = #words / line_count;
+		local avg_word_length = total_word_length / #words;
+
+		return (avg_word_per_sentence * avg_word_length) / 10, #words;
+
+		---|fE
+	end
+
+	local duration = 0;
+
+	for _, line in ipairs(lines) do
+		local complexity, word_count = line_complexity(line);
+		local WPM = 150 / complexity;
+
+		duration = duration + (( word_count / WPM ) * 60 * 100);
+	end
+
+	return duration;
+
+	---|fE
 end
 
 return utils;

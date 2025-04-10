@@ -385,37 +385,32 @@ message.msg_show = function (kind, content, replace_last)
 			vim.api.nvim_feedkeys(vim.api.nvim_replace_termcodes("<ESC>", true, false, true), "n", false);
 			return;
 		else
-			local current_id = message.id;
-			local lines = utils.to_lines(content);
-
-			local processor = spec.get_msg_processor({ kind = kind, content = content }, lines, {}) or {};
-			local duration = processor.duration or 600;
-
-			message.history[message.id] = {
-				kind = kind,
-				content = content
-			};
-			message.visible[message.id] = vim.tbl_extend("force", {
-				kind = kind,
-				content = content
-			}, {
-				timer = message.timer(function ()
-					message.__remove(current_id);
-				end, duration)
-			});
-
-			message.last = message.id;
-			message.id = message.id + 1;
-
 			vim.schedule(function ()
+				local current_id = message.id;
+				local lines = utils.to_lines(content);
+
+				local processor = spec.get_msg_processor({ kind = kind, content = content }, lines, {}) or {};
+				local duration = processor.duration or 600;
+
+				message.history[message.id] = {
+					kind = kind,
+					content = content
+				};
+				message.visible[message.id] = vim.tbl_extend("force", {
+					kind = kind,
+					content = content
+				}, {
+					timer = message.timer(function ()
+						message.__remove(current_id);
+					end, duration)
+				});
+
+				message.last = message.id;
+				message.id = message.id + 1;
+
 				local _, e = pcall(message.__render);
 				table.insert(log.entries, e)
-			end)
-
-			-- message.__append({
-			-- 	kind = kind,
-			-- 	content = content,
-			-- }, 5000);
+			end);
 		end
 	end
 end
