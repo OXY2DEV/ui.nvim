@@ -96,7 +96,8 @@ spec.default = {
 				decorations = function ()
 					return {
 						sign_text = "󰵅 ",
-						line_hl_group = "Comment"
+						sign_hl_group = "Comment",
+						-- line_hl_group = "Comment"
 					}
 				end
 			},

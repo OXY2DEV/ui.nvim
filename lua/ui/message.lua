@@ -250,30 +250,22 @@ message.__render = function ()
 			sign_width = math.max(sign_width, _sign_width);
 		end
 
-		for l = entry.from, entry.to - 1, 1 do
-			if l == entry.from then
-				vim.api.nvim_buf_set_extmark(message.msg_buffer, message.namespace, l, 0, {
-					virt_text_pos = "inline",
-					virt_text = entry.sign_text and {
-						{ entry.sign_text, entry.sign_hl }
-					} or nil,
+		vim.api.nvim_buf_set_extmark(message.msg_buffer, message.namespace, entry.from, 0, {
+			sign_text = entry.sign_text,
+			sign_hl_group = entry.sign_hl_group,
+		});
 
-					line_hl_group = entry.line_hl_group
-				});
-			else
-				vim.api.nvim_buf_set_extmark(message.msg_buffer, message.namespace, l, 0, {
-					virt_text_pos = "inline",
-					virt_text = entry.sign_text and {
-						{ string.rep(" ", _sign_width), entry.sign_hl }
-					} or nil,
-
-					line_hl_group = entry.line_hl_group
-				});
-			end
+		if entry.line_hl_group then
+			vim.api.nvim_buf_set_extmark(message.msg_buffer, message.namespace, entry.from, 0, {
+				end_row = entry.to,
+				line_hl_group = entry.line_hl_group
+			});
 		end
 	end
 
 	local W = math.min(math.floor(vim.o.columns * 0.5), utils.max_len(lines));
+
+	table.insert(log.entries, vim.inspect(utils.wrapped_height(lines, W)))
 
 	local window_config = {
 		relative = "editor",
@@ -296,6 +288,7 @@ message.__render = function ()
 	end
 
 	vim.wo[message.msg_window].winhl = "Normal:Normal";
+	vim.wo[message.msg_window].statuscolumn = "%s";
 
 	vim.wo[message.msg_window].wrap = true;
 	vim.wo[message.msg_window].linebreak = true;

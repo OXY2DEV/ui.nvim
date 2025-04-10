@@ -221,10 +221,16 @@ utils.wrapped_height = function (lines, width)
 	local height = 0;
 
 	for _, line in ipairs(lines) do
-		height = height + math.ceil(vim.fn.strchars(line) / width);
+		local len = vim.fn.strchars(line);
 
-		if vim.fn.strchars(line) % width ~= 0 then
+		if len <= width then
 			height = height + 1;
+		else
+			height = height + math.floor(vim.fn.strchars(line) / width);
+
+			if vim.fn.strchars(line) % width ~= 0 then
+				height = height + 1;
+			end
 		end
 	end
 
