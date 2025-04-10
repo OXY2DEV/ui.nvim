@@ -427,6 +427,15 @@ message.msg_showcmd = function (content)
 	-- table.insert(log.entries, vim.inspect(content))
 end
 
+message.msg_clear = function ()
+	for k, v in pairs(message.visible) do
+		v.timer:stop();
+		message.__remove(k);
+	end
+
+	message.__render();
+end
+
 ------------------------------------------------------------------------------
 
 --- Handles message events.
