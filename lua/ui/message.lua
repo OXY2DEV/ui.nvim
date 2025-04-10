@@ -229,10 +229,16 @@ message.__render = function ()
 
 	for l, line in ipairs(exts) do
 		for _, ext in ipairs(line) do
+			if ext[3] == "" then
+				goto continue;
+			end
+
 			vim.api.nvim_buf_set_extmark(message.msg_buffer, message.namespace, l - 1, ext[1], {
 				end_col = ext[2],
 				hl_group = ext[3]
 			});
+
+		    ::continue::
 		end
 	end
 
@@ -406,6 +412,7 @@ message.msg_show = function (kind, content, replace_last)
 				message.id = message.id + 1;
 
 				local _, e = pcall(message.__render);
+				table.insert(log.entries, vim.inspect(e))
 			end);
 		end
 	end
@@ -424,7 +431,7 @@ end
 -- end
 
 message.msg_showcmd = function (content)
-	table.insert(log.entries, vim.inspect(content))
+	-- table.insert(log.entries, vim.inspect(content))
 end
 
 ------------------------------------------------------------------------------

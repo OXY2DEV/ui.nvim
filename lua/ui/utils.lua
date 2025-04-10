@@ -84,7 +84,7 @@ utils.process_content = function (content)
 	local function handle_newline(part)
 		---|fS
 
-		for l, line in ipairs(vim.split(part[2], "\n", { trimempty = true })) do
+		for l, line in ipairs(vim.split(part[2], "\n", { trimempty = false })) do
 			if l == 1 and #lines > 0 then
 				lines[#lines] = lines[#lines] .. line;
 				table.insert(extmarks[#extmarks], { X, X + #line, utils.attr_to_hl(part[3] or part[1]) });
@@ -142,7 +142,7 @@ utils.to_lines = function (content)
 	local function handle_newline(part)
 		---|fS
 
-		for l, line in ipairs(vim.split(part[2], "\n", { trimempty = true })) do
+		for l, line in ipairs(vim.split(part[2], "\n", { trimempty = false })) do
 			if l == 1 and #lines > 0 then
 				lines[#lines] = lines[#lines] .. line;
 			else
@@ -280,10 +280,16 @@ utils.read_time = function (lines)
 	local duration = 0;
 
 	for _, line in ipairs(lines) do
+		if string.match(line, "^%s*$") then
+			goto continue;
+		end
+
 		local complexity, word_count = line_complexity(line);
 		local WPM = 150 / complexity;
 
 		duration = duration + (( word_count / WPM ) * 60 * 100);
+
+	    ::continue::
 	end
 
 	return duration;
