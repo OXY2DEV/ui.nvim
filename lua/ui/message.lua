@@ -135,7 +135,7 @@ message.__confirm = function (obj)
 			col = config.col or math.ceil((vim.o.columns - utils.max_len(lines)) / 2),
 
 			width = config.width or utils.max_len(lines),
-			height = config.height or #lines,
+			height = config.height or utils.wrapped_height(lines, config.width),
 
 			border = config.border,
 			style = "minimal",
@@ -199,12 +199,25 @@ message.__render = function ()
 
 	message.__prepare();
 	local lines, exts = {}, {};
+	local decorations = {};
 
 	for _, key in ipairs(keys) do
 		local value = message.visible[key];
 		local m_lines, m_exts = utils.process_content(value.content);
 
-	table.insert(log.entries, vim.inspect(value.content))
+		local processor = spec.get_msg_processor(value, m_lines, m_exts) or {};
+
+		if processor.modifier then
+			m_lines = processor.modifier.lines or m_lines;
+			m_exts = processor.modifier.extmarks or m_exts;
+		end
+
+		if processor.decorations then
+			table.insert(decorations, vim.tbl_extend("force", processor.decorations, {
+				from = #lines,
+				to = #lines + #m_lines
+			}));
+		end
 
 		lines = vim.list_extend(lines, m_lines)
 		exts = vim.list_extend(exts, m_exts)
@@ -213,15 +226,43 @@ message.__render = function ()
 	vim.api.nvim_buf_clear_namespace(message.msg_buffer, message.namespace, 0, -1);
 	vim.api.nvim_buf_set_lines(message.msg_buffer, 0, -1, false, lines);
 
-	local W = 5;
+	local sign_width = 0;
 
-	for l, line in ipairs(exts) do
-		local text = lines[l];
+	for _, entry in ipairs(decorations) do
+		local _sign_width;
 
-		if vim.fn.strchars(text) > W then
-			W = vim.fn.strchars(text);
+		if entry.sign_text then
+			_sign_width = vim.fn.strdisplaywidth(entry.sign_text);
+			sign_width = math.max(sign_width, _sign_width);
 		end
 
+		for l = entry.from, entry.to - 1, 1 do
+			table.insert(log.entries, vim.inspect(decorations))
+			if l == entry.from then
+				vim.api.nvim_buf_set_extmark(message.msg_buffer, message.namespace, l, 0, {
+					virt_text_pos = "inline",
+					virt_text = entry.sign_text and {
+						{ entry.sign_text, entry.sign_hl }
+					} or nil,
+
+					line_hl_group = entry.line_hl_group
+				});
+			else
+				vim.api.nvim_buf_set_extmark(message.msg_buffer, message.namespace, l, 0, {
+					virt_text_pos = "inline",
+					virt_text = entry.sign_text and {
+						{ string.rep(" ", _sign_width), entry.sign_hl }
+					} or nil,
+
+					line_hl_group = entry.line_hl_group
+				});
+			end
+		end
+	end
+
+	local W = math.min(math.floor(vim.o.columns * 0.5), utils.max_len(lines));
+
+	for l, line in ipairs(exts) do
 		for _, ext in ipairs(line) do
 			vim.api.nvim_buf_set_extmark(message.msg_buffer, message.namespace, l - 1, ext[1], {
 				end_col = ext[2],
@@ -233,11 +274,11 @@ message.__render = function ()
 	local window_config = {
 		relative = "editor",
 
-		row = vim.o.lines - (vim.o.cmdheight + 1) - math.min(#lines, 5),
+		row = vim.o.lines - (vim.o.cmdheight + 1) - utils.wrapped_height(lines, W),
 		col = vim.o.columns,
 
-		width = W,
-		height = math.min(#lines, 5),
+		width = W + sign_width,
+		height = utils.wrapped_height(lines, W),
 
 		style = "minimal",
 
@@ -347,7 +388,7 @@ message.msg_show = function (kind, content, replace_last)
 			local current_id = message.id;
 			local lines = utils.to_lines(content);
 
-			local processor = spec.get_msg_processor(kind, content, lines) or {};
+			local processor = spec.get_msg_processor({ kind = kind, content = content }, lines, {}) or {};
 			local duration = processor.duration or 600;
 
 			message.history[message.id] = {

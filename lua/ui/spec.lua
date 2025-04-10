@@ -1,6 +1,8 @@
 local spec = {};
 local log = require("ui.log")
 
+local utils = require("ui.utils");
+
 spec.default = {
 	cmdline = {
 		styles = {
@@ -29,6 +31,11 @@ spec.default = {
 				icon = { { "  ", "Color4" } },
 			},
 
+			keymap = {
+				condition = function (_, lines)
+				end
+			},
+
 			prompt = {
 				condition = function (state)
 					return state.prompt ~= "";
@@ -48,8 +55,6 @@ spec.default = {
 	message = {
 		processors = {
 			default = {
-				callback = function (kind, msg, lines)
-				end,
 				duration = function (kind)
 					if kind == "write" then
 						--- Write messages run frequently.
@@ -64,7 +69,20 @@ spec.default = {
 					end
 
 					return 1500;
+				end,
+				decorations = function ()
+					return {
+						sign_text = "󰵅 ",
+						line_hl_group = "Comment"
+					}
 				end
+			},
+
+			echo = {
+				condition = function (msg)
+					table.insert(log.entries, vim.inspect(msg.kind == "echo"))
+					return msg.kind == "echo";
+				end,
 			}
 		},
 
@@ -197,7 +215,7 @@ spec.get_confirm_config = function (msg, lines)
 	---|fE
 end
 
-spec.get_msg_processor = function (msg, lines)
+spec.get_msg_processor = function (msg, lines, extmarks)
 	---|fS
 
 	local processors= spec.config.message.processors or {};
@@ -212,7 +230,7 @@ spec.get_msg_processor = function (msg, lines)
 	for _, key in ipairs(keys) do
 		if key == "default" then goto continue; end
 		local entry = processors[key] or {};
-		local can_validate, valid = pcall(entry.condition, msg, lines);
+		local can_validate, valid = pcall(entry.condition, msg, lines, extmarks);
 
 		if can_validate and valid ~= false then
 			_output = vim.tbl_extend("force", _output, entry);
@@ -230,7 +248,7 @@ spec.get_msg_processor = function (msg, lines)
 		if type(v) ~= "function" then
 			output[k] = v;
 		elseif k ~= "condition" then
-			local can_run, val = pcall(v, msg, lines);
+			local can_run, val = pcall(v, msg, lines, extmarks);
 
 			if can_run and val ~= nil then
 				output[k] = val;

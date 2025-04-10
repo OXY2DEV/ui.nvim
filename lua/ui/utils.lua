@@ -189,8 +189,13 @@ utils.attr_to_hl = function (attr)
 	return vim.fn.synIDattr(vim.fn.synIDtrans(attr), "name")
 end
 
-utils.confirm_keys = function (prompt, text)
-	if not prompt and not text then
+--- Creates list of confirm keys.
+---@param prompt? string
+---@param content? [ integer, string ][]
+utils.confirm_keys = function (prompt, content)
+	---|fS
+
+	if not prompt and not content then
 		vim.g.__confirm_keys = {};
 	elseif prompt then
 		local keys = {};
@@ -201,6 +206,31 @@ utils.confirm_keys = function (prompt, text)
 
 		vim.g.__confirm_keys = keys;
 	end
+
+	---|fE
+end
+
+--- Gets line number for wrapped text.
+---@param lines string[]
+---@param width? integer
+---@return integer
+utils.wrapped_height = function (lines, width)
+	---|fS
+
+	width = width or vim.o.columns;
+	local height = 0;
+
+	for _, line in ipairs(lines) do
+		height = height + math.ceil(vim.fn.strchars(line) / width);
+
+		if vim.fn.strchars(line) % width ~= 0 then
+			height = height + 1;
+		end
+	end
+
+	return height;
+
+	---|fE
 end
 
 return utils;
