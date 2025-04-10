@@ -228,6 +228,15 @@ message.__render = function ()
 
 	local sign_width = 0;
 
+	for l, line in ipairs(exts) do
+		for _, ext in ipairs(line) do
+			vim.api.nvim_buf_set_extmark(message.msg_buffer, message.namespace, l - 1, ext[1], {
+				end_col = ext[2],
+				hl_group = ext[3]
+			});
+		end
+	end
+
 	for _, entry in ipairs(decorations) do
 		local _sign_width;
 
@@ -261,15 +270,6 @@ message.__render = function ()
 	end
 
 	local W = math.min(math.floor(vim.o.columns * 0.5), utils.max_len(lines));
-
-	for l, line in ipairs(exts) do
-		for _, ext in ipairs(line) do
-			vim.api.nvim_buf_set_extmark(message.msg_buffer, message.namespace, l - 1, ext[1], {
-				end_col = ext[2],
-				hl_group = ext[3]
-			});
-		end
-	end
 
 	local window_config = {
 		relative = "editor",

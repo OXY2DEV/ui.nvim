@@ -32,8 +32,29 @@ spec.default = {
 			},
 
 			keymap = {
-				condition = function (_, lines)
-				end
+				condition = function (state)
+					return string.match(state.prompt or "", "[%[%(].[%]%)]") ~= nil;
+				end,
+
+				title = function (state)
+					local title = {};
+					local is_first = true;
+
+					for key, command in string.gmatch(state.prompt, "[%[%(](.)[%]%)](%S*)") do
+						table.insert(title, {
+							{ " 󰧹 " .. (key or ""), is_first and "DiagnosticHint" or "Comment" },
+							{ " → " .. string.upper(key or "") .. string.gsub(command or "", "%W$", ""), "Comment" }
+						});
+
+						if is_first then
+							is_first = false;
+						end
+					end
+
+					return title;
+				end,
+
+				winhl = ""
 			},
 
 			prompt = {
@@ -121,7 +142,9 @@ spec.default = {
 					end
 				end,
 				decorations = {
-					sign_text = " "
+					sign_text = "󰣖 ",
+					sign_hl = "DiagnosticHint"
+					-- line_hl_group = "DiagnosticVirtualTextHint"
 				}
 			},
 
