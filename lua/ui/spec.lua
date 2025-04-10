@@ -78,6 +78,53 @@ spec.default = {
 				end
 			},
 
+			option = {
+				condition = function (_, lines)
+					return string.match(lines[1], "^%s+%w+=") ~= nil or string.match(lines[1], "^no%w+$") ~= nil;
+				end,
+
+				modifier = function (_, lines)
+					if string.match(lines[1], "^no%w+$") then
+						local key = string.match(lines[1], "^no(.*)$");
+
+						return {
+							lines = {
+								string.format("%s: false", key)
+							},
+							extmarks = {
+								{
+									{ 0, #key, "@property" },
+									{ #key, #key + 1, "@punctuation" },
+									{ #key + 2, #key + 7, "@boolean" },
+								}
+							}
+						};
+					else
+						local key, value = string.match(lines[1] or "", "^%s+(%w+)=(.*)$");
+
+						if utils.get_type(value) == "string" then
+							value = vim.inspect(value);
+						end
+
+						return {
+							lines = {
+								string.format("%s: %s", key, value)
+							},
+							extmarks = {
+								{
+									{ 0, #key, "@property" },
+									{ #key, #key + 1, "@punctuation" },
+									{ #key + 2, #key + 2 + #value, "@" .. utils.get_type(value) },
+								}
+							}
+						};
+					end
+				end,
+				decorations = {
+					sign_text = " "
+				}
+			},
+
 			echo = {
 				condition = function (msg)
 					table.insert(log.entries, vim.inspect(msg.kind == "echo"))

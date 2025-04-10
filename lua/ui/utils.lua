@@ -233,4 +233,16 @@ utils.wrapped_height = function (lines, width)
 	---|fE
 end
 
+utils.get_type = function (str)
+	if not str then
+		return "constant";
+	elseif tonumber(str) then
+		return "number";
+	elseif str == "true" or str == "false" then
+		return "boolean";
+	else
+		return "string";
+	end
+end
+
 return utils;
