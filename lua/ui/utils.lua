@@ -95,6 +95,8 @@ utils.process_content = function (content)
 				table.insert(extmarks, {
 					{ 0, #line, utils.attr_to_hl(part[3] or part[1]) }
 				});
+
+				X = X + #line;
 			end
 		end
 
