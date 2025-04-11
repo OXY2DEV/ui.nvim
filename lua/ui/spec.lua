@@ -245,11 +245,12 @@ spec.default = {
 
 			highlight_link = {
 				condition = function (_, lines)
-					return #lines == 2 and string.match(lines[2], "^%S+ xxx links to ") ~= nil;
+					return #lines == 2 and string.match(lines[2], "^.- +xxx links to .-") ~= nil;
 				end,
 
 				modifier = function (_, lines)
-					local group_name, link = string.match(lines[2], "^(.-) xxx links to (.-)$");
+					local group_name, link = string.match(lines[2], "^(.-) +xxx links to (.-)$");
+					group_name = string.gsub(group_name, "[^a-zA-Z0-9_.@-]", "");
 
 					return {
 						lines = {
@@ -281,11 +282,13 @@ spec.default = {
 
 			highlight_group = {
 				condition = function (_, lines)
-					return #lines == 2 and string.match(lines[2], "^%S+  +xxx") ~= nil;
+					return #lines == 2 and string.match(lines[2], "^.- xxx links to .-") == nil and string.match(lines[2], "^.- +xxx") ~= nil;
 				end,
 
 				modifier = function (_, lines)
 					local group_name, properties = string.match(lines[2], "^(%S+)%s+xxx%s(.-)$");
+					group_name = string.gsub(group_name, "[^a-zA-Z0-9_.@-]", "");
+
 					local _lines = {
 						string.format("Group: %s", group_name),
 						"abcABC 123",
