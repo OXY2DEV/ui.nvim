@@ -170,7 +170,7 @@ message.__confirm = function (obj)
 
 		--- Auto hide on next keypress.
 		vim.on_key(function (key)
-			if vim.list_contains(vim.g.__confirm_keys or {}, key) == false then
+			if vim.list_contains(vim.g.__confirm_keys or {}, string.lower(key)) == false then
 				return;
 			end
 
