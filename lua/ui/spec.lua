@@ -181,13 +181,64 @@ spec.default = {
 				}
 			},
 
+			lua_error = {
+				condition = function (msg)
+					return msg.kind == "lua_error";
+				end,
+
+				modifier = function (_, lines)
+					if vim.g.__ui_history then
+						return;
+					end
+
+					local path, line, actual_error = "", "", "";
+
+					for _, _line in ipairs(lines) do
+						if string.match(_line, "Error executing lua callback") then
+							path, line, actual_error = string.match(_line, "Error executing lua callback: ([^:]-):(%d+): (.-)$");
+							path = vim.fn.fnamemodify(path, ":~");
+							break;
+						end
+					end
+
+					return {
+						lines = {
+							actual_error,
+							string.format("File: %s", path),
+							string.format("Line: %s", line)
+							-- text
+						},
+						extmarks = {
+							{
+								{ 0, #actual_error, "DiagnosticError" },
+							},
+							{
+								{ 0, 5, "Comment" },
+								{ 6, 6 + #path, "DiagnosticHint" },
+							},
+							{
+								{ 0, 5, "Comment" },
+								{ 6, 6 + #line, "DiagnosticHint" },
+							},
+						}
+					}
+				end,
+
+				decorations = {
+					sign_text = " ",
+					sign_hl_group = "DiagnosticError",
+					-- line_hl_group = "DiagnosticVirtualTextError",
+				}
+			},
+
 			error_msg = {
-				condition = function (msg, lines)
+				condition = function (msg)
 					return msg.kind == "emsg";
 				end,
+
 				decorations = {
 					sign_text = " ",
-					sign_hl_group = "Error"
+					sign_hl_group = "DiagnosticError"
 					-- line_hl_group = "DiagnosticVirtualTextHint"
 				}
 			}
@@ -206,7 +257,6 @@ spec.default = {
 
 			swap_alert = {
 				condition = function (_, lines)
-					table.insert(log.entries, vim.inspect(lines))
 					return string.match(lines[2] or "", '^Swap') ~= nil
 				end,
 
