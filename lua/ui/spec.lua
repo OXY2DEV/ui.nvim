@@ -21,12 +21,24 @@ spec.default = {
 				-- }
 			},
 
+			lua_eval = {
+				condition = function (_, lines)
+					return string.match(lines[#lines], "^=") ~= nil;
+				end,
+
+				offset = 1,
+				filetype = "lua",
+
+				icon = { { "  ", "Color4" } },
+			},
+
 			lua = {
 				condition = function (_, lines)
 					return string.match(lines[#lines], "^lua") ~= nil;
 				end,
 
 				offset = 4,
+				filetype = "lua",
 
 				icon = { { "  ", "Color4" } },
 			},
@@ -93,13 +105,11 @@ spec.default = {
 
 					return duration + utils.read_time(lines);
 				end,
-				decorations = function ()
-					return {
-						sign_text = "󰵅 ",
-						sign_hl_group = "Comment",
-						-- line_hl_group = "Comment"
-					}
-				end
+				decorations = {
+					sign_text = "󰵅 ",
+					sign_hl_group = "Comment",
+					-- line_hl_group = "Comment"
+				}
 			},
 
 			option = {
@@ -146,10 +156,41 @@ spec.default = {
 				end,
 				decorations = {
 					sign_text = "󰣖 ",
-					sign_hl = "DiagnosticHint"
+					sign_hl_group = "DiagnosticHint"
 					-- line_hl_group = "DiagnosticVirtualTextHint"
 				}
 			},
+
+			search = {
+				condition = function (msg)
+					return msg.kind == "search_cmd";
+				end,
+
+				modifier = function (_, lines)
+					local term = string.match(lines[1], "^?(.*)$");
+
+					return {
+						lines = { term },
+						extmarks = { {} }
+					};
+				end,
+				decorations = {
+					sign_text = " ",
+					sign_hl_group = "Special"
+					-- line_hl_group = "DiagnosticVirtualTextHint"
+				}
+			},
+
+			error_msg = {
+				condition = function (msg, lines)
+					return msg.kind == "emsg";
+				end,
+				decorations = {
+					sign_text = " ",
+					sign_hl_group = "Error"
+					-- line_hl_group = "DiagnosticVirtualTextHint"
+				}
+			}
 
 			-- echo = {
 			-- 	condition = function (msg)
@@ -179,7 +220,6 @@ spec.default = {
 				},
 
 				row = 0,
-				border = "rounded"
 			},
 
 			write_confirm = {
@@ -192,7 +232,7 @@ spec.default = {
 
 					return {
 						lines = {
-							string.format("󰽂 Save as %s?", " " .. file .. " ")
+							string.format("󰽂 Save as  %s ?", file)
 						},
 						extmarks = {
 							{

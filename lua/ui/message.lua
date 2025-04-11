@@ -289,6 +289,7 @@ message.__render = function ()
 		message.msg_window = vim.api.nvim_open_win(message.msg_buffer, false, window_config);
 	end
 
+	-- pcall(vim.api.nvim_win_set_cursor, message.msg_window, { #lines, 0 });
 	vim.wo[message.msg_window].winhl = "Normal:Normal";
 	vim.wo[message.msg_window].statuscolumn = "%s";
 
