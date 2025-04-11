@@ -139,6 +139,7 @@ message.__confirm = function (obj)
 			border = config.border,
 			style = "minimal",
 
+			zindex = 90,
 			hide = false
 		};
 
@@ -278,6 +279,7 @@ message.__render = function ()
 
 		style = "minimal",
 
+		zindex = 80,
 		hide = false
 	}
 

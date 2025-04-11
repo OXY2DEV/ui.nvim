@@ -163,23 +163,42 @@ spec.default = {
 				winhl = "Normal:Normal"
 			},
 
-			["^Save changes to "] = {
+			swap_alert = {
 				condition = function (_, lines)
-					return string.match(lines[1] or "", '^Save changes to "([^"]+)"') ~= nil
+					table.insert(log.entries, vim.inspect(lines))
+					return string.match(lines[2] or "", '^Swap') ~= nil
+				end,
+
+				modifier = {
+					lines = { "󰾴 Swap file detected!" },
+					extmarks = {
+						{
+							{ 0, 24, "Special" }
+						}
+					}
+				},
+
+				row = 0,
+				border = "rounded"
+			},
+
+			write_confirm = {
+				condition = function (_, lines)
+					return string.match(lines[2] or "", '^Save changes to "([^"]+)"') ~= nil
 				end,
 
 				modifier = function (_, lines)
-					local file = string.match(lines[1] or "", 'Save changes to "([^"]+)"')
+					local file = string.match(lines[2] or "", 'Save changes to "([^"]+)"')
 
 					return {
 						lines = {
-							string.format("Save as %s?", " " .. file .. " ")
+							string.format("󰽂 Save as %s?", " " .. file .. " ")
 						},
 						extmarks = {
 							{
-								{ 0, 8, "Comment" },
-								{ 8, 10 + #file, "DiagnosticVirtualTextHint" },
-								{ 10 + #file, 11 + #file, "Comment" },
+								{ 0, 13, "Comment" },
+								{ 13, 15 + #file, "DiagnosticVirtualTextHint" },
+								{ 15 + #file, 16 + #file, "Comment" },
 							}
 						}
 					};
