@@ -266,8 +266,6 @@ message.__render = function ()
 
 	local W = math.min(math.floor(vim.o.columns * 0.5), utils.max_len(lines));
 
-	table.insert(log.entries, vim.inspect(utils.wrapped_height(lines, W)))
-
 	local window_config = {
 		relative = "editor",
 
@@ -367,50 +365,50 @@ end
 ------------------------------------------------------------------------------
 
 message.msg_show = function (kind, content, replace_last)
-	if replace_last then
+	if kind == "confirm" then
+		local _, e = pcall(message.__confirm, {
+			kind = kind,
+			content = content,
+		});
+
+	elseif kind == "search_count" then
+		--- Do not handle search count as messages.
+		return;
+	elseif kind == "return_prompt" then
+		--- Hit `<ESC>` on hit-enter prompts.
+		--- or else we get stuck.
+		vim.api.nvim_feedkeys(vim.api.nvim_replace_termcodes("<ESC>", true, false, true), "n", false);
+		return;
+	elseif replace_last then
 	else
-		if kind == "confirm" then
-			local _, e = pcall(message.__confirm, {
+		vim.schedule(function ()
+			local current_id = message.id;
+			local lines = utils.to_lines(content);
+
+			local processor = spec.get_msg_processor({ kind = kind, content = content }, lines, {}) or {};
+			local duration = processor.duration or 600;
+
+			message.history[message.id] = {
 				kind = kind,
-				content = content,
+				content = content
+			};
+			message.visible[message.id] = vim.tbl_extend("force", {
+				kind = kind,
+				content = content
+			}, {
+				timer = message.timer(function ()
+					message.__remove(current_id);
+				end, duration)
 			});
 
-		elseif kind == "search_count" then
-			--- Do not handle search count as messages.
-			return;
-		elseif kind == "return_prompt" then
-			--- Hit `<ESC>` on hit-enter prompts.
-			--- or else we get stuck.
-			vim.api.nvim_feedkeys(vim.api.nvim_replace_termcodes("<ESC>", true, false, true), "n", false);
-			return;
-		else
-			vim.schedule(function ()
-				local current_id = message.id;
-				local lines = utils.to_lines(content);
+			message.last = message.id;
+			message.id = message.id + 1;
 
-				local processor = spec.get_msg_processor({ kind = kind, content = content }, lines, {}) or {};
-				local duration = processor.duration or 600;
-
-				message.history[message.id] = {
-					kind = kind,
-					content = content
-				};
-				message.visible[message.id] = vim.tbl_extend("force", {
-					kind = kind,
-					content = content
-				}, {
-					timer = message.timer(function ()
-						message.__remove(current_id);
-					end, duration)
-				});
-
-				message.last = message.id;
-				message.id = message.id + 1;
-
-				local _, e = pcall(message.__render);
+			local _, e = pcall(message.__render);
+			if e then
 				table.insert(log.entries, vim.inspect(e))
-			end);
-		end
+			end
+		end);
 	end
 end
 
@@ -431,6 +429,10 @@ message.msg_showcmd = function (content)
 end
 
 message.msg_clear = function ()
+	if #vim.g.__confirm_keys == 0 then
+		return;
+	end
+
 	for k, v in pairs(message.visible) do
 		v.timer:stop();
 		message.__remove(k);

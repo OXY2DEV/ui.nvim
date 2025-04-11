@@ -222,7 +222,7 @@ cmdline.__render = function ()
 		vim.wo[cmdline.window].concealcursor = "nvic";
 
 		if package.loaded["ui.message"] then
-			pcall(package.loaded["ui.message"].__render);
+			local _, e = pcall(package.loaded["ui.message"].__render);
 		end
 
 		vim.api.nvim__redraw({ flush = true, win = cmdline.window })
