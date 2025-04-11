@@ -241,7 +241,87 @@ spec.default = {
 					sign_hl_group = "DiagnosticError"
 					-- line_hl_group = "DiagnosticVirtualTextHint"
 				}
-			}
+			},
+
+			highlight_link = {
+				condition = function (_, lines)
+					return #lines == 2 and string.match(lines[2], "^%S+ xxx links to ") ~= nil;
+				end,
+
+				modifier = function (_, lines)
+					local group_name, link = string.match(lines[2], "^(.-) xxx links to (.-)$");
+
+					return {
+						lines = {
+							string.format("Group: %s", group_name),
+							"abcABC 123",
+							string.format("  Link: %s", link)
+						},
+						extmarks = {
+							{
+								{ 0, 7, "DiagnosticInfo" },
+								{ 7, 7 + #group_name, "@label" }
+							},
+							{
+								{ 0, 10, group_name }
+							},
+							{
+								{ 2, 7, "@property" },
+								{ 8, 8 + #link, "@constant" },
+							}
+						}
+					}
+				end,
+				decorations = {
+					sign_text = "󱥚 ",
+					sign_hl_group = "DiagnosticInfo"
+					-- line_hl_group = "DiagnosticVirtualTextHint"
+				}
+			},
+
+			highlight_group = {
+				condition = function (_, lines)
+					return #lines == 2 and string.match(lines[2], "^%S+  +xxx") ~= nil;
+				end,
+
+				modifier = function (_, lines)
+					local group_name, properties = string.match(lines[2], "^(%S+)%s+xxx%s(.-)$");
+					local _lines = {
+						string.format("Group: %s", group_name),
+						"abcABC 123",
+					};
+					local _extmarks = {
+						{
+							{ 0, 7, "DiagnosticInfo" },
+							{ 7, 7 + #group_name, "@label" }
+						},
+						{
+							{ 0, #_lines[2], group_name }
+						},
+					};
+
+					for _, property in ipairs(vim.split(properties, " ")) do
+						local name, value = string.match(property, "^(.-)=(.+)$");
+
+						table.insert(_lines, string.format("  %s: %s", name, value));
+						table.insert(_extmarks, {
+							{ 2, 2 + #name, "@property" },
+							{ 2 + #name, 2 + #name + 1, "Comment" },
+							{ 2 + #name + 2, 2 + #name + 2 + #value, "@constant" },
+						})
+					end
+
+					return {
+						lines = _lines,
+						extmarks = _extmarks
+					};
+				end,
+				decorations = {
+					sign_text = "󱥚 ",
+					sign_hl_group = "DiagnosticInfo"
+					-- line_hl_group = "DiagnosticVirtualTextHint"
+				}
+			},
 
 			-- echo = {
 			-- 	condition = function (msg)
