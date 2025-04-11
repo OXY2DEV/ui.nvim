@@ -254,11 +254,16 @@ message.__render = function ()
 		vim.api.nvim_buf_set_extmark(message.msg_buffer, message.namespace, entry.from, 0, {
 			sign_text = entry.sign_text,
 			sign_hl_group = entry.sign_hl_group,
+
+			line_hl_group = entry.line_hl_group
 		});
 
 		if entry.line_hl_group then
-			vim.api.nvim_buf_set_extmark(message.msg_buffer, message.namespace, entry.from, 0, {
+			vim.api.nvim_buf_set_extmark(message.msg_buffer, message.namespace, entry.from + 1, 0, {
 				end_row = entry.to,
+
+				sign_text = string.rep(" ", vim.fn.strdisplaywidth(entry.sign_text or "")),
+				sign_hl_group = entry.line_hl_group,
 				line_hl_group = entry.line_hl_group
 			});
 		end
