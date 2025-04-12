@@ -13,4 +13,13 @@ log.export = function (path)
 	file:close();
 end
 
+--- Like `assert()`.
+---@param val boolean
+---@param msg? string
+log.assert = function (val, msg)
+	if val == false and type(msg) == "string" then
+		table.insert(log.entries, msg);
+	end
+end
+
 return log;

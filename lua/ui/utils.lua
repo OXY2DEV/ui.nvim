@@ -51,7 +51,7 @@ end
 --- Processes UI contents.
 ---@param content [ integer, string ][]
 ---@return string[]
----@return integer[]
+---@return ui.cmdline.decorations
 utils.process_content = function (content)
 	---|fS
 
