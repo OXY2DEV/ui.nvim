@@ -8,7 +8,7 @@ local utils = require("ui.utils");
 
 ------------------------------------------------------------------------------
 
----@type integer
+---@type integer Namespace for decorations in messages.
 message.namespace = vim.api.nvim_create_namespace("ui.message")
 
 ---@type integer, integer Buffer & window for messages.
@@ -22,16 +22,6 @@ message.confirm_buffer, message.confirm_window = nil, nil;
 
 ---@type integer, integer Buffer & window for showing stuff.
 message.history_buffer, message.history_window = nil, nil;
-
-message.state = {};
-
-message.get_state = function (key, fallback)
-	return message.state[key] ~= nil and message.state[key] or fallback;
-end
-
-message.set_state = function (new_state)
-	message.state = vim.tbl_extend("force", message.state or {}, new_state);
-end
 
 message.id = 2000;
 message.last = nil;
@@ -106,6 +96,66 @@ message.__remove = function (id)
 			local _, e = pcall(message.__render);
 		end)
 	end
+end
+
+message.__add = function (kind, content)
+	vim.schedule(function ()
+		local current_id = message.id;
+		local lines = utils.to_lines(content);
+
+		local processor = spec.get_msg_processor({ kind = kind, content = content }, lines, {}) or {};
+		local duration = processor.duration or 600;
+
+		message.history[message.id] = {
+			kind = kind,
+			content = content
+		};
+		message.visible[message.id] = vim.tbl_extend("force", {
+			kind = kind,
+			content = content
+		}, {
+			timer = message.timer(function ()
+				message.__remove(current_id);
+			end, duration)
+		});
+
+		message.last = message.id;
+		message.id = message.id + 1;
+
+		local _, e = pcall(message.__render);
+		if e then
+			table.insert(log.entries, vim.inspect(e))
+		end
+	end);
+end
+
+message.__replace = function (kind, content)
+	vim.schedule(function ()
+		local keys = vim.tbl_keys(message.visible);
+
+		if #keys == 0 then
+			message.__add(kind, content);
+			return;
+		end
+
+		local last = message.visible[keys[#keys]];
+
+		if not last or last.kind ~= kind then
+			message.__add(kind, content);
+			return;
+		end
+
+		last.content = content;
+		last.timer:stop();
+		local lines = utils.to_lines(content);
+
+		local processor = spec.get_msg_processor({ kind = kind, content = content }, lines, {}) or {};
+		local duration = processor.duration or 600;
+
+		last.timer:start(duration, 0, vim.schedule_wrap(function ()
+			message.__remove(keys[#keys]);
+		end))
+	end);
 end
 
 ------------------------------------------------------------------------------
@@ -370,6 +420,7 @@ end
 ------------------------------------------------------------------------------
 
 message.msg_show = function (kind, content, replace_last)
+	table.insert(log.entries, tostring(replace_last))
 	if kind == "confirm" then
 		local _, e = pcall(message.__confirm, {
 			kind = kind,
@@ -384,36 +435,10 @@ message.msg_show = function (kind, content, replace_last)
 		--- or else we get stuck.
 		vim.api.nvim_feedkeys(vim.api.nvim_replace_termcodes("<ESC>", true, false, true), "n", false);
 		return;
-	elseif replace_last then
+	elseif replace_last and vim.tbl_isempty(message.visible) == false then
+		message.__replace(kind, content);
 	else
-		vim.schedule(function ()
-			local current_id = message.id;
-			local lines = utils.to_lines(content);
-
-			local processor = spec.get_msg_processor({ kind = kind, content = content }, lines, {}) or {};
-			local duration = processor.duration or 600;
-
-			message.history[message.id] = {
-				kind = kind,
-				content = content
-			};
-			message.visible[message.id] = vim.tbl_extend("force", {
-				kind = kind,
-				content = content
-			}, {
-				timer = message.timer(function ()
-					message.__remove(current_id);
-				end, duration)
-			});
-
-			message.last = message.id;
-			message.id = message.id + 1;
-
-			local _, e = pcall(message.__render);
-			if e then
-				table.insert(log.entries, vim.inspect(e))
-			end
-		end);
+		message.__add(kind, content)
 	end
 end
 
