@@ -107,15 +107,17 @@ cmdline.__lines = function ()
 		current_exts[e] = {};
 	end
 
+	---@type ui.cmdline.style
+	cmdline.style = spec.get_cmdline_style(cmdline.state, current_lines);
+
 	--- Add an extra space at the end.
 	--- This is to prevent the cursor from not being
 	--- visible at the end of the command-line.
+	---
+	--- Must be done after getting the style.
 	for l, line in ipairs(current_lines) do
 		current_lines[l] = line .. " ";
 	end
-
-	---@type ui.cmdline.style
-	cmdline.style = spec.get_cmdline_config(cmdline.state, current_lines);
 
 	---@type ui.cmdline.lines, ui.cmdline.decorations
 	local context_lines, context_exts = {}, {};
@@ -429,7 +431,7 @@ cmdline.cmdline_block_hide = function ()
 	cmdline.set_state({
 		lines = {},
 	});
-	cmdline.state.lines = nil;
+	cmdline.state.lines = nil; ---@diagnostic disable-line
 
 	cmdline.cmdline_hide();
 
