@@ -116,7 +116,7 @@ cmdline.__lines = function ()
 	---
 	--- Must be done after getting the style.
 	for l, line in ipairs(current_lines) do
-		current_lines[l] = line .. " ";
+		current_lines[l] = line .. "  ";
 	end
 
 	---@type ui.cmdline.lines, ui.cmdline.decorations
@@ -188,11 +188,12 @@ cmdline.__cursor = function ()
 		});
 	end
 
-	vim.api.nvim_buf_set_extmark(cmdline.buffer, cmdline.cursor_ns, #lines - 1, pos, {
-		end_col = pos + to,
-		hl_group = cmdline.style.cursor or "Cursor"
-	});
-
+	log.assert(
+		pcall(vim.api.nvim_buf_set_extmark, cmdline.buffer, cmdline.cursor_ns, #lines - 1, pos, {
+			end_col = pos + to,
+			hl_group = cmdline.style.cursor or "Cursor"
+		})
+	);
 	---|fE
 end
 
