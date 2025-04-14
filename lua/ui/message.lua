@@ -27,8 +27,35 @@ message.id = 2000;
 message.last = nil;
 
 message.history = {};
-
 message.visible = {};
+
+message.decorations = nil;
+
+message.statuscolumn = function ()
+	if not message.decorations or #message.decorations == 0 then
+		return "";
+	end
+
+	local lnum = vim.v.lnum - 1;
+
+	for _, entry in ipairs(message.decorations) do
+		if lnum >= entry.from and lnum <= entry.to then
+			if lnum == entry.from then
+				return utils.to_statuscolumn(entry.icon);
+			else
+				return utils.to_statuscolumn(
+					entry.padding or utils.strip_text(entry.icon)
+				);
+			end
+
+			break;
+		end
+	end
+
+	return "";
+end
+
+_G.statuscolumn = message.statuscolumn;
 
 ------------------------------------------------------------------------------
 
@@ -49,6 +76,8 @@ message.__prepare = function ()
 
 	if not message.msg_window or vim.api.nvim_win_is_valid(message.msg_window) == false then
 		message.msg_window = vim.api.nvim_open_win(message.msg_buffer, false, win_config);
+		vim.wo[message.msg_window].statuscolumn = "%!v:lua.statuscolumn()";
+		-- vim.wo[message.msg_window].statuscolumn = "%!v:lua.require('ui.message').statuscolumn()";
 	end
 
 	-- if not message.show_buffer or vim.api.nvim_buf_is_valid(message.show_buffer) == false then
@@ -249,7 +278,7 @@ message.__render = function ()
 
 	message.__prepare();
 	local lines, exts = {}, {};
-	local decorations = {};
+	message.decorations = {};
 
 	for _, key in ipairs(keys) do
 		local value = message.visible[key];
@@ -263,9 +292,9 @@ message.__render = function ()
 		end
 
 		if processor.decorations then
-			table.insert(decorations, vim.tbl_extend("force", processor.decorations, {
+			table.insert(message.decorations, vim.tbl_extend("force", processor.decorations, {
 				from = #lines,
-				to = #lines + #m_lines
+				to = #lines + (#m_lines - 1)
 			}));
 		end
 
@@ -275,8 +304,6 @@ message.__render = function ()
 
 	vim.api.nvim_buf_clear_namespace(message.msg_buffer, message.namespace, 0, -1);
 	vim.api.nvim_buf_set_lines(message.msg_buffer, 0, -1, false, lines);
-
-	local sign_width = 0;
 
 	for l, line in ipairs(exts) do
 		for _, ext in ipairs(line) do
@@ -293,27 +320,17 @@ message.__render = function ()
 		end
 	end
 
-	for _, entry in ipairs(decorations) do
-		local _sign_width;
+	---@type integer Number of columns decorations take.
+	local decor_size = 0;
 
-		if entry.sign_text then
-			_sign_width = vim.fn.strdisplaywidth(entry.sign_text);
-			sign_width = math.max(sign_width, _sign_width);
+	for _, entry in ipairs(message.decorations) do
+		if entry.icon then
+			decor_size = math.max(decor_size, utils.virt_len(entry.icon));
 		end
 
-		vim.api.nvim_buf_set_extmark(message.msg_buffer, message.namespace, entry.from, 0, {
-			sign_text = entry.sign_text,
-			sign_hl_group = entry.sign_hl_group,
-
-			line_hl_group = entry.line_hl_group
-		});
-
 		if entry.line_hl_group then
-			vim.api.nvim_buf_set_extmark(message.msg_buffer, message.namespace, entry.from + 1, 0, {
+			vim.api.nvim_buf_set_extmark(message.msg_buffer, message.namespace, entry.from, 0, {
 				end_row = entry.to,
-
-				sign_text = string.rep(" ", vim.fn.strdisplaywidth(entry.sign_text or "")),
-				sign_hl_group = entry.line_hl_group,
 				line_hl_group = entry.line_hl_group
 			});
 		end
@@ -321,20 +338,20 @@ message.__render = function ()
 
 	local W = math.min(math.floor(vim.o.columns * 0.5), utils.max_len(lines));
 
-	local window_config = {
+	local window_config = vim.tbl_extend("keep", spec.config.message.window or {}, {
 		relative = "editor",
 
 		row = vim.o.lines - (vim.o.cmdheight + (vim.g.__cmdline_height or 0) + 1) - utils.wrapped_height(lines, W),
 		col = vim.o.columns,
 
-		width = W + sign_width,
+		width = W + decor_size,
 		height = utils.wrapped_height(lines, W),
 
-		style = "minimal",
+		-- style = "minimal",
 
 		zindex = 80,
 		hide = false
-	}
+	});
 
 	if message.msg_window and vim.api.nvim_win_is_valid(message.msg_window) then
 		vim.api.nvim_win_set_config(message.msg_window, window_config);
@@ -344,7 +361,6 @@ message.__render = function ()
 
 	-- pcall(vim.api.nvim_win_set_cursor, message.msg_window, { #lines, 0 });
 	vim.wo[message.msg_window].winhl = "Normal:Normal";
-	vim.wo[message.msg_window].statuscolumn = "%s";
 
 	vim.wo[message.msg_window].wrap = true;
 	vim.wo[message.msg_window].linebreak = true;
@@ -420,7 +436,6 @@ end
 ------------------------------------------------------------------------------
 
 message.msg_show = function (kind, content, replace_last)
-	table.insert(log.entries, tostring(replace_last))
 	if kind == "confirm" then
 		local _, e = pcall(message.__confirm, {
 			kind = kind,

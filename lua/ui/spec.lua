@@ -7,12 +7,12 @@ spec.default = {
 	cmdline = {
 		styles = {
 			default = {
-				winhl = "Normal:Color4T",
+				winhl = "Normal:UICmdlineDefault",
 
 				filetype = "vim",
 				offset = 0,
 
-				icon = { { "  ", "Color4" } },
+				icon = { { "  ", "UICmdlineDefaultIcon" } },
 				--
 				-- title = {
 				-- 	{
@@ -26,21 +26,25 @@ spec.default = {
 					return string.match(lines[#lines], "^=") ~= nil;
 				end,
 
+				winhl = "Normal:UICmdlineEval",
+
 				offset = 1,
 				filetype = "lua",
 
-				icon = { { "  ", "Color4" } },
+				icon = { { "  ", "UICmdlineEvalIcon" } },
 			},
 
 			lua = {
 				condition = function (_, lines)
-					return string.match(lines[#lines], "^lua") ~= nil;
+					return string.match(lines[#lines], "^lua ") ~= nil;
 				end,
+
+				winhl = "Normal:UICmdlineLua",
 
 				offset = 4,
 				filetype = "lua",
 
-				icon = { { "  ", "Color4" } },
+				icon = { { "  ", "UICmdlineLuaIcon" } },
 			},
 
 			keymap = {
@@ -106,9 +110,15 @@ spec.default = {
 					return duration + utils.read_time(lines);
 				end,
 				decorations = {
-					sign_text = "󰵅 ",
-					sign_hl_group = "Comment",
-					-- line_hl_group = "Comment"
+					icon = {
+						{ "▍", "UIMessageDefaultSign" }
+					},
+					padding = {
+						{ "▍", "UIMessageDefaultSign" }
+					},
+					-- sign_text = "󰵅 ",
+					-- sign_hl_group = "UIMessageDefaultSign",
+					line_hl_group = "UIMessageDefault"
 				}
 			},
 
@@ -182,8 +192,16 @@ spec.default = {
 			},
 
 			lua_error = {
-				condition = function (msg)
-					return msg.kind == "lua_error";
+				---|fS
+
+				condition = function (_, lines)
+					for _, line in ipairs(lines) do
+						if string.match(line, ".-:%d+: ?.-$") then
+							return true;
+						end
+					end
+
+					return false;
 				end,
 
 				modifier = function (_, lines)
@@ -192,25 +210,42 @@ spec.default = {
 					end
 
 					local path, line, actual_error = "", "", "";
+					local code;
 
 					for _, _line in ipairs(lines) do
-						if string.match(_line, "Error executing lua callback") then
-							path, line, actual_error = string.match(_line, "Error executing lua callback: ([^:]-):(%d+): (.-)$");
-							path = vim.fn.fnamemodify(path, ":~");
+						if string.match(_line, ".-:%d+: ?.-$") then
+							path, line, actual_error = string.match(_line, "(.-):(%d+): ?(.-)$");
+
+							if string.match(path, "%[.-%]$") then
+								path = string.match(path, "%[.-%]$");
+							else
+								path = vim.fn.fnamemodify(
+									string.match(path, "%S+$"),
+									":~"
+								);
+							end
+
+							code = string.match(_line, "^E(%d%d+)")
 							break;
 						end
 					end
 
+					if actual_error == "" then
+						return {};
+					end
+
 					return {
 						lines = {
-							actual_error,
-							string.format("File: %s", path),
-							string.format("Line: %s", line)
+							" " .. actual_error,
+							string.format("From: %s", path),
+							string.format("Line: %s", line),
+							code and "" or nil,
+							code and string.format("Code: %s", code) or nil,
 							-- text
 						},
 						extmarks = {
 							{
-								{ 0, #actual_error, "DiagnosticError" },
+								{ 0, 4 + #actual_error, "DiagnosticError" },
 							},
 							{
 								{ 0, 5, "Comment" },
@@ -220,30 +255,52 @@ spec.default = {
 								{ 0, 5, "Comment" },
 								{ 6, 6 + #line, "DiagnosticHint" },
 							},
+							code and {} or nil,
+							code and {
+								{ 0, 5, "Comment" },
+								{ 6, 6 + #code, "DiagnosticError" },
+							} or nil,
 						}
-					}
+					};
 				end,
 
 				decorations = {
-					sign_text = " ",
-					sign_hl_group = "DiagnosticError",
-					-- line_hl_group = "DiagnosticVirtualTextError",
+					icon = {
+						{ "▍", "UIMessageErrorSign" }
+					},
+					padding = {
+						{ "▍", "UIMessageErrorSign" }
+					},
+					line_hl_group = "UIMessageError",
 				}
+
+				---|fE
 			},
 
-			error_msg = {
+			z_error_msg = {
+				---|fS
+
 				condition = function (msg)
 					return msg.kind == "emsg";
 				end,
 
 				decorations = {
-					sign_text = " ",
-					sign_hl_group = "DiagnosticError"
-					-- line_hl_group = "DiagnosticVirtualTextHint"
+					icon = {
+						{ "▍", "UIMessageErrorSign" }
+					},
+					padding = {
+						{ "▍", "UIMessageErrorSign" }
+					},
+
+					line_hl_group = "UIMessageError"
 				}
+
+				---|fE
 			},
 
 			highlight_link = {
+				---|fS
+
 				condition = function (_, lines)
 					return #lines == 2 and string.match(lines[2], "^.- +xxx links to .-") ~= nil;
 				end,
@@ -254,17 +311,18 @@ spec.default = {
 
 					return {
 						lines = {
+							" abcABC 123",
 							string.format("Group: %s", group_name),
-							"abcABC 123",
 							string.format("  Link: %s", link)
 						},
 						extmarks = {
 							{
-								{ 0, 7, "DiagnosticInfo" },
-								{ 7, 7 + #group_name, "@label" }
+								{ 0, 4, "Comment" },
+								{ 4, 14, group_name }
 							},
 							{
-								{ 0, 10, group_name }
+								{ 0, 7, "DiagnosticInfo" },
+								{ 7, 7 + #group_name, "@label" }
 							},
 							{
 								{ 2, 7, "@property" },
@@ -274,13 +332,20 @@ spec.default = {
 					}
 				end,
 				decorations = {
-					sign_text = "󱥚 ",
-					sign_hl_group = "DiagnosticInfo"
-					-- line_hl_group = "DiagnosticVirtualTextHint"
+					icon = {
+						{ "▍", "UIMessagePaletteSign" }
+					},
+					padding = {
+						{ "▍", "UIMessagePaletteSign" }
+					},
 				}
+
+				---|fE
 			},
 
 			highlight_group = {
+				---|fS
+
 				condition = function (_, lines)
 					return #lines == 2 and string.match(lines[2], "^.- xxx links to .-") == nil and string.match(lines[2], "^.- +xxx") ~= nil;
 				end,
@@ -290,16 +355,17 @@ spec.default = {
 					group_name = string.gsub(group_name, "[^a-zA-Z0-9_.@-]", "");
 
 					local _lines = {
+						" abcABC 123",
 						string.format("Group: %s", group_name),
-						"abcABC 123",
 					};
 					local _extmarks = {
 						{
-							{ 0, 7, "DiagnosticInfo" },
-							{ 7, 7 + #group_name, "@label" }
+							{ 0, 4, "Comment" },
+							{ 4, #_lines[1], group_name }
 						},
 						{
-							{ 0, #_lines[2], group_name }
+							{ 0, 7, "DiagnosticInfo" },
+							{ 7, 7 + #group_name, "@label" }
 						},
 					};
 
@@ -320,10 +386,16 @@ spec.default = {
 					};
 				end,
 				decorations = {
-					sign_text = "󱥚 ",
-					sign_hl_group = "DiagnosticInfo"
-					-- line_hl_group = "DiagnosticVirtualTextHint"
+					icon = {
+						{ "▍", "UIMessagePaletteSign" }
+					},
+					padding = {
+						{ "▍", "UIMessagePaletteSign" }
+					},
+					line_hl_group = "UIMessagePalette",
 				}
+
+				---|fE
 			},
 
 			-- echo = {
@@ -383,7 +455,7 @@ spec.default = {
 
 spec.config = vim.deepcopy(spec.default);
 
-spec.get_cmdline_config = function (state, lines)
+spec.get_cmdline_style = function (state, lines)
 	---|fS
 
 	local styles = spec.config.cmdline.styles or {};

@@ -18,6 +18,55 @@ utils.virt_len = function (virt_text)
 	---|fE
 end
 
+--- Virtual text → statuscolumn text.
+---@param virt_text [ string, string? ][]
+---@return string
+utils.to_statuscolumn = function (virt_text)
+	---|fS
+
+	if vim.islist(virt_text) == false then
+		return "";
+	end
+
+	local output = "";
+
+	for _, entry in ipairs(virt_text) do
+		if type(entry[2]) == "string" then
+			output = output .. string.format("%%#%s#%s%%#Normal#", entry[2], entry[1]);
+		else
+			output = output .. entry[1];
+		end
+	end
+
+	return output;
+
+	---|fE
+end
+
+--- Strips text from virtual text.
+---@param virt_text [ string, string? ][]
+---@return [ string, string? ][]
+utils.strip_text = function (virt_text)
+	---|fS
+
+	if vim.islist(virt_text) == false then
+		return {};
+	end
+
+	local new = {};
+
+	for _, item in ipairs(virt_text) do
+		table.insert(new, {
+			string.rep(" ", vim.fn.strdisplaywidth(item[1])),
+			item[2]
+		});
+	end
+
+	return new;
+
+	---|fE
+end
+
 ---@param virt_lines ( [ string, string? ][] )[]
 ---@return string[]
 ---@return table
