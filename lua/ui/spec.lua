@@ -165,9 +165,10 @@ spec.default = {
 					end
 				end,
 				decorations = {
-					sign_text = "󰣖 ",
-					sign_hl_group = "DiagnosticHint"
-					-- line_hl_group = "DiagnosticVirtualTextHint"
+					icon = {
+						{ "▍󰣖 ", "UIMessageHintSign" }
+					},
+					line_hl_group = "UIMessageHint"
 				}
 			},
 
@@ -185,9 +186,10 @@ spec.default = {
 					};
 				end,
 				decorations = {
-					sign_text = " ",
-					sign_hl_group = "Special"
-					-- line_hl_group = "DiagnosticVirtualTextHint"
+					icon = {
+						{ "▍ ", "Search" }
+					},
+					line_hl_group = "DiagnosticVirtualTextHint"
 				}
 			},
 
