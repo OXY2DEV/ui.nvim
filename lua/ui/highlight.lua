@@ -350,6 +350,44 @@ hl.groups = {
 		---|fE
 	end,
 
+	msg_hint = function ()
+		---|fS
+
+		---@type number, number, number Main color.
+		local ML, MA, MB = hl.rgb_to_oklab(
+			hl.num_to_rgb(
+				hl.get_attr("fg", { "DiagnosticHint" }) or hl.choice(1234, 1244)
+			)
+		);
+		---@type number, number, number Background color.
+		local BL, BA, BB = hl.rgb_to_oklab(
+			hl.num_to_rgb(
+				hl.get_attr("bg", { "Normal" }) or hl.choice(1234, 1244)
+			)
+		);
+
+		local Y = 0.85;
+		local RL, RA, RB = hl.lerp(ML, BL, Y), hl.lerp(MA, BA, Y), hl.lerp(MB, BB, Y);
+
+		return {
+			{
+				group_name = "UIMessageHint",
+				value = {
+					bg = string.format("#%x%x%x", hl.oklab_to_rgb(RL, RA, RB)),
+				}
+			},
+			{
+				group_name = "UIMessageHintSign",
+				value = {
+					fg = string.format("#%x%x%x", hl.oklab_to_rgb(ML, MA, MB)),
+					bg = string.format("#%x%x%x", hl.oklab_to_rgb(RL, RA, RB)),
+				}
+			},
+		};
+
+		---|fE
+	end,
+
 	msg_palette = function ()
 		---|fS
 
