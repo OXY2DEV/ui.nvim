@@ -290,7 +290,7 @@ hl.groups = {
 			)
 		);
 
-		local Y = 0.75;
+		local Y = 0.85;
 		local RL, RA, RB = hl.lerp(ML, BL, Y), hl.lerp(MA, BA, Y), hl.lerp(MB, BB, Y);
 
 		return {
@@ -310,7 +310,67 @@ hl.groups = {
 		};
 
 		---|fE
-	end
+	end,
+
+	msg_error = function ()
+		---|fS
+
+		---@type number, number, number Main color.
+		local ML, MA, MB = hl.rgb_to_oklab(
+			hl.num_to_rgb(
+				hl.get_attr("fg", { "DiagnosticError", "Error" }) or hl.choice(1234, 1244)
+			)
+		);
+		---@type number, number, number Background color.
+		local BL, BA, BB = hl.rgb_to_oklab(
+			hl.num_to_rgb(
+				hl.get_attr("bg", { "Normal" }) or hl.choice(1234, 1244)
+			)
+		);
+
+		local Y = 0.85;
+		local RL, RA, RB = hl.lerp(ML, BL, Y), hl.lerp(MA, BA, Y), hl.lerp(MB, BB, Y);
+
+		return {
+			{
+				group_name = "UIMessageError",
+				value = {
+					bg = string.format("#%x%x%x", hl.oklab_to_rgb(RL, RA, RB)),
+				}
+			},
+			{
+				group_name = "UIMessageErrorSign",
+				value = {
+					fg = string.format("#%x%x%x", hl.oklab_to_rgb(ML, MA, MB)),
+					bg = string.format("#%x%x%x", hl.oklab_to_rgb(RL, RA, RB)),
+				}
+			},
+		};
+
+		---|fE
+	end,
+
+	msg_palette = function ()
+		---|fS
+
+		---@type number, number, number Main color.
+		local ML, MA, MB = hl.rgb_to_oklab(
+			hl.num_to_rgb(
+				hl.get_attr("fg", { "@function", "Error" }) or hl.choice(1234, 1244)
+			)
+		);
+
+		return {
+			{
+				group_name = "UIMessagePaletteSign",
+				value = {
+					fg = string.format("#%x%x%x", hl.oklab_to_rgb(ML, MA, MB)),
+				}
+			},
+		};
+
+		---|fE
+	end,
 };
 
 hl.setup = function ()
