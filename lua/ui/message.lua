@@ -270,6 +270,7 @@ end
 
 message.__render = function ()
 	local keys = vim.tbl_keys(message.visible);
+	table.sort(keys);
 
 	if #keys == 0 then
 		message.__hide();
