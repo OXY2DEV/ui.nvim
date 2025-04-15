@@ -1,6 +1,31 @@
 local utils = {};
 -- local log = require("ui.log")
 
+---@type integer Buffer for wrapping text.
+utils.wrap_buffer = vim.api.nvim_create_buf(false, true);
+
+--- Wraps text by width.
+---@param lines string[]
+---@param width integer
+---@return string[]
+utils.text_wrap = function(lines, width)
+	---|fS
+
+	if not utils.wrap_buffer or not vim.api.nvim_buf_is_valid(utils.wrap_buffer) then
+		utils.wrap_buffer = vim.api.nvim_create_buf(false, true);
+	end
+
+	vim.api.nvim_buf_set_lines(utils.wrap_buffer, 0, -1, false, lines);
+	vim.bo[utils.wrap_buffer].textwidth = width or vim.o.columns;
+	vim.api.nvim_buf_call(utils.wrap_buffer, function ()
+		vim.api.nvim_command("%normal gqq");
+	end);
+
+	return vim.api.nvim_buf_get_lines(utils.wrap_buffer, 0, -1, false);
+
+	---|fE
+end
+
 --- Gets length of virtual text.
 ---@param virt_text [ string, string | nil ][]
 ---@return integer

@@ -334,8 +334,10 @@ cmdline.cmdline_show = function (content, pos, firstc, prompt, indent, level, hl
 		hl_id = hl_id,
 	});
 
-	utils.confirm_keys(prompt, content);
-	cmdline.__render();
+	vim.schedule(function()
+		utils.confirm_keys(prompt, content);
+		cmdline.__render();
+	end);
 
 	---|fE
 end

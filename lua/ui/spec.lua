@@ -7,21 +7,21 @@ spec.default = {
 	cmdline = {
 		styles = {
 			default = {
+				---|fS
+
 				winhl = "Normal:UICmdlineDefault",
 
 				filetype = "vim",
 				offset = 0,
 
 				icon = { { "  ", "UICmdlineDefaultIcon" } },
-				--
-				-- title = {
-				-- 	{
-				-- 		{ "Run", "Special" }
-				-- 	}
-				-- }
+
+				---|fE
 			},
 
 			lua_eval = {
+				---|fS
+
 				condition = function (_, lines)
 					return string.match(lines[#lines], "^=") ~= nil;
 				end,
@@ -29,12 +29,20 @@ spec.default = {
 				winhl = "Normal:UICmdlineEval",
 
 				offset = 1,
-				filetype = "lua",
+				filetype = function (state)
+					return state.pos < 1 and "vim" or "lua";
+				end,
 
-				icon = { { "  ", "UICmdlineEvalIcon" } },
+				icon = {
+					{ "  ", "UICmdlineEvalIcon" }
+				},
+
+				---|fE
 			},
 
 			lua = {
+				---|fS
+
 				condition = function (_, lines)
 					return string.match(lines[#lines], "^lua ") ~= nil;
 				end,
@@ -42,12 +50,18 @@ spec.default = {
 				winhl = "Normal:UICmdlineLua",
 
 				offset = 4,
-				filetype = "lua",
+				filetype = function (state)
+					return state.pos < 4 and "vim" or "lua";
+				end,
 
 				icon = { { "  ", "UICmdlineLuaIcon" } },
+
+				---|fE
 			},
 
 			keymap = {
+				---|fS
+
 				condition = function (state)
 					return string.match(state.prompt or "", "[%[%(].[%]%)]") ~= nil;
 				end,
@@ -71,20 +85,41 @@ spec.default = {
 				end,
 
 				winhl = ""
+
+				---|fE
 			},
 
-			prompt = {
+			zz_prompt = {
+				---|fS
+
 				condition = function (state)
 					return state.prompt ~= "";
 				end,
 
 				title = function (state)
-					return {
-						{
-							{ state.prompt, "Comment" }
-						}
-					}
-				end
+					local output = {};
+					local lines = utils.text_wrap({ state.prompt or "" }, math.floor(vim.o.columns * 0.8));
+					local hl = "UICmdlineLuaIcon";
+
+					for l, line in ipairs(lines) do
+						local _line = {};
+
+						if l == 1 then
+							table.insert(_line, { " ╭╴", hl });
+						else
+							table.insert(_line, { " │ ", hl });
+						end
+
+						table.insert(_line, { line, "Comment" });
+						table.insert(output, _line);
+					end
+
+					return output;
+				end,
+
+				icon = { { " 󰘎 ", "UICmdlineLuaIcon" } },
+
+				---|fE
 			}
 		}
 	},
@@ -111,14 +146,11 @@ spec.default = {
 				end,
 				decorations = {
 					icon = {
-						{ "▍", "UIMessageDefaultSign" }
+						{ "▍", "UIMessageDefault" }
 					},
 					padding = {
-						{ "▍", "UIMessageDefaultSign" }
+						{ "▍", "UIMessageDefault" }
 					},
-					-- sign_text = "󰵅 ",
-					-- sign_hl_group = "UIMessageDefaultSign",
-					line_hl_group = "UIMessageDefault"
 				}
 			},
 
@@ -335,10 +367,13 @@ spec.default = {
 				end,
 				decorations = {
 					icon = {
-						{ "▍", "UIMessagePaletteSign" }
+						{ "╽", "UIMessagePaletteSign" }
 					},
 					padding = {
-						{ "▍", "UIMessagePaletteSign" }
+						{ "┃", "UIMessagePaletteSign" }
+					},
+					tail = {
+						{ "╿", "UIMessagePaletteSign" }
 					},
 				}
 
