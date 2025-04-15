@@ -281,7 +281,7 @@ hl.groups = {
 		---@type number, number, number Main color.
 		local ML, MA, MB = hl.rgb_to_oklab(
 			hl.num_to_rgb(
-				hl.get_attr("fg", { "DiagnosticInfo", "@comment" }) or hl.choice(1234, 1244)
+				hl.get_attr("fg", { "@comment" }) or hl.choice(1234, 1244)
 			)
 		);
 
@@ -297,19 +297,41 @@ hl.groups = {
 		---|fE
 	end,
 
-	msg_error = function ()
+	msg_ok = function ()
 		---|fS
 
 		---@type number, number, number Main color.
 		local ML, MA, MB = hl.rgb_to_oklab(
 			hl.num_to_rgb(
-				hl.get_attr("fg", { "DiagnosticError", "Error" }) or hl.choice(1234, 1244)
+				hl.get_attr("fg", { "DiagnosticOk", "Error" }) or hl.choice(1234, 1244)
 			)
 		);
 
 		return {
 			{
-				group_name = "UIMessageError",
+				group_name = "UIMessageOk",
+				value = {
+					fg = string.format("#%x%x%x", hl.oklab_to_rgb(ML, MA, MB)),
+				}
+			}
+		};
+
+		---|fE
+	end,
+
+	msg_info = function ()
+		---|fS
+
+		---@type number, number, number Main color.
+		local ML, MA, MB = hl.rgb_to_oklab(
+			hl.num_to_rgb(
+				hl.get_attr("fg", { "DiagnosticInfo" }) or hl.choice(1234, 1244)
+			)
+		);
+
+		return {
+			{
+				group_name = "UIMessageInfo",
 				value = {
 					fg = string.format("#%x%x%x", hl.oklab_to_rgb(ML, MA, MB)),
 				}
@@ -341,13 +363,57 @@ hl.groups = {
 		---|fE
 	end,
 
+	msg_warn = function ()
+		---|fS
+
+		---@type number, number, number Main color.
+		local ML, MA, MB = hl.rgb_to_oklab(
+			hl.num_to_rgb(
+				hl.get_attr("fg", { "DiagnosticWarn" }) or hl.choice(1234, 1244)
+			)
+		);
+
+		return {
+			{
+				group_name = "UIMessageWarn",
+				value = {
+					fg = string.format("#%x%x%x", hl.oklab_to_rgb(ML, MA, MB)),
+				}
+			}
+		};
+
+		---|fE
+	end,
+
+	msg_error = function ()
+		---|fS
+
+		---@type number, number, number Main color.
+		local ML, MA, MB = hl.rgb_to_oklab(
+			hl.num_to_rgb(
+				hl.get_attr("fg", { "DiagnosticError", "Error" }) or hl.choice(1234, 1244)
+			)
+		);
+
+		return {
+			{
+				group_name = "UIMessageError",
+				value = {
+					fg = string.format("#%x%x%x", hl.oklab_to_rgb(ML, MA, MB)),
+				}
+			}
+		};
+
+		---|fE
+	end,
+
 	msg_palette = function ()
 		---|fS
 
 		---@type number, number, number Main color.
 		local ML, MA, MB = hl.rgb_to_oklab(
 			hl.num_to_rgb(
-				hl.get_attr("fg", { "@function", "Error" }) or hl.choice(1234, 1244)
+				hl.get_attr("fg", { "@function", "Function" }) or hl.choice(1234, 1244)
 			)
 		);
 
