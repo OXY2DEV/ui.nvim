@@ -42,6 +42,10 @@ message.statuscolumn = function ()
 		if lnum >= entry.from and lnum <= entry.to then
 			if lnum == entry.from then
 				return utils.to_statuscolumn(entry.icon);
+			elseif lnum == entry.to then
+				return utils.to_statuscolumn(
+					entry.tail or entry.padding or utils.strip_text(entry.icon)
+				);
 			else
 				return utils.to_statuscolumn(
 					entry.padding or utils.strip_text(entry.icon)
