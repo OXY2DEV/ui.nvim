@@ -225,9 +225,9 @@ cmdline.__render = function ()
 	vim.g.__ui_cmd_height = H;
 
 
-	-- Rendering should be scheduled.
-	-- Otherwise, we get errors.
-	vim.schedule(function ()
+	local function callback ()
+		---|fS
+
 		-- Clear the buffer of old decorations.
 		vim.api.nvim_buf_clear_namespace(cmdline.buffer, cmdline.namespace, 0, -1);
 
@@ -307,8 +307,16 @@ cmdline.__render = function ()
 			);
 		end
 
-		vim.api.nvim__redraw({ flush = true, win = cmdline.window })
-	end);
+		vim.api.nvim__redraw({ flush = true, win = cmdline.window });
+
+		---|fE
+	end
+
+	if string.match(lines[#lines], "^[%S]*s/") then
+		callback();
+	else
+		vim.schedule(callback);
+	end
 
 	---|fE
 end
@@ -334,10 +342,8 @@ cmdline.cmdline_show = function (content, pos, firstc, prompt, indent, level, hl
 		hl_id = hl_id,
 	});
 
-	vim.schedule(function()
-		utils.confirm_keys(prompt, content);
-		cmdline.__render();
-	end);
+	utils.confirm_keys(prompt, content);
+	cmdline.__render();
 
 	---|fE
 end
