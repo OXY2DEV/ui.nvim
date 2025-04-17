@@ -197,6 +197,7 @@ cmdline.__cursor = function ()
 	---|fE
 end
 
+--- Renders the command-line.
 cmdline.__render = function ()
 	---|fS
 
@@ -325,7 +326,7 @@ end
 
 ---@param content ui.cmdline.content
 ---@param pos integer
----@param firstc string
+---@param firstc ":" | "?" | "/" | "="
 ---@param prompt string
 ---@param indent integer
 ---@param level integer
