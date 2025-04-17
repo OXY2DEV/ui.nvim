@@ -63,6 +63,21 @@ _G.statuscolumn = message.statuscolumn;
 
 ------------------------------------------------------------------------------
 
+message.ui_attached = false;
+message.ui_echo = {};
+
+vim.api.nvim_create_autocmd("UIEnter", {
+	callback = function ()
+		message.ui_attached = true;
+
+		for _, item in ipairs(message.ui_echo) do
+			message.__add(item.kind, item.content);
+		end
+	end
+});
+
+------------------------------------------------------------------------------
+
 message.__prepare = function ()
 	local win_config = {
 			relative = "editor",
@@ -132,6 +147,14 @@ message.__remove = function (id)
 end
 
 message.__add = function (kind, content)
+	if message.ui_attached == false then
+		table.insert(message.ui_echo, {
+			kind = kind,
+			content = content
+		});
+		return;
+	end
+
 	vim.schedule(function ()
 		local current_id = message.id;
 		local lines = utils.to_lines(content);
