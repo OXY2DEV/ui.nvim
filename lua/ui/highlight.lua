@@ -443,11 +443,30 @@ hl.groups = {
 			)
 		);
 
+		---@type number, number, number Background color.
+		local BL, BA, BB = hl.rgb_to_oklab(
+			hl.num_to_rgb(
+				hl.get_attr("bg", { "Normal" }) or hl.choice(1234, 1244)
+			)
+		);
+
+		local Y = 0.9;
+		local RL = hl.lerp(ML, BL, Y);
+		local RA = hl.lerp(MA, BA, Y);
+		local RB = hl.lerp(MB, BB, Y);
+
 		return {
+			{
+				group_name = "UIMessageInfoSign",
+				value = {
+					bg = string.format("#%x%x%x", hl.oklab_to_rgb(RL, RA, RB)),
+					fg = string.format("#%x%x%x", hl.oklab_to_rgb(ML, MA, MB)),
+				}
+			},
 			{
 				group_name = "UIMessageInfo",
 				value = {
-					fg = string.format("#%x%x%x", hl.oklab_to_rgb(ML, MA, MB)),
+					bg = string.format("#%x%x%x", hl.oklab_to_rgb(RL, RA, RB)),
 				}
 			}
 		};
@@ -487,11 +506,30 @@ hl.groups = {
 			)
 		);
 
+		---@type number, number, number Background color.
+		local BL, BA, BB = hl.rgb_to_oklab(
+			hl.num_to_rgb(
+				hl.get_attr("bg", { "Normal" }) or hl.choice(1234, 1244)
+			)
+		);
+
+		local Y = 0.9;
+		local RL = hl.lerp(ML, BL, Y);
+		local RA = hl.lerp(MA, BA, Y);
+		local RB = hl.lerp(MB, BB, Y);
+
 		return {
+			{
+				group_name = "UIMessageWarnSign",
+				value = {
+					bg = string.format("#%x%x%x", hl.oklab_to_rgb(RL, RA, RB)),
+					fg = string.format("#%x%x%x", hl.oklab_to_rgb(ML, MA, MB)),
+				}
+			},
 			{
 				group_name = "UIMessageWarn",
 				value = {
-					fg = string.format("#%x%x%x", hl.oklab_to_rgb(ML, MA, MB)),
+					bg = string.format("#%x%x%x", hl.oklab_to_rgb(RL, RA, RB)),
 				}
 			}
 		};
