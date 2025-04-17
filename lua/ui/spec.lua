@@ -257,11 +257,37 @@ spec.default = {
 
 					return duration + utils.read_time(lines);
 				end,
-				decorations = {
-					icon = {
-						{ "▍", "UIMessageDefault" }
-					}
-				},
+				decorations = function (msg)
+					local config = {
+						icon = {
+							{ "▍", "UIMessageDefault" }
+						}
+					};
+
+					if msg.content and #msg.content == 1 then
+						local content = msg.content[1];
+						local hl = utils.attr_to_hl(content[3]);
+
+						if hl == "WarningMsg" then
+							config.icon = {
+								{ "▍ ", "UIMessageWarnSign" }
+							};
+							config.line_hl_group = "UIMessageWarn";
+						elseif hl == "ErrorMsg" then
+							config.icon = {
+								{ "▍ ", "UIMessageErrorSign" }
+							};
+							config.line_hl_group = "UIMessageError";
+						else
+							config.icon = {
+								{ "▍ ", "UIMessageInfoSign" }
+							};
+							config.line_hl_group = "UIMessageInfo";
+						end
+					end
+
+					return config;
+				end,
 
 				---|fE
 			},
@@ -407,7 +433,7 @@ spec.default = {
 
 					return {
 						lines = {
-							" " .. actual_error,
+							actual_error,
 							string.format("From: %s", path),
 							string.format("Line: %s", line),
 							(code or exec) and "" or nil,
@@ -417,7 +443,7 @@ spec.default = {
 						},
 						extmarks = {
 							{
-								{ 0, 4 + #actual_error, "DiagnosticError" },
+								{ 0, #actual_error, "DiagnosticError" },
 							},
 							{
 								{ 0, 5, "Comment" },
@@ -442,7 +468,7 @@ spec.default = {
 
 				decorations = {
 					icon = {
-						{ "▍", "UIMessageErrorSign" }
+						{ "▍ ", "UIMessageErrorSign" }
 					},
 					padding = {
 						{ "▍", "UIMessageErrorSign" }
@@ -487,14 +513,13 @@ spec.default = {
 
 					return {
 						lines = {
-							" abcABC 123",
+							"abcABC 123",
 							string.format("Group: %s", group_name),
 							string.format("  Link: %s", link)
 						},
 						extmarks = {
 							{
-								{ 0, 4, "Comment" },
-								{ 4, 14, group_name }
+								{ 0, 10, group_name }
 							},
 							{
 								{ 0, 7, "DiagnosticInfo" },
@@ -509,6 +534,9 @@ spec.default = {
 				end,
 				decorations = {
 					icon = {
+						{ "▍ ", "UIMessagePaletteSign" }
+					},
+					padding = {
 						{ "▍", "UIMessagePaletteSign" }
 					},
 				}
@@ -528,13 +556,12 @@ spec.default = {
 					group_name = string.gsub(group_name, "[^a-zA-Z0-9_.@-]", "");
 
 					local _lines = {
-						" abcABC 123",
+						"abcABC 123",
 						string.format("Group: %s", group_name),
 					};
 					local _extmarks = {
 						{
-							{ 0, 4, "Comment" },
-							{ 4, #_lines[1], group_name }
+							{ 0, #_lines[1], group_name }
 						},
 						{
 							{ 0, 7, "DiagnosticInfo" },
@@ -560,6 +587,9 @@ spec.default = {
 				end,
 				decorations = {
 					icon = {
+						{ "▍ ", "UIMessagePaletteSign" }
+					},
+					padding = {
 						{ "▍", "UIMessagePaletteSign" }
 					},
 				}
