@@ -274,6 +274,120 @@ hl.groups = {
 		---|fE
 	end,
 
+	cmd_search_up = function ()
+		---|fS
+
+		---@type number, number, number Main color.
+		local ML, MA, MB = hl.rgb_to_oklab(
+			hl.num_to_rgb(
+				hl.get_attr("fg", { "DiagnosticWarn" }) or hl.choice(1234, 1244)
+			)
+		);
+		---@type number, number, number Background color.
+		local BL, BA, BB = hl.rgb_to_oklab(
+			hl.num_to_rgb(
+				hl.get_attr("bg", { "Normal" }) or hl.choice(1234, 1244)
+			)
+		);
+
+		local Y = 0.85;
+		local RL, RA, RB = hl.lerp(ML, BL, Y), hl.lerp(MA, BA, Y), hl.lerp(MB, BB, Y);
+
+		return {
+			{
+				group_name = "UICmdlineSearchUp",
+				value = {
+					bg = string.format("#%x%x%x", hl.oklab_to_rgb(RL, RA, RB)),
+				}
+			},
+			{
+				group_name = "UICmdlineSearchUpIcon",
+				value = {
+					fg = string.format("#%x%x%x", hl.oklab_to_rgb(ML, MA, MB)),
+					bg = string.format("#%x%x%x", hl.oklab_to_rgb(RL, RA, RB)),
+				}
+			},
+		};
+
+		---|fE
+	end,
+
+	cmd_search_down = function ()
+		---|fS
+
+		---@type number, number, number Main color.
+		local ML, MA, MB = hl.rgb_to_oklab(
+			hl.num_to_rgb(
+				hl.get_attr("fg", { "@constant" }) or hl.choice(1234, 1244)
+			)
+		);
+		---@type number, number, number Background color.
+		local BL, BA, BB = hl.rgb_to_oklab(
+			hl.num_to_rgb(
+				hl.get_attr("bg", { "Normal" }) or hl.choice(1234, 1244)
+			)
+		);
+
+		local Y = 0.85;
+		local RL, RA, RB = hl.lerp(ML, BL, Y), hl.lerp(MA, BA, Y), hl.lerp(MB, BB, Y);
+
+		return {
+			{
+				group_name = "UICmdlineSearchDown",
+				value = {
+					bg = string.format("#%x%x%x", hl.oklab_to_rgb(RL, RA, RB)),
+				}
+			},
+			{
+				group_name = "UICmdlineSearchDownIcon",
+				value = {
+					fg = string.format("#%x%x%x", hl.oklab_to_rgb(ML, MA, MB)),
+					bg = string.format("#%x%x%x", hl.oklab_to_rgb(RL, RA, RB)),
+				}
+			},
+		};
+
+		---|fE
+	end,
+
+	cmd_substitute = function ()
+		---|fS
+
+		---@type number, number, number Main color.
+		local ML, MA, MB = hl.rgb_to_oklab(
+			hl.num_to_rgb(
+				hl.get_attr("fg", { "@comment" }) or hl.choice(1234, 1244)
+			)
+		);
+		---@type number, number, number Background color.
+		local BL, BA, BB = hl.rgb_to_oklab(
+			hl.num_to_rgb(
+				hl.get_attr("bg", { "Normal" }) or hl.choice(1234, 1244)
+			)
+		);
+
+		local Y = 0.85;
+		local RL, RA, RB = hl.lerp(ML, BL, Y), hl.lerp(MA, BA, Y), hl.lerp(MB, BB, Y);
+
+		return {
+			{
+				group_name = "UICmdlineSubstitute",
+				value = {
+					bg = string.format("#%x%x%x", hl.oklab_to_rgb(RL, RA, RB)),
+				}
+			},
+			{
+				group_name = "UICmdlineSubstituteIcon",
+				value = {
+					fg = string.format("#%x%x%x", hl.oklab_to_rgb(ML, MA, MB)),
+					bg = string.format("#%x%x%x", hl.oklab_to_rgb(RL, RA, RB)),
+				}
+			},
+		};
+
+		---|fE
+	end,
+
 
 	msg_normal = function ()
 		---|fS

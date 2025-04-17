@@ -19,6 +19,117 @@ spec.default = {
 				---|fE
 			},
 
+			search_up = {
+				---|fS
+
+				condition = function (state)
+					return state.firstc == "/";
+				end,
+
+				winhl = "Normal:UICmdlineSearchUp",
+				filetype = function ()
+					return "text";
+				end,
+
+				icon = { { "  ", "UICmdlineSearchUpIcon" } },
+
+				---|fE
+			},
+
+			search_down = {
+				---|fS
+
+				condition = function (state)
+					return state.firstc == "?";
+				end,
+
+				winhl = "Normal:UICmdlineSearchDown",
+				filetype = function ()
+					return "text";
+				end,
+
+				icon = { { "  ", "UICmdlineSearchDownIcon" } },
+
+				---|fE
+			},
+
+			set = {
+				---|fS
+
+				condition = function (_, lines)
+					return string.match(lines[#lines], "^set ") ~= nil;
+				end,
+
+				winhl = "Normal:UICmdlineDefault",
+
+				filetype = "vim",
+
+				icon = {
+					{ "  ", "UICmdlineDefaultIcon" }
+				},
+
+				---|fE
+			},
+
+			shell = {
+				---|fS
+
+				condition = function (_, lines)
+					return string.match(lines[#lines], "^!") ~= nil;
+				end,
+
+				winhl = "Normal:UICmdlineEval",
+
+				offset = 1,
+				filetype = function (state)
+					return state.pos < 1 and "vim" or "lua";
+				end,
+
+				icon = function ()
+					if not _G.is_within_termux then
+						return {
+							{ "  ", "UICmdlineEvalIcon" }
+						};
+					elseif _G.is_within_termux() then
+						return {
+							{ " 󰀲 ", "UICmdlineEvalIcon" }
+						};
+					else
+						return {
+							{ " 󰀵 ", "UICmdlineEvalIcon" }
+						};
+					end
+				end,
+
+				---|fE
+			},
+
+			substitute = {
+				---|fS
+
+				condition = function (_, lines)
+					return string.match(lines[#lines], "^%S*s/") ~= nil;
+				end,
+
+				winhl = "Normal:UICmdlineSubstitute",
+
+				filetype = "vim",
+
+				icon = function (_, lines)
+					if string.match(lines[#lines], "^s/") then
+						return {
+							{ "  ", "UICmdlineSubstituteIcon" }
+						};
+					else
+						return {
+							{ "  ", "UICmdlineSubstituteIcon" }
+						};
+					end
+				end,
+
+				---|fE
+			},
+
 			lua_eval = {
 				---|fS
 
@@ -128,18 +239,18 @@ spec.default = {
 		processors = {
 			default = {
 				duration = function (msg, lines)
-					local duration = 1500;
+					local duration = 2500;
 
 					if msg.kind == "write" then
 						--- Write messages run frequently.
 						--- Reduce duration.
-						duration = 1000;
+						duration = 2000;
 					elseif msg.kind == "confirm" then
 						--- Currently not in use.
-						duration = 2000;
+						duration = 3000;
 					elseif vim.list_contains({ "emsg", "echoerr", "lua_error", "rpc_error", "shell_err" }, msg.kind) then
 						--- Error messages.
-						duration = 2500;
+						duration = 3500;
 					end
 
 					return duration + utils.read_time(lines);
@@ -149,6 +260,9 @@ spec.default = {
 						{ "▍", "UIMessageDefault" }
 					},
 					padding = {
+						{ "▍", "UIMessageDefault" }
+					},
+					tail = {
 						{ "▍", "UIMessageDefault" }
 					},
 				}
@@ -219,9 +333,8 @@ spec.default = {
 				end,
 				decorations = {
 					icon = {
-						{ "▍ ", "Search" }
+						{ "▍ ", "UIMessageInfo" }
 					},
-					line_hl_group = "DiagnosticVirtualTextHint"
 				}
 			},
 
@@ -424,10 +537,13 @@ spec.default = {
 				end,
 				decorations = {
 					icon = {
-						{ "▍", "UIMessagePaletteSign" }
+						{ "┌ ", "UIMessagePaletteSign" }
 					},
 					padding = {
-						{ "▍", "UIMessagePaletteSign" }
+						{ "│ ", "UIMessagePaletteSign" }
+					},
+					tail = {
+						{ "└ ", "UIMessagePaletteSign" }
 					},
 					line_hl_group = "UIMessagePalette",
 				}
