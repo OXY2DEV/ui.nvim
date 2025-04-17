@@ -238,6 +238,8 @@ spec.default = {
 	message = {
 		processors = {
 			default = {
+				---|fS
+
 				duration = function (msg, lines)
 					local duration = 2500;
 
@@ -258,17 +260,15 @@ spec.default = {
 				decorations = {
 					icon = {
 						{ "▍", "UIMessageDefault" }
-					},
-					padding = {
-						{ "▍", "UIMessageDefault" }
-					},
-					tail = {
-						{ "▍", "UIMessageDefault" }
-					},
-				}
+					}
+				},
+
+				---|fE
 			},
 
 			option = {
+				---|fS
+
 				condition = function (_, lines)
 					return string.match(lines[1], "^%s+%w+=") ~= nil or string.match(lines[1], "^no%w+$") ~= nil;
 				end,
@@ -312,30 +312,50 @@ spec.default = {
 				end,
 				decorations = {
 					icon = {
-						{ "▍󰣖 ", "UIMessageHintSign" }
+						{ "▍󰣖 ", "UIMessageHint" }
 					},
 					line_hl_group = "UIMessageHint"
 				}
+
+				---|fE
 			},
 
 			search = {
+				---|fS
+
 				condition = function (msg)
 					return msg.kind == "search_cmd";
 				end,
 
 				modifier = function (_, lines)
-					local term = string.match(lines[1], "^?(.*)$");
+					local term = string.match(lines[1], "^[%?/](.*)$");
 
 					return {
 						lines = { term },
-						extmarks = { {} }
+						extmarks = {
+							{}
+						}
 					};
 				end,
-				decorations = {
-					icon = {
-						{ "▍ ", "UIMessageInfo" }
-					},
-				}
+				decorations = function (_, lines)
+					if string.match(lines[#lines], "^/") then
+						return {
+							icon = {
+								{ "▍ ", "UICmdlineSearchUpIcon" }
+							},
+							line_hl_group = "UICmdlineSearchUp"
+						};
+					else
+						return {
+							icon = {
+								{ "▍ ", "UICmdlineSearchDownIcon" }
+							},
+							line_hl_group = "UICmdlineSearchDown"
+						};
+					end
+				end
+
+				---|fE
 			},
 
 			lua_error = {
@@ -357,9 +377,13 @@ spec.default = {
 					end
 
 					local path, line, actual_error = "", "", "";
-					local code;
+					local exec, code;
 
 					for _, _line in ipairs(lines) do
+						if string.match(_line, "Error executing (.-):") then
+							exec = string.match(_line, "Error executing (.-):");
+						end
+
 						if string.match(_line, ".-:%d+: ?.-$") then
 							path, line, actual_error = string.match(_line, "(.-):(%d+): ?(.-)$");
 
@@ -386,8 +410,9 @@ spec.default = {
 							" " .. actual_error,
 							string.format("From: %s", path),
 							string.format("Line: %s", line),
-							code and "" or nil,
+							(code or exec) and "" or nil,
 							code and string.format("Code: %s", code) or nil,
+							exec and string.format("Exec: %s", exec) or nil,
 							-- text
 						},
 						extmarks = {
@@ -402,10 +427,14 @@ spec.default = {
 								{ 0, 5, "Comment" },
 								{ 6, 6 + #line, "DiagnosticHint" },
 							},
-							code and {} or nil,
+							(code or exec) and {} or nil,
 							code and {
 								{ 0, 5, "Comment" },
 								{ 6, 6 + #code, "DiagnosticError" },
+							} or nil,
+							exec and {
+								{ 0, 5, "Comment" },
+								{ 6, 6 + #exec, "DiagnosticError" },
 							} or nil,
 						}
 					};
@@ -480,13 +509,7 @@ spec.default = {
 				end,
 				decorations = {
 					icon = {
-						{ "╽", "UIMessagePaletteSign" }
-					},
-					padding = {
-						{ "┃", "UIMessagePaletteSign" }
-					},
-					tail = {
-						{ "╿", "UIMessagePaletteSign" }
+						{ "▍", "UIMessagePaletteSign" }
 					},
 				}
 
@@ -537,15 +560,8 @@ spec.default = {
 				end,
 				decorations = {
 					icon = {
-						{ "┌ ", "UIMessagePaletteSign" }
+						{ "▍", "UIMessagePaletteSign" }
 					},
-					padding = {
-						{ "│ ", "UIMessagePaletteSign" }
-					},
-					tail = {
-						{ "└ ", "UIMessagePaletteSign" }
-					},
-					line_hl_group = "UIMessagePalette",
 				}
 
 				---|fE
