@@ -14,8 +14,8 @@ message.namespace = vim.api.nvim_create_namespace("ui.message")
 ---@type integer, integer Buffer & window for messages.
 message.msg_buffer, message.msg_window = nil, nil;
 
----@type integer, integer Buffer & window for showing stuff.
--- message.show_buffer, message.show_window = nil, nil;
+---@type integer, integer Buffer & window for showing larger messages.
+message.list_buffer, message.list_window = nil, nil;
 
 ---@type integer, integer Buffer & window for showing stuff.
 message.confirm_buffer, message.confirm_window = nil, nil;
@@ -23,19 +23,28 @@ message.confirm_buffer, message.confirm_window = nil, nil;
 ---@type integer, integer Buffer & window for showing stuff.
 message.history_buffer, message.history_window = nil, nil;
 
+---@type integer Current message ID.
 message.id = 2000;
-message.last = nil;
 
+---@type table[] Message history(stores messages not available in `:messages`).
 message.history = {};
+---@type table[] Currently visible message.
 message.visible = {};
 
+---@type table[] Decorations to show in the statuscolumn.
 message.decorations = nil;
 
+--- Custom statuscolumn for the message window.
+---@return string
 message.statuscolumn = function ()
+	---|fS
+
 	if not message.decorations or #message.decorations == 0 then
+		-- Decorations not available.
 		return "";
 	end
 
+	---@type integer Current line-number(0-indexed).
 	local lnum = vim.v.lnum - 1;
 
 	for _, entry in ipairs(message.decorations) do
@@ -57,12 +66,16 @@ message.statuscolumn = function ()
 	end
 
 	return "";
+
+	---|fE
 end
 
-_G.statuscolumn = message.statuscolumn;
+-- Export the statuscolumn so that we can use it in 'statuscolumn'.
+_G.__ui_statuscolumn = message.statuscolumn;
 
 ------------------------------------------------------------------------------
 
+---@type boolean Have we passed UIEnter event?
 message.ui_attached = false;
 message.ui_echo = {};
 
@@ -78,15 +91,18 @@ vim.api.nvim_create_autocmd("UIEnter", {
 
 ------------------------------------------------------------------------------
 
+--- Prepares various window & buffers.
 message.__prepare = function ()
+	---|fS
+
 	local win_config = {
-			relative = "editor",
+		relative = "editor",
 
-			row = 0, col = 0,
-			width = 1, height = 1,
+		row = 0, col = 0,
+		width = 1, height = 1,
 
-			style = "minimal",
-			hide = true
+		style = "minimal",
+		hide = true
 	};
 
 	if not message.msg_buffer or vim.api.nvim_buf_is_valid(message.msg_buffer) == false then
@@ -95,17 +111,16 @@ message.__prepare = function ()
 
 	if not message.msg_window or vim.api.nvim_win_is_valid(message.msg_window) == false then
 		message.msg_window = vim.api.nvim_open_win(message.msg_buffer, false, win_config);
-		vim.wo[message.msg_window].statuscolumn = "%!v:lua.statuscolumn()";
-		-- vim.wo[message.msg_window].statuscolumn = "%!v:lua.require('ui.message').statuscolumn()";
+		vim.wo[message.msg_window].statuscolumn = "%!v:lua.__ui_statuscolumn()";
 	end
 
-	-- if not message.show_buffer or vim.api.nvim_buf_is_valid(message.show_buffer) == false then
-	-- 	message.show_buffer = vim.api.nvim_create_buf(false, true);
-	-- end
-	--
-	-- if not message.show_window or vim.api.nvim_win_is_valid(message.show_window) == false then
-	-- 	message.show_window = vim.api.nvim_open_win(message.show_buffer, false, win_config);
-	-- end
+	if not message.list_buffer or vim.api.nvim_buf_is_valid(message.list_buffer) == false then
+		message.list_buffer = vim.api.nvim_create_buf(false, true);
+	end
+
+	if not message.list_window or vim.api.nvim_win_is_valid(message.list_window) == false then
+		message.list_window = vim.api.nvim_open_win(message.list_buffer, false, win_config);
+	end
 
 	if not message.confirm_buffer or vim.api.nvim_buf_is_valid(message.confirm_buffer) == false then
 		message.confirm_buffer = vim.api.nvim_create_buf(false, true);
@@ -122,9 +137,18 @@ message.__prepare = function ()
 	if not message.history_window or vim.api.nvim_win_is_valid(message.history_window) == false then
 		message.history_window = vim.api.nvim_open_win(message.history_buffer, false, win_config);
 	end
+
+	---|fE
 end
 
+--- Wrapper for `vim.uv.new_timer()`.
+---@param callback function
+---@param duration? integer
+---@param interval? integer
+---@return table
 message.timer = function (callback, duration, interval)
+	---|fS
+
 	local timer = vim.uv.new_timer();
 
 	if interval then
@@ -134,9 +158,15 @@ message.timer = function (callback, duration, interval)
 	end
 
 	return timer;
+
+	---|fE
 end
 
+--- Removes message with `ID`.
+---@param id integer
 message.__remove = function (id)
+	---|fS
+
 	if message.visible[id] then
 		message.visible[id] = nil;
 
@@ -144,9 +174,16 @@ message.__remove = function (id)
 			local _, e = pcall(message.__render);
 		end)
 	end
+
+	---|fE
 end
 
+--- Adds a new message.
+---@param kind ui.message.kind
+---@param content ui.message.content[]
 message.__add = function (kind, content)
+	---|fS
+
 	if message.ui_attached == false then
 		table.insert(message.ui_echo, {
 			kind = kind,
@@ -156,6 +193,8 @@ message.__add = function (kind, content)
 	end
 
 	vim.schedule(function ()
+		---|fS
+
 		local current_id = message.id;
 		local lines = utils.to_lines(content);
 
@@ -175,21 +214,30 @@ message.__add = function (kind, content)
 			end, duration)
 		});
 
-		message.last = message.id;
 		message.id = message.id + 1;
 
-		local _, e = pcall(message.__render);
-		if e then
-			table.insert(log.entries, vim.inspect(e))
-		end
+		log.assert(
+			pcall(message.__render)
+		);
+
+		---|fE
 	end);
+
+	---|fE
 end
 
+--- Replaces the last visible message.
+---@param kind ui.message.kind
+---@param content ui.message.content[]
 message.__replace = function (kind, content)
+	---|fS
+
 	vim.schedule(function ()
+		---@type integer
 		local keys = vim.tbl_keys(message.visible);
 
 		if #keys == 0 then
+			-- No visible message available.
 			message.__add(kind, content);
 			return;
 		end
@@ -197,12 +245,15 @@ message.__replace = function (kind, content)
 		local last = message.visible[keys[#keys]];
 
 		if not last or last.kind ~= kind then
+			-- Current messages `kind` doesn't match
+			-- the previous messages `kind`.
 			message.__add(kind, content);
 			return;
 		end
 
 		last.content = content;
 		last.timer:stop();
+
 		local lines = utils.to_lines(content);
 
 		local processor = spec.get_msg_processor({ kind = kind, content = content }, lines, {}) or {};
@@ -210,8 +261,14 @@ message.__replace = function (kind, content)
 
 		last.timer:start(duration, 0, vim.schedule_wrap(function ()
 			message.__remove(keys[#keys]);
-		end))
+		end));
+
+		log.assert(
+			pcall(message.__render)
+		);
 	end);
+
+	---|fE
 end
 
 ------------------------------------------------------------------------------
