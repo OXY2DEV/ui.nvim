@@ -6,3 +6,10 @@ vim.api.nvim_create_autocmd("VimLeave", {
 		require("ui.log").export();
 	end
 });
+
+vim.api.nvim_create_autocmd("ColorScheme", {
+	callback = function ()
+		require("ui.highlight").setup();
+	end
+})
+
