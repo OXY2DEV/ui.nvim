@@ -1,0 +1,34 @@
+---@meta
+
+---@alias ui.message.kind
+---| ""
+---| "bufwrite"
+---| "confirm"
+---| "emsg"
+---| "echo"
+---| "echomsg"
+---| "echoerr"
+---| "completion"
+---| "list_cmd"
+---| "lua_error"
+---| "lua_print"
+---| "lua_print"
+---| "rpc_error"
+---| "return_prompt"
+---| "quickfix"
+---| "search_cmd"
+---| "search_count"
+---| "shell_err"
+---| "shell_out"
+---| "shell_ret"
+---| "undo"
+---| "verbose"
+---| "wildlist"
+---| "wmsg"
+
+---@class ui.message.content
+---
+---@field [1] integer Attribute ID(unused).
+---@field [2] string Message chunk.
+---@field [3] integer Highlight group ID(Used for coloring).
+
