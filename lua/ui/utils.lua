@@ -55,9 +55,18 @@ utils.to_statuscolumn = function (virt_text)
 
 	local output = "";
 
-	for _, entry in ipairs(virt_text) do
+	for e, entry in ipairs(virt_text) do
 		if type(entry[2]) == "string" then
-			output = output .. string.format("%%#%s#%s%%#Normal#", entry[2], entry[1]);
+			if e == #virt_text then
+				-- The final element shouldn't end
+				-- with a highlight group reset.
+				--
+				-- This is for when the statuscolumn
+				-- is wider then this line.
+				output = output .. string.format("%%#%s#%s", entry[2], entry[1]);
+			else
+				output = output .. string.format("%%#%s#%s%%#Normal#", entry[2], entry[1]);
+			end
 		else
 			output = output .. entry[1];
 		end
