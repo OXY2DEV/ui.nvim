@@ -26,6 +26,8 @@ message.confirm_buffer, message.confirm_window = nil, nil;
 ---@type integer, integer Buffer & window for showing stuff.
 message.history_buffer, message.history_window = nil, nil;
 
+------------------------------------------------------------------------------
+
 ---@type integer Current message ID.
 message.id = 2000;
 
@@ -848,6 +850,25 @@ message.setup = function ()
 			end
 
 			message.__render();
+		end
+	});
+
+	---@type table
+	local tab_change_timer = vim.uv.new_timer();
+
+	vim.api.nvim_create_autocmd("TabChanged", {
+		callback = function ()
+			-- Use debounce to prevent constantly opening/
+			-- closing windows when cycling through tabs.
+			tab_change_timer:stop();
+			tab_change_timer:start(100, 0, vim.schedule_wrap(function ()
+				pcall(vim.api.nvim_win_close, message.msg_window, true);
+				pcall(vim.api.nvim_win_close, message.list_window, true);
+				pcall(vim.api.nvim_win_close, message.confirm_window, true);
+				pcall(vim.api.nvim_win_close, message.list_window, true);
+
+				message.__prepare();
+			end));
 		end
 	});
 
