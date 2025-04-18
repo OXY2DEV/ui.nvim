@@ -6,6 +6,9 @@ local log = require("ui.log");
 local spec = require("ui.spec");
 local utils = require("ui.utils");
 
+---@type "vim" | "ui" Message history source preference.
+vim.g.__ui_history_pref = "vim";
+
 ------------------------------------------------------------------------------
 
 ---@type integer Namespace for decorations in messages.
@@ -26,9 +29,9 @@ message.history_buffer, message.history_window = nil, nil;
 ---@type integer Current message ID.
 message.id = 2000;
 
----@type table[] Message history(stores messages not available in `:messages`).
+---@type ui.message.entry[] Message history(stores messages not available in `:messages`).
 message.history = {};
----@type table[] Currently visible message.
+---@type ui.message.entry[] Currently visible message.
 message.visible = {};
 
 ---@type table[] Decorations to show in the statuscolumn.
@@ -77,6 +80,7 @@ _G.__ui_statuscolumn = message.statuscolumn;
 
 ---@type boolean Have we passed UIEnter event?
 message.ui_attached = false;
+---@type ui.message.entry[] List of messages to echo after UIEnter.
 message.ui_echo = {};
 
 vim.api.nvim_create_autocmd("UIEnter", {
@@ -136,6 +140,9 @@ message.__prepare = function ()
 
 	if not message.history_window or vim.api.nvim_win_is_valid(message.history_window) == false then
 		message.history_window = vim.api.nvim_open_win(message.history_buffer, false, win_config);
+
+		vim.wo[message.history_window].numberwidth = 1;
+		vim.wo[message.history_window].statuscolumn = "%!v:lua.__ui_statuscolumn()";
 	end
 
 	---|fE
@@ -180,7 +187,7 @@ end
 
 --- Adds a new message.
 ---@param kind ui.message.kind
----@param content ui.message.content[]
+---@param content ui.message.fragment[]
 message.__add = function (kind, content)
 	---|fS
 
@@ -228,7 +235,7 @@ end
 
 --- Replaces the last visible message.
 ---@param kind ui.message.kind
----@param content ui.message.content[]
+---@param content ui.message.fragment[]
 message.__replace = function (kind, content)
 	---|fS
 
@@ -276,6 +283,8 @@ end
 --- Confirmation message.
 ---@param obj table
 message.__confirm = function (obj)
+	---|fS
+
 	--- All logic must be run outside of
 	--- fast event.
 	vim.schedule(function ()
@@ -342,17 +351,27 @@ message.__confirm = function (obj)
 
 			vim.g.__confirm_msg = nil;
 		end, message.namespace);
-	end)
+	end);
+
+	---|fE
 end
 
+--- Hides the message window.
 message.__hide = function ()
+	---|fS
+
 	local keys = vim.tbl_keys(message.visible);
 	if #keys ~= 0 then return; end
 
 	pcall(vim.api.nvim_win_set_config, message.msg_window, { hide = true });
+
+	---|fE
 end
 
+--- Renders visible messages.
 message.__render = function ()
+	---|fS
+
 	local keys = vim.tbl_keys(message.visible);
 	table.sort(keys);
 
@@ -449,22 +468,70 @@ message.__render = function ()
 
 	vim.wo[message.msg_window].wrap = true;
 	vim.wo[message.msg_window].linebreak = true;
+
+	---|fE
 end
 
+--- Loads history in a window.
+---@param entries any
 message.__history = function (entries)
-	vim.g.__history_src = vim.g.__history_src or "vim";
+	vim.g.__ui_history_pref = vim.g.__ui_history_pref or "vim";
+	vim.g.__ui_history = true;
+
 	message.__prepare();
+	message.decorations = {};
+
+	---@type integer The window we were in before opening messages.
+	local last_win = vim.api.nvim_get_current_win();
+
+	---|fS
 
 	vim.api.nvim_buf_set_keymap(message.history_buffer, "n", "t", "", {
+		desc = "Toggles between `vim` and `ui.nvim`'s message history.",
 		callback = function ()
-			vim.g.__history_src = vim.g.__history_src == "vim" and "internal" or "vim";
+			vim.g.__ui_history_pref = vim.g.__ui_history_pref == "vim" and "ui" or "vim";
 			message.__history(entries);
 		end
 	});
 
-	local lines, exts = {}, {};
+	vim.api.nvim_buf_set_keymap(message.history_buffer, "n", "q", "", {
+		desc = "Quits message window.",
+		callback = function ()
+			---|fS
+
+			-- Instead of closing the window, we hide it.
+			--
+			-- Only floating windows can be hidden so we
+			-- turn it into a floating window.
+			vim.api.nvim_set_current_win(last_win);
+			log.assert(
+				pcall(vim.api.nvim_win_set_config, message.history_window, {
+					relative = "editor",
+
+					row = 0, col = 0,
+					width = 1, height = 1,
+
+					hide = true
+				})
+			);
+
+			---|fE
+		end
+	});
+
+	---|fE
+
+	---@type string[], ( ui.message.hl_fragment[] )[]
+	local lines, exts = {
+		vim.g.__ui_history_pref == "vim" and " History:" or "󰋚 History:"
+	}, {
+		{}
+	};
+
+	---|fS
 
 	if vim.g.__history_src == "vim" and entries then
+		-- Show raw history from Vim.
 		for _, entry in ipairs(entries) do
 			local _lines, _exts = utils.process_content(entry[2]);
 
@@ -472,20 +539,53 @@ message.__history = function (entries)
 			exts = vim.list_extend(exts, _exts);
 		end
 	else
+		-- Show history from `ui.nvim`.
+
+		---@type integer[] List of message IDs.
 		local keys = vim.tbl_keys(message.history);
 		table.sort(keys);
 
 		for _, key in ipairs(keys) do
-			local entry = message.history[key];
-			local _lines, _exts = utils.process_content(entry.content);
+			local value = message.history[key];
+			local m_lines, m_exts = utils.process_content(value.content);
 
-			lines = vim.list_extend(lines, _lines);
-			exts = vim.list_extend(exts, _exts);
+			local processor = spec.get_msg_processor(value, m_lines, m_exts) or {};
+
+			if processor.modifier then
+				m_lines = processor.modifier.lines or m_lines;
+				m_exts = processor.modifier.extmarks or m_exts;
+			end
+
+			if processor.history_decorations then
+				table.insert(message.decorations, vim.tbl_extend("force", processor.history_decorations, {
+					from = #lines,
+					to = #lines + (#m_lines - 1)
+				}));
+			elseif processor.decorations then
+				table.insert(message.decorations, vim.tbl_extend("force", processor.decorations, {
+					from = #lines,
+					to = #lines + (#m_lines - 1)
+				}));
+			end
+
+			lines = vim.list_extend(lines, m_lines)
+			exts = vim.list_extend(exts, m_exts)
 		end
 	end
 
+	---|fE
+
 	vim.api.nvim_buf_clear_namespace(message.history_buffer, message.namespace, 0, -1);
 	vim.api.nvim_buf_set_lines(message.history_buffer, 0, -1, false, lines);
+
+	vim.api.nvim_buf_set_extmark(message.history_buffer, message.namespace, 0, 0, {
+		virt_text_pos = "right_align",
+		virt_text = {
+			{ " t toggle ", "DiagnosticVirtualTextHint" },
+			{ " " },
+			{ " q toggle ", "DiagnosticVirtualTextHint" },
+		}
+	});
 
 	for l, line in ipairs(exts) do
 		for _, ext in ipairs(line) do
@@ -496,11 +596,25 @@ message.__history = function (entries)
 		end
 	end
 
+	---@type integer Number of columns decorations take.
+	local decor_size = 0;
+
+	for _, entry in ipairs(message.decorations) do
+		if entry.icon then
+			decor_size = math.max(decor_size, utils.virt_len(entry.icon));
+		end
+
+		if entry.line_hl_group then
+			vim.api.nvim_buf_set_extmark(message.history_buffer, message.namespace, entry.from, 0, {
+				end_row = entry.to,
+				line_hl_group = entry.line_hl_group
+			});
+		end
+	end
+
 	local window_config = {
 		split = "below",
 		height = 10,
-
-		style = "minimal",
 
 		hide = false
 	}
@@ -515,7 +629,13 @@ message.__history = function (entries)
 	vim.wo[message.history_window].wrap = true;
 	vim.wo[message.history_window].linebreak = true;
 
-	vim.api.nvim__redraw({ flush = true, win = message.history_window });
+	vim.api.nvim__redraw({
+		flush = true,
+
+		win = message.history_window,
+		statuscolumn = true,
+	});
+	vim.g.__ui_history = false;
 end
 
 ------------------------------------------------------------------------------
