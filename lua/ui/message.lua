@@ -361,6 +361,89 @@ message.__confirm = function (obj)
 	---|fE
 end
 
+message.__list = function (obj)
+	---|fS
+
+	--- All logic must be run outside of
+	--- fast event.
+	vim.schedule(function ()
+		local lines, exts = utils.process_content(obj.content);
+		local last_win = vim.api.nvim_get_current_win();
+
+		message.__prepare();
+		local config = spec.get_listmsg_config(obj, lines);
+
+		if config.modifier then
+			lines = config.modifier.lines or lines;
+			exts = config.modifier.extmarks or exts;
+		end
+
+		vim.api.nvim_buf_set_keymap(message.list_buffer, "n", "q", "", {
+			callback = function ()
+				vim.api.nvim_set_current_win(last_win);
+				vim.api.nvim_win_set_config(message.list_window, {
+					relative = "editor",
+
+					row = 0, col = 0,
+					width = 1, height = 1,
+
+					hide = true
+				});
+			end
+		});
+
+		---@type integer
+		local W = math.min(utils.max_len(lines), math.floor(vim.o.columns * 0.5));
+		---@type integer
+		local H = utils.wrapped_height(lines, W);
+
+		local window_config = {
+			relative = "editor",
+
+			row = config.row or math.ceil((vim.o.lines - H) / 2),
+			col = config.col or math.ceil((vim.o.columns - W) / 2),
+
+			width = config.width or W,
+			height = config.height or H,
+
+			border = config.border,
+			style = "minimal",
+
+			zindex = 90,
+			hide = false
+		};
+
+		vim.api.nvim_buf_clear_namespace(message.list_buffer, message.namespace, 0, -1);
+		vim.api.nvim_buf_set_lines(message.list_buffer, 0, -1, false, lines);
+
+		for l, line in ipairs(exts) do
+			for _, ext in ipairs(line) do
+				vim.api.nvim_buf_set_extmark(message.list_buffer, message.namespace, l - 1, ext[1], {
+					end_col = ext[2],
+					hl_group = ext[3]
+				});
+			end
+		end
+
+		if message.list_window and vim.api.nvim_win_is_valid(message.list_window) then
+			vim.api.nvim_win_set_config(message.list_window, window_config);
+		else
+			message.list_window = vim.api.nvim_open_win(message.list_buffer, false, window_config);
+		end
+
+		vim.api.nvim_set_current_win(message.list_window);
+
+		vim.wo[message.list_window].wrap = true;
+		vim.wo[message.list_window].linebreak = true;
+
+		if config.winhl then
+			vim.wo[message.list_window].winhl = config.winhl;
+		end
+	end);
+
+	---|fE
+end
+
 --- Hides the message window.
 message.__hide = function ()
 	---|fS
@@ -478,8 +561,10 @@ message.__render = function ()
 end
 
 --- Loads history in a window.
----@param entries any
+---@param entries ( ui.message.fragment[] )[]
 message.__history = function (entries)
+	---|fS
+
 	vim.g.__ui_history_pref = vim.g.__ui_history_pref or "vim";
 	vim.g.__ui_history = true;
 
@@ -585,6 +670,7 @@ message.__history = function (entries)
 
 	---|fS
 
+	-- Add keymap hints
 	vim.api.nvim_buf_set_extmark(message.history_buffer, message.namespace, 0, 0, {
 		virt_text_pos = "right_align",
 		virt_text = {
@@ -600,6 +686,7 @@ message.__history = function (entries)
 
 	---|fE
 
+	-- Highlight lines of the buffer.
 	for l, line in ipairs(exts) do
 		for _, ext in ipairs(line) do
 			vim.api.nvim_buf_set_extmark(message.history_buffer, message.namespace, l - 1, ext[1], {
@@ -609,14 +696,8 @@ message.__history = function (entries)
 		end
 	end
 
-	---@type integer Number of columns decorations take.
-	local decor_size = 0;
-
+	-- Highlight lines with decorations.
 	for _, entry in ipairs(message.history_decorations) do
-		if entry.icon then
-			decor_size = math.max(decor_size, utils.virt_len(entry.icon));
-		end
-
 		if entry.line_hl_group then
 			vim.api.nvim_buf_set_extmark(message.history_buffer, message.namespace, entry.from, 0, {
 				end_row = entry.to,
@@ -625,19 +706,20 @@ message.__history = function (entries)
 		end
 	end
 
-	local window_config = {
+	local window_config = vim.tbl_extend("force", {
 		split = "below",
 		height = 10,
 
 		hide = false
-	}
+	}, spec.config.message.message_winconfig or {});
 
 	if message.history_window and vim.api.nvim_win_is_valid(message.history_window) then
 		vim.api.nvim_win_set_config(message.history_window, window_config);
-		vim.api.nvim_set_current_win(message.history_window);
 	else
 		message.msg_window = vim.api.nvim_open_win(message.history_buffer, true, window_config);
 	end
+
+	vim.api.nvim_set_current_win(message.history_window);
 
 	vim.wo[message.history_window].wrap = true;
 	vim.wo[message.history_window].linebreak = true;
@@ -649,17 +731,25 @@ message.__history = function (entries)
 		statuscolumn = true,
 	});
 	vim.g.__ui_history = false;
+
+	---|fE
 end
 
 ------------------------------------------------------------------------------
 
+---@param kind ui.message.kind
+---@param content ui.message.fragment[]
+---@param replace_last boolean
 message.msg_show = function (kind, content, replace_last)
-	if kind == "confirm" then
-		local _, e = pcall(message.__confirm, {
-			kind = kind,
-			content = content,
-		});
+	---|fS
 
+	if kind == "confirm" then
+		log.assert(
+			pcall(message.__confirm, {
+				kind = kind,
+				content = content,
+			})
+		);
 	elseif kind == "search_count" then
 		--- Do not handle search count as messages.
 		return;
@@ -668,30 +758,49 @@ message.msg_show = function (kind, content, replace_last)
 		--- or else we get stuck.
 		vim.api.nvim_feedkeys(vim.api.nvim_replace_termcodes("<ESC>", true, false, true), "n", false);
 		return;
+	elseif spec.is_list({ kind = kind, content = content }) == true then
+		log.assert(
+			pcall(message.__list, {
+				kind = kind,
+				content = content
+			})
+		);
 	elseif replace_last and vim.tbl_isempty(message.visible) == false then
 		message.__replace(kind, content);
 	else
 		message.__add(kind, content)
 	end
+
+	---|fE
 end
 
+---@param entries ( ui.message.fragment[] )[]
 message.msg_history_show = function (entries)
+	---|fS
+
+	-- Escape hit-enter from opening messages.
 	vim.api.nvim_feedkeys(vim.api.nvim_replace_termcodes("<CR>", true, false, true), "n", false);
 
 	vim.schedule(function ()
-		local _, e = pcall(message.__history, entries);
-	end)
+		log.assert(
+			pcall(message.__history, entries)
+		);
+	end);
+
+	---|fE
 end
 
 -- message.msg_showmode = function (content)
 -- 	table.insert(log.entries, vim.inspect(content))
 -- end
 
-message.msg_showcmd = function (content)
-	-- table.insert(log.entries, vim.inspect(content))
-end
+-- message.msg_showcmd = function (content)
+-- 	table.insert(log.entries, vim.inspect(content))
+-- end
 
 message.msg_clear = function ()
+	---|fS
+
 	if #vim.g.__confirm_keys == 0 then
 		return;
 	end
@@ -702,6 +811,8 @@ message.msg_clear = function ()
 	end
 
 	message.__render();
+
+	---|fE
 end
 
 ------------------------------------------------------------------------------
@@ -710,15 +821,22 @@ end
 ---@param event string
 ---@param ... any
 message.handle = function (event, ...)
-	local _, _ = pcall(message[event], ...);
+	---|fS
 
-	vim.api.nvim__redraw({
-		flush = true,
-		win = message.msg_window
-	});
+	if not message[event] then
+		return;
+	end
+
+	log.assert(
+		pcall(message[event], ...)
+	);
+
+	---|fE
 end
 
 message.setup = function ()
+	---|fS
+
 	message.__prepare();
 
 	vim.api.nvim_create_autocmd("VimResized", {
@@ -732,6 +850,8 @@ message.setup = function ()
 			message.__render();
 		end
 	});
+
+	---|fE
 end
 
 return message;
