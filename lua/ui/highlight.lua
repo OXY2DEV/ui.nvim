@@ -137,6 +137,34 @@ end
 
 ------------------------------------------------------------------------------
 
+hl.visible_fg = function (lumen)
+	local BL, BA, BB = hl.rgb_to_oklab(
+		hl.num_to_rgb(
+			hl.get_attr("bg", { "Normal" }) or hl.choice(1234, 1244)
+		)
+	);
+
+	local FL, FA, FB = hl.rgb_to_oklab(
+		hl.num_to_rgb(
+			hl.get_attr("fg", { "Normal" }) or hl.choice(1234, 1244)
+		)
+	);
+
+	if lumen < 0.5 then
+		if BL > FL then
+			return BL, BA, BB;
+		else
+			return FL, FA, FB;
+		end
+	else
+		if BL < FL then
+			return BL, BA, BB;
+		else
+			return FL, FA, FB;
+		end
+	end
+end
+
 ---@type table<string, fun(): table[]>
 hl.groups = {
 	cmd_main = function ()
@@ -599,6 +627,51 @@ hl.groups = {
 
 		---|fE
 	end,
+
+	history_toggle = function ()
+		---|fS
+
+		---@type number, number, number Main color.
+		local ML, MA, MB = hl.rgb_to_oklab(
+			hl.num_to_rgb(
+				hl.get_attr("fg", { "DiagnosticWarn" }) or hl.choice(1234, 1244)
+			)
+		);
+
+		---@type number, number, number Background color.
+		local BL, BA, BB = hl.rgb_to_oklab(
+			hl.num_to_rgb(
+				hl.get_attr("bg", { "Normal" }) or hl.choice(1234, 1244)
+			)
+		);
+
+		local Y = 0.9;
+		local RL = hl.lerp(ML, BL, Y);
+		local RA = hl.lerp(MA, BA, Y);
+		local RB = hl.lerp(MB, BB, Y);
+
+		return {
+			{
+				group_name = "UIHistoryKeymap",
+				value = {
+					bg = string.format("#%x%x%x", hl.oklab_to_rgb(ML, MA, MB)),
+					fg = string.format("#%x%x%x", hl.oklab_to_rgb(hl.visible_fg(ML))),
+				}
+			},
+			{
+				group_name = "UIHistoryDesc",
+				value = {
+					bg = string.format("#%x%x%x", hl.oklab_to_rgb(RL, RA, RB)),
+					fg = string.format("#%x%x%x", hl.oklab_to_rgb(hl.visible_fg(RL))),
+				}
+			}
+		};
+
+		---|fE
+	end,
+
+	history_close = function ()
+	end
 };
 
 hl.setup = function ()
