@@ -236,6 +236,9 @@ spec.default = {
 	},
 
 	message = {
+		message_winconfig = {},
+		history_winconfig = {},
+
 		processors = {
 			default = {
 				---|fS
@@ -604,6 +607,119 @@ spec.default = {
 			-- }
 		},
 
+		is_list = function (msg)
+			return msg.kind == "list_cmd";
+		end,
+
+		list = {
+			default = {},
+
+			ls = {
+				condition = function ()
+					local last_cmd = vim.fn.histget("cmd", -1);
+
+					for _, patt in ipairs({ "^ls", "^buffers", "^files" }) do
+						if string.match(last_cmd, patt) then
+							return true;
+						end
+					end
+
+					return false;
+				end,
+
+				modifier = function (_, lines)
+					local _lines, exts = {}, {};
+					local entries = {};
+
+					local widths = {
+						id = 6,
+						name = 6,
+						lnum = 4,
+						indicators = 10
+					};
+
+					for l, line in ipairs(lines) do
+						if l == 1 then
+							goto continue;
+						end
+
+						local ID, indicators, name, lnum = string.match(line, '^%s*(%d+)%s*([u%%#ah%-=RF%?%+x]+)%s*"(.+)"%s*line (%d+)$');
+
+						table.insert(entries, {
+							id = ID or "",
+							name = name or "",
+							lnum = lnum or "",
+
+							indicators = indicators or "",
+						});
+
+						widths.id = math.max(widths.id, vim.fn.strdisplaywidth(ID or ""));
+						widths.name = math.max(widths.name, vim.fn.strdisplaywidth(name or ""));
+						widths.lnum = math.max(widths.lnum, vim.fn.strdisplaywidth(lnum or ""));
+						widths.indicators = math.max(widths.indicators, vim.fn.strdisplaywidth(indicators or ""));
+
+						::continue::
+					end
+
+					local title, title_exts = utils.to_row({
+						{
+							string.format(" %-" .. widths.id .. "s ", "Buffer"),
+							"@attribute"
+						},
+						{ "╷", "@function" },
+						{
+							string.format(" %-" .. widths.name .. "s ", "Name"),
+							"@attribute"
+						},
+						{ "╷", "@function" },
+						{
+							string.format(" %-" .. widths.indicators .. "s ", "Indicators"),
+							"@attribute"
+						},
+						{ "╷", "@function" },
+						{
+							string.format(" %-" .. widths.lnum .. "s ", "Line"),
+							"@attribute"
+						},
+					});
+
+					table.insert(_lines, title);
+					table.insert(exts, title_exts);
+
+					for e, entry in ipairs(entries) do
+						local border = e == #entries and "╵" or "│";
+
+						local row, row_exts = utils.to_row({
+							{
+								string.format(" %-" .. widths.id .. "s ", entry.id),
+								"Comment"
+							},
+							{ border, "@function" },
+							{
+								string.format(" %-" .. widths.name .. "s ", entry.name),
+								"Comment"
+							},
+							{ border, "@function" },
+							{
+								string.format(" %-" .. widths.indicators .. "s ", entry.indicators),
+								"Comment"
+							},
+							{ border, "@function" },
+							{
+								string.format(" %-" .. widths.lnum .. "s ", entry.lnum),
+								"Comment"
+							},
+						});
+
+						table.insert(_lines, row);
+						table.insert(exts, row_exts);
+					end
+
+					return { lines = _lines, extmarks = exts };
+				end
+			},
+		},
+
 		confirm = {
 			default = {
 				winhl = "Normal:Normal"
@@ -750,6 +866,54 @@ spec.get_confirm_config = function (msg, lines)
 	---|fE
 end
 
+spec.get_listmsg_config = function (msg, lines)
+	---|fS
+
+	local styles = spec.config.message.list or {};
+	local _output = styles.default or {};
+
+	---@type string[]
+	local keys = vim.tbl_keys(styles);
+	table.sort(keys);
+
+	--- Iterate over keys and get the first
+	--- match.
+	for _, key in ipairs(keys) do
+		if key == "default" then goto continue; end
+		local entry = styles[key] or {};
+		local can_validate, valid = pcall(entry.condition, msg, lines);
+
+		if can_validate and valid ~= false then
+			_output = vim.tbl_extend("force", _output, entry);
+			break;
+		end
+
+	    ::continue::
+	end
+
+	local output = {};
+
+	--- Turn dynamic values into static
+	--- values
+	for k, v in pairs(_output) do
+		if type(v) ~= "function" then
+			output[k] = v;
+		elseif k ~= "condition" then
+			local can_run, val = pcall(v, msg, lines);
+
+			if can_run and val ~= nil then
+				output[k] = val;
+			else
+				output[k] = nil;
+			end
+		end
+	end
+
+	return output;
+
+	---|fE
+end
+
 spec.get_msg_processor = function (msg, lines, extmarks)
 	---|fS
 
@@ -819,6 +983,15 @@ spec.get_msg_processor = function (msg, lines, extmarks)
 	return output;
 
 	---|fE
+end
+
+spec.is_list = function (msg)
+	if not spec.config.message.is_list then
+		return false;
+	end
+
+	local can_cond, cond = pcall(spec.config.message.is_list, msg);
+	return can_cond and cond;
 end
 
 return spec;

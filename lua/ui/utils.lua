@@ -388,4 +388,30 @@ utils.read_time = function (lines)
 	---|fE
 end
 
+--- Creates a table row.
+---@param parts [ string, string? ][]
+---@return string
+---@return table
+utils.to_row = function (parts)
+	---|fS
+
+	local X = 0;
+	local output = "";
+	local extmarks = {};
+
+	for _, part in ipairs(parts) do
+		output = output .. part[1];
+
+		if part[2] then
+			table.insert(extmarks, { X, X + #part[1], part[2] });
+		end
+
+		X = X + #part[1];
+	end
+
+	return output, extmarks;
+
+	---|fE
+end
+
 return utils;
