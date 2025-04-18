@@ -1,5 +1,5 @@
 local utils = {};
--- local log = require("ui.log")
+local log = require("ui.log")
 
 ---@type integer Buffer for wrapping text.
 utils.wrap_buffer = vim.api.nvim_create_buf(false, true);
@@ -412,6 +412,10 @@ utils.to_row = function (parts)
 	return output, extmarks;
 
 	---|fE
+end
+
+utils.last_win = function ()
+	return vim.fn.win_getid(vim.fn.winnr("#")) or win;
 end
 
 return utils;

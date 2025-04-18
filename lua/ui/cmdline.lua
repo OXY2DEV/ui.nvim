@@ -84,6 +84,8 @@ cmdline.__prepare = function ()
 			hide = true,
 			focusable = false
 		});
+
+		vim.api.nvim_win_set_var(cmdline.window[tab], "ui_window", true);
 		vim.wo[cmdline.window[tab]].sidescrolloff = math.floor(vim.o.columns * 0.5) or 36;
 	end
 
@@ -297,6 +299,8 @@ cmdline.__render = function ()
 
 		if not cmdline.window[tab] or vim.api.nvim_win_is_valid(cmdline.window[tab]) == false then
 			cmdline.window[tab] = vim.api.nvim_open_win(cmdline.buffer, false, win_config);
+
+			vim.api.nvim_win_set_var(cmdline.window[tab], "ui_window", true);
 			vim.wo[cmdline.window[tab]].sidescrolloff = math.floor(vim.o.columns * 0.5) or 36;
 		else
 			log.assert(

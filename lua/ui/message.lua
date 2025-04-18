@@ -126,6 +126,7 @@ message.__prepare = function ()
 
 	if not message.msg_window[tab] or vim.api.nvim_win_is_valid(message.msg_window[tab]) == false then
 		message.msg_window[tab] = vim.api.nvim_open_win(message.msg_buffer, false, win_config);
+		vim.api.nvim_win_set_var(message.msg_window[tab], "ui_window", true);
 
 		vim.wo[message.msg_window[tab]].numberwidth = 1;
 		vim.wo[message.msg_window[tab]].statuscolumn = "%!v:lua.__ui_statuscolumn()";
@@ -137,6 +138,7 @@ message.__prepare = function ()
 
 	if not message.list_window[tab] or vim.api.nvim_win_is_valid(message.list_window[tab]) == false then
 		message.list_window[tab] = vim.api.nvim_open_win(message.list_buffer, false, win_config);
+		vim.api.nvim_win_set_var(message.list_window[tab], "ui_window", true);
 	end
 
 	if not message.confirm_buffer or vim.api.nvim_buf_is_valid(message.confirm_buffer) == false then
@@ -145,6 +147,7 @@ message.__prepare = function ()
 
 	if not message.confirm_window[tab] or vim.api.nvim_win_is_valid(message.confirm_window[tab]) == false then
 		message.confirm_window[tab] = vim.api.nvim_open_win(message.confirm_buffer, false, win_config);
+		vim.api.nvim_win_set_var(message.confirm_window[tab], "ui_window", true);
 	end
 
 	if not message.history_buffer or vim.api.nvim_buf_is_valid(message.history_buffer) == false then
@@ -153,6 +156,7 @@ message.__prepare = function ()
 
 	if not message.history_window[tab] or vim.api.nvim_win_is_valid(message.history_window[tab]) == false then
 		message.history_window[tab] = vim.api.nvim_open_win(message.history_buffer, false, win_config);
+		vim.api.nvim_win_set_var(message.history_window[tab], "ui_window", true);
 
 		vim.wo[message.history_window[tab]].numberwidth = 1;
 		vim.wo[message.history_window[tab]].statuscolumn = "%!v:lua.__ui_statuscolumn()";
@@ -347,6 +351,7 @@ message.__confirm = function (obj)
 			vim.api.nvim_win_set_config(message.confirm_window[tab], window_config);
 		else
 			message.confirm_window[tab] = vim.api.nvim_open_win(message.confirm_buffer, false, window_config);
+			vim.api.nvim_win_set_var(message.confirm_window[tab], "ui_window", true);
 		end
 
 		vim.wo[message.confirm_window[tab]].wrap = true;
@@ -378,8 +383,9 @@ message.__list = function (obj)
 	--- All logic must be run outside of
 	--- fast event.
 	vim.schedule(function ()
+		vim.g.__ui_list_msg = obj;
+
 		local lines, exts = utils.process_content(obj.content);
-		local last_win = vim.api.nvim_get_current_win();
 
 		message.__prepare();
 		local config = spec.get_listmsg_config(obj, lines);
@@ -394,7 +400,9 @@ message.__list = function (obj)
 				---@type integer
 				local tab = vim.api.nvim_get_current_tabpage();
 
-				vim.api.nvim_set_current_win(last_win);
+				vim.api.nvim_set_current_win(
+					utils.last_win()
+				);
 				vim.api.nvim_win_set_config(message.list_window[tab], {
 					relative = "editor",
 
@@ -403,6 +411,8 @@ message.__list = function (obj)
 
 					hide = true
 				});
+
+				vim.g.__ui_list_msg = nil;
 			end
 		});
 
@@ -446,6 +456,7 @@ message.__list = function (obj)
 			vim.api.nvim_win_set_config(message.list_window[tab], window_config);
 		else
 			message.list_window[tab] = vim.api.nvim_open_win(message.list_buffer, false, window_config);
+			vim.api.nvim_win_set_var(message.list_window[tab], "ui_window", true);
 		end
 
 		vim.api.nvim_set_current_win(message.list_window[tab]);
@@ -572,6 +583,7 @@ message.__render = function ()
 		vim.api.nvim_win_set_config(message.msg_window[tab], window_config);
 	else
 		message.msg_window[tab] = vim.api.nvim_open_win(message.msg_buffer, false, window_config);
+		vim.api.nvim_win_set_var(message.msg_window[tab], "ui_window", true);
 	end
 
 	vim.wo[message.msg_window[tab]].winhl = "Normal:Normal";
@@ -592,9 +604,6 @@ message.__history = function (entries)
 
 	message.__prepare();
 	message.history_decorations = {};
-
-	---@type integer The window we were in before opening messages.
-	local last_win = vim.api.nvim_get_current_win();
 
 	---|fS
 
@@ -618,7 +627,7 @@ message.__history = function (entries)
 			--
 			-- Only floating windows can be hidden so we
 			-- turn it into a floating window.
-			vim.api.nvim_set_current_win(last_win);
+			vim.api.nvim_set_current_win(utils.last_win(message.history_window[tab]));
 			log.assert(
 				pcall(vim.api.nvim_win_set_config, message.history_window[tab], {
 					relative = "editor",
@@ -745,6 +754,7 @@ message.__history = function (entries)
 		vim.api.nvim_win_set_config(message.history_window[tab], window_config);
 	else
 		message.history_window[tab] = vim.api.nvim_open_win(message.history_buffer, true, window_config);
+		vim.api.nvim_win_set_var(message.history_window[tab], "ui_window", true);
 	end
 
 	vim.api.nvim_set_current_win(message.history_window[tab]);
@@ -873,6 +883,12 @@ message.setup = function ()
 				--- If a confirmation window is active,
 				--- redraw it.
 				message.__confirm(vim.g.__ui_confirm_msg);
+			end
+
+			if vim.g.__ui_list_msg then
+				--- If a list message window is active,
+				--- redraw it.
+				message.__list(vim.g.__ui_list_msg);
 			end
 
 			message.__render();
