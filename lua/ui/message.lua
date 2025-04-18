@@ -42,7 +42,12 @@ message.decorations = nil;
 message.statuscolumn = function ()
 	---|fS
 
-	if not message.decorations or #message.decorations == 0 then
+	local win = vim.g.statusline_winid;
+
+	if win ~= message.msg_window and win ~= message.history_window then
+		-- Wrong window.
+		return "";
+	elseif not message.decorations or #message.decorations == 0 then
 		-- Decorations not available.
 		return "";
 	end
@@ -50,7 +55,7 @@ message.statuscolumn = function ()
 	---@type integer Current line-number(0-indexed).
 	local lnum = vim.v.lnum - 1;
 
-	for _, entry in ipairs(message.decorations) do
+	for _, entry in ipairs(win == message.history_window and message.history_decorations or message.decorations) do
 		if lnum >= entry.from and lnum <= entry.to then
 			if lnum == entry.from then
 				return utils.to_statuscolumn(entry.icon);
@@ -479,7 +484,7 @@ message.__history = function (entries)
 	vim.g.__ui_history = true;
 
 	message.__prepare();
-	message.decorations = {};
+	message.history_decorations = {};
 
 	---@type integer The window we were in before opening messages.
 	local last_win = vim.api.nvim_get_current_win();
@@ -557,12 +562,12 @@ message.__history = function (entries)
 			end
 
 			if processor.history_decorations then
-				table.insert(message.decorations, vim.tbl_extend("force", processor.history_decorations, {
+				table.insert(message.history_decorations, vim.tbl_extend("force", processor.history_decorations, {
 					from = #lines,
 					to = #lines + (#m_lines - 1)
 				}));
 			elseif processor.decorations then
-				table.insert(message.decorations, vim.tbl_extend("force", processor.decorations, {
+				table.insert(message.history_decorations, vim.tbl_extend("force", processor.decorations, {
 					from = #lines,
 					to = #lines + (#m_lines - 1)
 				}));
@@ -578,14 +583,22 @@ message.__history = function (entries)
 	vim.api.nvim_buf_clear_namespace(message.history_buffer, message.namespace, 0, -1);
 	vim.api.nvim_buf_set_lines(message.history_buffer, 0, -1, false, lines);
 
+	---|fS
+
 	vim.api.nvim_buf_set_extmark(message.history_buffer, message.namespace, 0, 0, {
 		virt_text_pos = "right_align",
 		virt_text = {
-			{ " t toggle ", "DiagnosticVirtualTextHint" },
+			{ " t ", "UIHistoryKeymap" },
+			{ " Toggle source ", "UIHistoryDesc" },
 			{ " " },
-			{ " q toggle ", "DiagnosticVirtualTextHint" },
-		}
+			{ " q ", "UIHistoryKeymap" },
+			{ " Quit ", "UIHistoryDesc" },
+		},
+
+		line_hl_group = "Comment"
 	});
+
+	---|fE
 
 	for l, line in ipairs(exts) do
 		for _, ext in ipairs(line) do
@@ -599,7 +612,7 @@ message.__history = function (entries)
 	---@type integer Number of columns decorations take.
 	local decor_size = 0;
 
-	for _, entry in ipairs(message.decorations) do
+	for _, entry in ipairs(message.history_decorations) do
 		if entry.icon then
 			decor_size = math.max(decor_size, utils.virt_len(entry.icon));
 		end
