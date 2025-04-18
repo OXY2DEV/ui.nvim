@@ -42,8 +42,8 @@ cmdline.namespace = vim.api.nvim_create_namespace("ui.cmdline");
 ---@type integer Namespace for the cursor in command-line.
 cmdline.cursor_ns = vim.api.nvim_create_namespace("ui.cmdline.cursor");
 
----@type integer, integer Cmdline buffer & window.
-cmdline.buffer, cmdline.window = nil, nil;
+---@type integer, integer[] Cmdline buffer & window.
+cmdline.buffer, cmdline.window = nil, {};
 
 ------------------------------------------------------------------------------
 
@@ -62,14 +62,17 @@ cmdline.__prepare = function ()
 		cmdline.buffer = vim.api.nvim_create_buf(false, true);
 	end
 
+	---@type integer
+	local tab = vim.api.nvim_get_current_tabpage();
+
 	-- Open a hidden window.
 	-- We can't open new windows while processing
 	-- UI events.
 	-- But, we can change an already open window's
 	-- configuration. That's why we open a hidden
 	-- window first.
-	if not cmdline.window or vim.api.nvim_win_is_valid(cmdline.window) == false then
-		cmdline.window = vim.api.nvim_open_win(cmdline.buffer, false, {
+	if not cmdline.window[tab] or vim.api.nvim_win_is_valid(cmdline.window[tab]) == false then
+		cmdline.window[tab] = vim.api.nvim_open_win(cmdline.buffer, false, {
 			relative = "editor",
 
 			row = 0,
@@ -81,7 +84,7 @@ cmdline.__prepare = function ()
 			hide = true,
 			focusable = false
 		});
-		vim.wo[cmdline.window].sidescrolloff = math.floor(vim.o.columns * 0.5) or 36;
+		vim.wo[cmdline.window[tab]].sidescrolloff = math.floor(vim.o.columns * 0.5) or 36;
 	end
 
 	---|fE
@@ -171,7 +174,10 @@ cmdline.__cursor = function ()
 	---@type integer Byte size of the character under the cursor.
 	local to = #vim.fn.strcharpart(string.sub(line, pos, #line), 0, 1);
 
-	vim.api.nvim_win_set_cursor(cmdline.window, {
+	---@type integer
+	local tab = vim.api.nvim_get_current_tabpage();
+
+	vim.api.nvim_win_set_cursor(cmdline.window[tab], {
 		vim.api.nvim_buf_line_count(cmdline.buffer), -- This is 1-indexed.
 		pos
 	})
@@ -286,21 +292,24 @@ cmdline.__render = function ()
 			---|fE
 		end
 
-		if not cmdline.window or vim.api.nvim_win_is_valid(cmdline.window) == false then
-			cmdline.window = vim.api.nvim_open_win(cmdline.buffer, false, win_config);
-			vim.wo[cmdline.window].sidescrolloff = math.floor(vim.o.columns * 0.5) or 36;
+		---@type integer
+		local tab = vim.api.nvim_get_current_tabpage();
+
+		if not cmdline.window[tab] or vim.api.nvim_win_is_valid(cmdline.window[tab]) == false then
+			cmdline.window[tab] = vim.api.nvim_open_win(cmdline.buffer, false, win_config);
+			vim.wo[cmdline.window[tab]].sidescrolloff = math.floor(vim.o.columns * 0.5) or 36;
 		else
 			log.assert(
-				pcall(vim.api.nvim_win_set_config, cmdline.window, win_config)
+				pcall(vim.api.nvim_win_set_config, cmdline.window[tab], win_config)
 			);
 		end
 
 		cmdline.__cursor();
 
-		vim.wo[cmdline.window].winhl = cmdline.style.winhl or "";
+		vim.wo[cmdline.window[tab]].winhl = cmdline.style.winhl or "";
 
-		vim.wo[cmdline.window].conceallevel = 3;
-		vim.wo[cmdline.window].concealcursor = "nvic";
+		vim.wo[cmdline.window[tab]].conceallevel = 3;
+		vim.wo[cmdline.window[tab]].concealcursor = "nvic";
 
 		if package.loaded["ui.message"] then
 			log.assert(
@@ -308,7 +317,7 @@ cmdline.__render = function ()
 			);
 		end
 
-		vim.api.nvim__redraw({ flush = true, win = cmdline.window });
+		vim.api.nvim__redraw({ flush = true, win = cmdline.window[tab] });
 
 		---|fE
 	end
@@ -360,8 +369,11 @@ cmdline.cmdline_pos = function (pos, level)
 	});
 
 	vim.schedule(function ()
+		---@type integer
+		local tab = vim.api.nvim_get_current_tabpage();
+
 		cmdline.__cursor();
-		vim.api.nvim__redraw({ flush = true, win = cmdline.window })
+		vim.api.nvim__redraw({ flush = true, win = cmdline.window[tab] })
 	end);
 
 	---|fE
@@ -377,11 +389,13 @@ cmdline.cmdline_hide = function ()
 	vim.g.__ui_cmd_height = 0;
 
 	vim.schedule(function ()
-		--- We can't open/close windows.
-		--- But, we can hide them here.
-		log.assert(
-			pcall(vim.api.nvim_win_set_config, cmdline.window, { hide = true })
-		);
+		-- We can't open/close windows.
+		-- But, we can hide them here.
+		for _, win in pairs(cmdline.window) do
+			log.assert(
+				pcall(vim.api.nvim_win_set_config, win, { hide = true })
+			);
+		end
 
 		--- Restore cursorline.
 		if vim.g.__ui_cursorline ~= nil then
