@@ -1,5 +1,5 @@
 local utils = {};
-local log = require("ui.log")
+-- local log = require("ui.log")
 
 ---@type integer Buffer for wrapping text.
 utils.wrap_buffer = vim.api.nvim_create_buf(false, true);
@@ -155,7 +155,11 @@ utils.process_content = function (content)
 			lines[#lines] = lines[#lines] .. part[2];
 		end
 
-		table.insert(extmarks[#extmarks], { X, X + #part[2], utils.attr_to_hl(part[3] or part[1]) });
+		table.insert(extmarks[#extmarks], {
+			X,
+			X + #part[2],
+			utils.attr_to_hl(part[3] or part[1])
+		});
 		X = X + #part[2];
 
 		---|fE
@@ -167,19 +171,21 @@ utils.process_content = function (content)
 	local function handle_newline(part)
 		---|fS
 
-		for l, line in ipairs(vim.split(part[2], "\n", { trimempty = false })) do
+		local _lines = vim.split(part[2], "\n", {});
+
+		for l, line in ipairs(_lines) do
 			if l == 1 and #lines > 0 then
 				lines[#lines] = lines[#lines] .. line;
 				table.insert(extmarks[#extmarks], { X, X + #line, utils.attr_to_hl(part[3] or part[1]) });
 
-				X = 0;
+				X = X + #line;
 			else
 				table.insert(lines, line);
 				table.insert(extmarks, {
 					{ 0, #line, utils.attr_to_hl(part[3] or part[1]) }
 				});
 
-				X = X + #line;
+				X = #line;
 			end
 		end
 
@@ -415,7 +421,7 @@ utils.to_row = function (parts)
 end
 
 utils.last_win = function ()
-	return vim.fn.win_getid(vim.fn.winnr("#")) or win;
+	return vim.fn.win_getid(vim.fn.winnr("#"));
 end
 
 return utils;
