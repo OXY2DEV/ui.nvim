@@ -628,6 +628,8 @@ spec.default = {
 			default = {},
 
 			ls = {
+				---|fS
+
 				condition = function ()
 					local last_cmd = vim.fn.histget("cmd", -1);
 
@@ -730,6 +732,36 @@ spec.default = {
 
 					return { lines = _lines, extmarks = exts };
 				end
+
+				---|fE
+			},
+
+			hi = {
+				---|fS
+
+				condition = function ()
+					local last_cmd = vim.fn.histget("cmd", -1);
+
+					for _, patt in ipairs({ "^hi%s*$", "^highlight%s*$" }) do
+						if string.match(last_cmd, patt) then
+							return true;
+						end
+					end
+
+					return false;
+				end,
+
+				modifier = function (_, lines, exts)
+					local _lines = vim.deepcopy(lines);
+					local _exts = vim.deepcopy(exts);
+
+					table.remove(_lines, 1);
+					table.remove(_exts, 1);
+
+					return { lines = _lines, extmarks = _exts };
+				end
+
+				---|fE
 			},
 		},
 
@@ -831,7 +863,7 @@ spec.get_cmdline_style = function (state, lines)
 	---|fE
 end
 
-spec.get_confirm_config = function (msg, lines)
+spec.get_confirm_config = function (msg, lines, extmarks)
 	---|fS
 
 	local styles = spec.config.message.confirm or {};
@@ -846,7 +878,7 @@ spec.get_confirm_config = function (msg, lines)
 	for _, key in ipairs(keys) do
 		if key == "default" then goto continue; end
 		local entry = styles[key] or {};
-		local can_validate, valid = pcall(entry.condition, msg, lines);
+		local can_validate, valid = pcall(entry.condition, msg, lines, extmarks);
 
 		if can_validate and valid ~= false then
 			_output = vim.tbl_extend("force", _output, entry);
@@ -864,7 +896,7 @@ spec.get_confirm_config = function (msg, lines)
 		if type(v) ~= "function" then
 			output[k] = v;
 		elseif k ~= "condition" then
-			local can_run, val = pcall(v, msg, lines);
+			local can_run, val = pcall(v, msg, lines, extmarks);
 
 			if can_run and val ~= nil then
 				output[k] = val;
@@ -879,7 +911,7 @@ spec.get_confirm_config = function (msg, lines)
 	---|fE
 end
 
-spec.get_listmsg_config = function (msg, lines)
+spec.get_listmsg_config = function (msg, lines, extmarks)
 	---|fS
 
 	local styles = spec.config.message.list or {};
@@ -894,7 +926,7 @@ spec.get_listmsg_config = function (msg, lines)
 	for _, key in ipairs(keys) do
 		if key == "default" then goto continue; end
 		local entry = styles[key] or {};
-		local can_validate, valid = pcall(entry.condition, msg, lines);
+		local can_validate, valid = pcall(entry.condition, msg, lines, extmarks);
 
 		if can_validate and valid ~= false then
 			_output = vim.tbl_extend("force", _output, entry);
@@ -912,7 +944,7 @@ spec.get_listmsg_config = function (msg, lines)
 		if type(v) ~= "function" then
 			output[k] = v;
 		elseif k ~= "condition" then
-			local can_run, val = pcall(v, msg, lines);
+			local can_run, val = pcall(v, msg, lines, extmarks);
 
 			if can_run and val ~= nil then
 				output[k] = val;

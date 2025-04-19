@@ -329,7 +329,7 @@ message.__confirm = function (obj)
 		local lines, exts = utils.process_content(obj.content);
 
 		message.__prepare();
-		local config = spec.get_confirm_config(obj, lines);
+		local config = spec.get_confirm_config(obj, lines, exts);
 
 		if config.modifier then
 			lines = config.modifier.lines or lines;
@@ -408,7 +408,7 @@ message.__list = function (obj)
 		local lines, exts = utils.process_content(obj.content);
 
 		message.__prepare();
-		local config = spec.get_listmsg_config(obj, lines);
+		local config = spec.get_listmsg_config(obj, lines, exts);
 
 		if config.modifier then
 			lines = config.modifier.lines or lines;
