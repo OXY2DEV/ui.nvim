@@ -598,7 +598,7 @@ message.__render = function ()
 	local window_config = vim.tbl_extend("keep", spec.config.message.window or {}, {
 		relative = "editor",
 
-		row = vim.o.lines - (vim.o.cmdheight + (vim.g.__cmdline_height or 0) + 1) - utils.wrapped_height(lines, W),
+		row = vim.o.lines - (vim.o.cmdheight + (vim.g.__ui_cmd_height or 0) + 1) - utils.wrapped_height(lines, W),
 		col = vim.o.columns,
 
 		width = W + decor_size,

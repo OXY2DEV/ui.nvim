@@ -51,12 +51,6 @@ cmdline.buffer, cmdline.window = nil, {};
 cmdline.__prepare = function ()
 	---|fS
 
-	-- Temporarily disable 'cursorline'.
-	if not vim.g.__ui_cursorline then
-		vim.g.__ui_cursorline = vim.o.cursorline == true;
-		vim.o.cursorline = false;
-	end
-
 	--- Create command-line buffer.
 	if not cmdline.buffer or vim.api.nvim_buf_is_valid(cmdline.buffer) == false then
 		cmdline.buffer = vim.api.nvim_create_buf(false, true);
@@ -184,24 +178,35 @@ cmdline.__cursor = function ()
 		pos
 	})
 
-	--- Clear previous cursor.
+	-- Clear previous cursor.
 	vim.api.nvim_buf_clear_namespace(cmdline.buffer, cmdline.cursor_ns, 0, -1);
 
 	if cmdline.style.offset and pos >= cmdline.style.offset then
-		--- If `offset` exists and the cursor position is >= to the offset
-		--- we hide the leading part of the command-line(till `offset` characters).
+		-- If `offset` exists and the cursor position is >= to the offset
+		-- we hide the leading part of the command-line(till `offset` characters).
 		vim.api.nvim_buf_set_extmark(cmdline.buffer, cmdline.cursor_ns, #lines - 1, 0, {
 			end_col = #vim.fn.strcharpart(line, 0, cmdline.style.offset),
 			conceal = ""
 		});
 	end
 
+	-- Add a fake Cursor.
 	log.assert(
-		pcall(vim.api.nvim_buf_set_extmark, cmdline.buffer, cmdline.cursor_ns, #lines - 1, pos, {
-			end_col = pos + to,
-			hl_group = cmdline.style.cursor or "Cursor"
-		})
+		pcall(vim.api.nvim_buf_set_extmark,
+
+			cmdline.buffer,
+			cmdline.cursor_ns,
+
+			#lines - 1,
+			pos,
+
+			{
+				end_col = pos + to,
+				hl_group = cmdline.style.cursor or "Cursor"
+			}
+		)
 	);
+
 	---|fE
 end
 
@@ -230,10 +235,9 @@ cmdline.__render = function ()
 	};
 
 	-- Export the cmdline height.
-	vim.g.__cmdline_height = H;
 	vim.g.__ui_cmd_height = H;
 
-
+	--- The actual drawing part.
 	local function callback ()
 		---|fS
 
@@ -327,6 +331,10 @@ cmdline.__render = function ()
 	end
 
 	if string.match(lines[#lines], "^[%S]*s/") then
+		-- When we do `:s/`(aka substitute) Neovim will
+		-- schedule the screen updates *after* the preview.
+		--
+		-- So, we update the screen immediately.
 		callback();
 	else
 		vim.schedule(callback);
@@ -356,6 +364,9 @@ cmdline.cmdline_show = function (content, pos, firstc, prompt, indent, level, hl
 		hl_id = hl_id,
 	});
 
+	-- This is used to communicate between
+	-- the cmdline & message module when
+	-- confirmation prompts are shown.
 	utils.confirm_keys(prompt, content);
 	cmdline.__render();
 
@@ -387,9 +398,9 @@ end
 cmdline.cmdline_hide = function ()
 	---|fS
 
-	-- Reset exported height.
 	utils.confirm_keys();
-	vim.g.__cmdline_height = 0;
+
+	-- Reset exported height.
 	vim.g.__ui_cmd_height = 0;
 
 	vim.schedule(function ()
@@ -401,12 +412,6 @@ cmdline.cmdline_hide = function ()
 			);
 		end
 
-		--- Restore cursorline.
-		if vim.g.__ui_cursorline ~= nil then
-			vim.o.cursorline = vim.g.__ui_cursorline;
-			vim.g.__ui_cursorline = nil;
-		end
-
 		--- Re-render messages to update the window
 		--- position.
 		if package.loaded["ui.message"] then
@@ -415,6 +420,8 @@ cmdline.cmdline_hide = function ()
 			);
 		end
 
+		-- Sometimes the statusline doesn't update after
+		-- mode change. So, we force it here.
 		vim.api.nvim__redraw({
 			flush = true,
 			statusline = true
@@ -459,7 +466,7 @@ cmdline.cmdline_block_hide = function ()
 	cmdline.set_state({
 		lines = {},
 	});
-	cmdline.state.lines = nil; ---@diagnostic disable-line
+	cmdline.state.lines = nil;
 
 	cmdline.cmdline_hide();
 

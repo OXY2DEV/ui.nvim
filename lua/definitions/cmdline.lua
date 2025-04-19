@@ -28,6 +28,7 @@
 ---@field indent integer Indentation of the text.
 ---@field level integer Level of the command-line.
 ---@field hl_id? integer Highlight group ID for `prompt`.
+---@field lines? ui.cmdline.content[] Context lines.
 
 
 ---@alias ui.cmdline.lines string[] Lines of text shown in the command-line.
