@@ -918,12 +918,6 @@ message.setup = function ()
 		end
 	});
 
-	vim.api.nvim_create_autocmd("TabNew", {
-		callback = function ()
-			message.__prepare();
-		end
-	});
-
 	vim.api.nvim_create_autocmd("TabEnter", {
 		callback = function ()
 			if vim.g.__ui_confirm_msg then

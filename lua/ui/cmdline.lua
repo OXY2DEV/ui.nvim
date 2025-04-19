@@ -479,6 +479,12 @@ end
 
 --- Sets up the cmdline module.
 cmdline.setup = function ()
+	vim.api.nvim_create_autocmd("TabEnter", {
+		callback = function ()
+			cmdline.__prepare();
+		end
+	});
+
 	cmdline.__prepare();
 end
 
