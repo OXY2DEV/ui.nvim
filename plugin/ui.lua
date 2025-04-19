@@ -1,9 +1,15 @@
-require("ui").setup();
-require("ui.highlight").setup();
+vim.api.nvim_create_autocmd("VimEnter", {
+	callback = function ()
+		require("ui").setup();
+		require("ui.highlight").setup();
+	end
+});
 
 vim.api.nvim_create_autocmd("VimLeave", {
 	callback = function ()
-		require("ui.log").export();
+		if vim.g.__ui_dev then
+			require("ui.log").export();
+		end
 	end
 });
 
