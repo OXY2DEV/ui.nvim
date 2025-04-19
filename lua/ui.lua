@@ -51,21 +51,35 @@ ui.attach = function ()
 		message = require("ui.message"),
 	};
 
-	for _, v in pairs(modules) do
-		pcall(v["setup"])
+	log.print("Setting up UI modules:");
+	log.level_inc();
+
+	for k, v in pairs(modules) do
+		log.print("Module: " .. k);
+		log.assert(
+			pcall(v["setup"])
+		);
 	end
+
+	log.level_dec();
 
 	vim.ui_attach(ui.namespace, {
 		ext_cmdline = true,
 		ext_messages = true,
 		-- ext_linegrid = true
 	}, function (event, ...)
-		table.insert(log.entries, string.format("Event: %s", event));
+		log.print("Event, " .. event);
+		log.level_inc();
+
 		local mod_name = ui.event_map[event];
 		if not mod_name then return; end
 
 		---@type boolean, string?
-		local success, err = pcall(modules[mod_name].handle, event, ...);
+		log.assert(
+			pcall(modules[mod_name].handle, event, ...)
+		)
+
+		log.level_dec();
 	end);
 end
 
