@@ -608,7 +608,20 @@ spec.default = {
 		},
 
 		is_list = function (msg)
-			return msg.kind == "list_cmd";
+			if msg.kind ~= "list_cmd" then
+				return false;
+			end
+
+			local invalid_commands = { "^highlight .+", "^hi .+" };
+			local last_cmd = vim.fn.histget("cmd", -1);
+
+			for _, pattern in ipairs(invalid_commands) do
+				if string.match(last_cmd, pattern) then
+					return false;
+				end
+			end
+
+			return true;
 		end,
 
 		list = {
