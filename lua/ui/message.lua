@@ -219,6 +219,16 @@ message.__add = function (kind, content)
 	vim.schedule(function ()
 		---|fS
 
+		if spec.is_list({ kind = kind, content = content }) == true then
+			log.assert(
+				pcall(message.__list, {
+					kind = kind,
+					content = content
+				})
+			);
+			return;
+		end
+
 		local current_id = message.id;
 		local lines = utils.to_lines(content);
 
@@ -257,6 +267,16 @@ message.__replace = function (kind, content)
 	---|fS
 
 	vim.schedule(function ()
+		if spec.is_list({ kind = kind, content = content }) == true then
+			log.assert(
+				pcall(message.__list, {
+					kind = kind,
+					content = content
+				})
+			);
+			return;
+		end
+
 		---@type integer
 		local keys = vim.tbl_keys(message.visible);
 
@@ -419,7 +439,7 @@ message.__list = function (obj)
 		---@type integer
 		local W = math.min(utils.max_len(lines), math.floor(vim.o.columns * 0.5));
 		---@type integer
-		local H = utils.wrapped_height(lines, W);
+		local H = math.min(utils.wrapped_height(lines, W), vim.o.lines - 2);
 
 		---@type integer
 		local tab = vim.api.nvim_get_current_tabpage();
@@ -445,10 +465,21 @@ message.__list = function (obj)
 
 		for l, line in ipairs(exts) do
 			for _, ext in ipairs(line) do
-				vim.api.nvim_buf_set_extmark(message.list_buffer, message.namespace, l - 1, ext[1], {
-					end_col = ext[2],
-					hl_group = ext[3]
-				});
+				log.assert(
+					pcall(
+						vim.api.nvim_buf_set_extmark,
+						message.list_buffer,
+						message.namespace,
+
+						l - 1,
+						ext[1],
+
+						{
+							end_col = ext[2],
+							hl_group = ext[3]
+						}
+					)
+				);
 			end
 		end
 
@@ -795,14 +826,6 @@ message.msg_show = function (kind, content, replace_last)
 		--- Hit `<ESC>` on hit-enter prompts.
 		--- or else we get stuck.
 		vim.api.nvim_feedkeys(vim.api.nvim_replace_termcodes("<ESC>", true, false, true), "n", false);
-		return;
-	elseif spec.is_list({ kind = kind, content = content }) == true then
-		log.assert(
-			pcall(message.__list, {
-				kind = kind,
-				content = content
-			})
-		);
 	elseif replace_last and vim.tbl_isempty(message.visible) == false then
 		message.__replace(kind, content);
 	else
