@@ -1,3 +1,5 @@
+--- Type definition for the `message` module.
+--- Maintainer: MD. Mouinul Hossain
 ---@meta
 
 --- Different types of messages.

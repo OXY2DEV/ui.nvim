@@ -1,5 +1,6 @@
 --- Type definition for the `command-line` module.
 --- Maintainer: MD. Mouinul Hossain
+---@meta
 
 --- Configuration table for the command-line.
 ---@class ui.cmdline.configuration

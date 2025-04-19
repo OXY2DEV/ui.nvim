@@ -50,7 +50,7 @@ message.statuscolumn = function ()
 	if win ~= message.msg_window[tab] and win ~= message.history_window[tab] then
 		-- Wrong window.
 		return "";
-	elseif not message.decorations or #message.decorations == 0 then
+	elseif not message.decorations and not message.history_decorations then
 		-- Decorations not available.
 		return "";
 	end
@@ -81,7 +81,7 @@ message.statuscolumn = function ()
 	---|fE
 end
 
--- Export the statuscolumn so that we can use it in 'statuscolumn'.
+-- Export the statuscolumn so that we can use it in 'statuscolumn' option.
 _G.__ui_statuscolumn = message.statuscolumn;
 
 ------------------------------------------------------------------------------
@@ -195,7 +195,9 @@ message.__remove = function (id)
 		message.visible[id] = nil;
 
 		vim.schedule(function ()
-			local _, e = pcall(message.__render);
+			log.assert(
+				pcall(message.__render)
+			)
 		end)
 	end
 
@@ -220,6 +222,8 @@ message.__add = function (kind, content)
 		---|fS
 
 		if spec.is_list({ kind = kind, content = content }) == true then
+			-- If the message is a list message,
+			-- pass it to the list renderer.
 			log.assert(
 				pcall(message.__list, {
 					kind = kind,
@@ -235,6 +239,8 @@ message.__add = function (kind, content)
 		local processor = spec.get_msg_processor({ kind = kind, content = content }, lines, {}) or {};
 		local duration = processor.duration or 600;
 
+		-- Store the message in history & visible
+		-- message table.
 		message.history[message.id] = {
 			kind = kind,
 			content = content
@@ -268,6 +274,8 @@ message.__replace = function (kind, content)
 
 	vim.schedule(function ()
 		if spec.is_list({ kind = kind, content = content }) == true then
+			-- If a list message for some reason gets here then
+			-- we redirect it.
 			log.assert(
 				pcall(message.__list, {
 					kind = kind,
@@ -318,7 +326,7 @@ end
 ------------------------------------------------------------------------------
 
 --- Confirmation message.
----@param obj table
+---@param obj ui.message.entry
 message.__confirm = function (obj)
 	---|fS
 
@@ -381,7 +389,7 @@ message.__confirm = function (obj)
 			vim.wo[message.confirm_window[tab]].winhl = config.winhl;
 		end
 
-		--- Auto hide on next keypress.
+		--- Auto hide on next key press.
 		vim.on_key(function (key)
 			if vim.list_contains(vim.g.__confirm_keys or {}, string.lower(key)) == false then
 				return;
@@ -397,6 +405,8 @@ message.__confirm = function (obj)
 	---|fE
 end
 
+--- List message.
+---@param obj ui.message.entry
 message.__list = function (obj)
 	---|fS
 
@@ -658,7 +668,9 @@ message.__history = function (entries)
 			--
 			-- Only floating windows can be hidden so we
 			-- turn it into a floating window.
-			vim.api.nvim_set_current_win(utils.last_win(message.history_window[tab]));
+			vim.api.nvim_set_current_win(
+				utils.last_win()
+			);
 			log.assert(
 				pcall(vim.api.nvim_win_set_config, message.history_window[tab], {
 					relative = "editor",
