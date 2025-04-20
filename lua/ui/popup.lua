@@ -13,8 +13,11 @@ popup.state = {};
 ---@type integer Namespace for the decorations in the command-line.
 popup.namespace = vim.api.nvim_create_namespace("ui.popup");
 
----@type integer, integer[] Cmdline buffer & window.
+---@type integer, integer[] Popup buffer & window.
 popup.buffer, popup.window = nil, {};
+
+---@type integer, integer[] Information buffer & window.
+popup.info_buffer, popup.info_window = nil, {}
 
 ------------------------------------------------------------------------------
 
@@ -51,7 +54,40 @@ popup.__prepare = function ()
 		});
 
 		vim.api.nvim_win_set_var(popup.window[tab], "ui_window", true);
+
+		vim.wo[popup.window[tab]].wrap = false;
 		vim.wo[popup.window[tab]].sidescrolloff = math.floor(vim.o.columns * 0.5) or 36;
+	end
+
+	--- Create command-line buffer.
+	if not popup.info_buffer or vim.api.nvim_buf_is_valid(popup.info_buffer) == false then
+		popup.info_buffer = vim.api.nvim_create_buf(false, true);
+	end
+
+	-- Open a hidden window.
+	-- We can't open new windows while processing
+	-- UI events.
+	-- But, we can change an already open window's
+	-- configuration. That's why we open a hidden
+	-- window first.
+	if not popup.info_window[tab] or vim.api.nvim_win_is_valid(popup.info_window[tab]) == false then
+		popup.info_window[tab] = vim.api.nvim_open_win(popup.info_buffer, false, {
+			relative = "editor",
+
+			row = 0,
+			col = 0,
+
+			width = 1,
+			height = 1,
+
+			hide = true,
+			focusable = false
+		});
+
+		vim.api.nvim_win_set_var(popup.info_window[tab], "ui_window", true);
+
+		vim.wo[popup.info_window[tab]].wrap = true;
+		vim.wo[popup.info_window[tab]].linebreak = true;
 	end
 
 	---|fE
@@ -77,6 +113,45 @@ popup.__hide = function ()
 	};
 
 	pcall(vim.api.nvim_win_set_config, popup.window[tab], win_config);
+	pcall(vim.api.nvim_win_set_config, popup.info_window[tab], win_config);
+
+	---|fE
+end
+
+popup.__info = function (item)
+	---|fS
+
+	if not item or item[4] == "" then
+		return;
+	end
+
+	local lines = vim.split(item[4], "\n", { trimempty = true });
+	vim.api.nvim_buf_set_lines(popup.info_buffer, 0, -1, false, lines);
+
+	local W = math.min(utils.max_len(lines), math.floor(vim.o.columns * 0.4));
+	local H = utils.wrapped_height(lines, W);
+
+	local tab = vim.api.nvim_get_current_tabpage();
+	local win_config = {
+		relative = "editor",
+
+		row = vim.o.lines - (1 + H),
+		col = 0,
+
+		width = W,
+		height = H,
+
+		style = "minimal",
+		hide = false,
+		focusable = false
+	};
+
+	pcall(vim.api.nvim_win_set_config, popup.info_window[tab], win_config);
+
+	vim.api.nvim__redraw({
+		flush = true,
+		win = popup.info_window[tab]
+	});
 
 	---|fE
 end
@@ -109,8 +184,10 @@ popup.__render = function ()
 		if (i - 1) == popup.state.selected then
 			table.insert(hls, { #line, #(line .. text), item_config.select_hl or "CursorLine" });
 			X = #line + math.floor(#text / 2);
+
+			popup.__info(item);
 		elseif item_config.normal_hl then
-			table.insert(hls, { #line, #(line .. text), item_config.item_hl });
+			table.insert(hls, { #line, #(line .. text), item_config.normal_hl });
 		end
 
 		if item_config.icon_hl then
