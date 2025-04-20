@@ -7,6 +7,15 @@ spec.default = {
 	popupmenu = {
 		enable = true,
 
+		tooltip = function ()
+			local mode = vim.api.nvim_get_mode().mode;
+			return mode == "c" and {
+				{ " 󰸾 󰹀 ", "UIMenuKeymap" },
+			} or {
+				{ " 󰹁 󰸽 ", "UIMenuKeymap" },
+			};
+		end,
+
 		entries = {
 			default = {
 				padding_left = " ",

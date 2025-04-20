@@ -218,7 +218,7 @@ hl.groups = {
 		---@type number, number, number Main color.
 		local ML, MA, MB = hl.rgb_to_oklab(
 			hl.num_to_rgb(
-				hl.get_attr("fg", { "@function" }) or hl.choice(1992437, 9024762)
+				hl.get_attr("fg", { "@function", "Function" }) or hl.choice(1992437, 9024762)
 			)
 		);
 		---@type number, number, number Background color.
@@ -692,6 +692,31 @@ hl.groups = {
 					bg = string.format("#%x%x%x", hl.oklab_to_rgb(RL, RA, RB)),
 				}
 			}
+		};
+
+		---|fE
+	end,
+
+	popupmenu_button = function ()
+		---|fS
+
+		---@type number, number, number Main color.
+		local ML, MA, MB = hl.rgb_to_oklab(
+			hl.num_to_rgb(
+				hl.get_attr("fg", { "@function", "Function" }) or hl.choice(1992437, 9024762)
+			)
+		);
+
+		return {
+			{
+				group_name = "UIMenuKeymap",
+				value = {
+					bg = string.format("#%x%x%x", hl.oklab_to_rgb(ML, MA, MB)),
+					fg = string.format("#%x%x%x", hl.oklab_to_rgb(hl.visible_fg(ML))),
+
+					bold = true
+				}
+			},
 		};
 
 		---|fE
