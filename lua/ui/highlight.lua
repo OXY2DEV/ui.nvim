@@ -140,13 +140,13 @@ end
 hl.visible_fg = function (lumen)
 	local BL, BA, BB = hl.rgb_to_oklab(
 		hl.num_to_rgb(
-			hl.get_attr("bg", { "Normal" }) or hl.choice(1234, 1244)
+			hl.get_attr("bg", { "Normal" }) or hl.choice(15725045, 1973806)
 		)
 	);
 
 	local FL, FA, FB = hl.rgb_to_oklab(
 		hl.num_to_rgb(
-			hl.get_attr("fg", { "Normal" }) or hl.choice(1234, 1244)
+			hl.get_attr("fg", { "Normal" }) or hl.choice(5001065, 13489908)
 		)
 	);
 
@@ -173,13 +173,13 @@ hl.groups = {
 		---@type number, number, number Main color.
 		local ML, MA, MB = hl.rgb_to_oklab(
 			hl.num_to_rgb(
-				hl.get_attr("fg", { "DiagnosticOk" }) or hl.choice(1234, 1244)
+				hl.get_attr("fg", { "DiagnosticOk" }) or hl.choice(4235307, 10937249)
 			)
 		);
 		---@type number, number, number Background color.
 		local BL, BA, BB = hl.rgb_to_oklab(
 			hl.num_to_rgb(
-				hl.get_attr("bg", { "Normal" }) or hl.choice(1234, 1244)
+				hl.get_attr("bg", { "Normal" }) or hl.choice(15725045, 1973806)
 			)
 		);
 
@@ -218,13 +218,13 @@ hl.groups = {
 		---@type number, number, number Main color.
 		local ML, MA, MB = hl.rgb_to_oklab(
 			hl.num_to_rgb(
-				hl.get_attr("fg", { "@function" }) or hl.choice(1234, 1244)
+				hl.get_attr("fg", { "@function" }) or hl.choice(1992437, 9024762)
 			)
 		);
 		---@type number, number, number Background color.
 		local BL, BA, BB = hl.rgb_to_oklab(
 			hl.num_to_rgb(
-				hl.get_attr("bg", { "Normal" }) or hl.choice(1234, 1244)
+				hl.get_attr("bg", { "Normal" }) or hl.choice(15725045, 1973806)
 			)
 		);
 
@@ -263,13 +263,13 @@ hl.groups = {
 		---@type number, number, number Main color.
 		local ML, MA, MB = hl.rgb_to_oklab(
 			hl.num_to_rgb(
-				hl.get_attr("fg", { "@conditional" }) or hl.choice(1234, 1244)
+				hl.get_attr("fg", { "@conditional" }) or hl.choice(8927727, 13346551)
 			)
 		);
 		---@type number, number, number Background color.
 		local BL, BA, BB = hl.rgb_to_oklab(
 			hl.num_to_rgb(
-				hl.get_attr("bg", { "Normal" }) or hl.choice(1234, 1244)
+				hl.get_attr("bg", { "Normal" }) or hl.choice(15725045, 1973806)
 			)
 		);
 
@@ -290,13 +290,6 @@ hl.groups = {
 					bg = string.format("#%x%x%x", hl.oklab_to_rgb(RL, RA, RB)),
 				}
 			},
-
-			-- {
-			-- 	group_name = "UIMessageOk",
-			-- 	value = {
-			-- 		bg = string.format("#%x%x%x", hl.oklab_to_rgb(RL, RA, RB)),
-			-- 	}
-			-- },
 		};
 
 		---|fE
@@ -308,13 +301,13 @@ hl.groups = {
 		---@type number, number, number Main color.
 		local ML, MA, MB = hl.rgb_to_oklab(
 			hl.num_to_rgb(
-				hl.get_attr("fg", { "DiagnosticWarn" }) or hl.choice(1234, 1244)
+				hl.get_attr("fg", { "DiagnosticWarn" }) or hl.choice(14650909, 16376495)
 			)
 		);
 		---@type number, number, number Background color.
 		local BL, BA, BB = hl.rgb_to_oklab(
 			hl.num_to_rgb(
-				hl.get_attr("bg", { "Normal" }) or hl.choice(1234, 1244)
+				hl.get_attr("bg", { "Normal" }) or hl.choice(15725045, 1973806)
 			)
 		);
 
@@ -346,13 +339,13 @@ hl.groups = {
 		---@type number, number, number Main color.
 		local ML, MA, MB = hl.rgb_to_oklab(
 			hl.num_to_rgb(
-				hl.get_attr("fg", { "@constant" }) or hl.choice(1234, 1244)
+				hl.get_attr("fg", { "@constant" }) or hl.choice(16671755, 16429959)
 			)
 		);
 		---@type number, number, number Background color.
 		local BL, BA, BB = hl.rgb_to_oklab(
 			hl.num_to_rgb(
-				hl.get_attr("bg", { "Normal" }) or hl.choice(1234, 1244)
+				hl.get_attr("bg", { "Normal" }) or hl.choice(15725045, 1973806)
 			)
 		);
 
@@ -384,13 +377,13 @@ hl.groups = {
 		---@type number, number, number Main color.
 		local ML, MA, MB = hl.rgb_to_oklab(
 			hl.num_to_rgb(
-				hl.get_attr("fg", { "@comment" }) or hl.choice(1234, 1244)
+				hl.get_attr("fg", { "@comment" }) or hl.choice(8159123, 9673138)
 			)
 		);
 		---@type number, number, number Background color.
 		local BL, BA, BB = hl.rgb_to_oklab(
 			hl.num_to_rgb(
-				hl.get_attr("bg", { "Normal" }) or hl.choice(1234, 1244)
+				hl.get_attr("bg", { "Normal" }) or hl.choice(15725045, 1973806)
 			)
 		);
 
@@ -423,7 +416,7 @@ hl.groups = {
 		---@type number, number, number Main color.
 		local ML, MA, MB = hl.rgb_to_oklab(
 			hl.num_to_rgb(
-				hl.get_attr("fg", { "@comment" }) or hl.choice(1234, 1244)
+				hl.get_attr("fg", { "@comment" }) or hl.choice(8159123, 9673138)
 			)
 		);
 
@@ -445,7 +438,7 @@ hl.groups = {
 		---@type number, number, number Main color.
 		local ML, MA, MB = hl.rgb_to_oklab(
 			hl.num_to_rgb(
-				hl.get_attr("fg", { "DiagnosticOk", "Error" }) or hl.choice(1234, 1244)
+				hl.get_attr("fg", { "DiagnosticOk" }) or hl.choice(4235307, 10937249)
 			)
 		);
 
@@ -467,14 +460,14 @@ hl.groups = {
 		---@type number, number, number Main color.
 		local ML, MA, MB = hl.rgb_to_oklab(
 			hl.num_to_rgb(
-				hl.get_attr("fg", { "DiagnosticInfo" }) or hl.choice(1234, 1244)
+				hl.get_attr("fg", { "DiagnosticInfo" }) or hl.choice(304613, 9034987)
 			)
 		);
 
 		---@type number, number, number Background color.
 		local BL, BA, BB = hl.rgb_to_oklab(
 			hl.num_to_rgb(
-				hl.get_attr("bg", { "Normal" }) or hl.choice(1234, 1244)
+				hl.get_attr("bg", { "Normal" }) or hl.choice(15725045, 1973806)
 			)
 		);
 
@@ -508,7 +501,7 @@ hl.groups = {
 		---@type number, number, number Main color.
 		local ML, MA, MB = hl.rgb_to_oklab(
 			hl.num_to_rgb(
-				hl.get_attr("fg", { "DiagnosticHint" }) or hl.choice(1234, 1244)
+				hl.get_attr("fg", { "DiagnosticHint" }) or hl.choice(1544857, 9757397)
 			)
 		);
 
@@ -530,14 +523,14 @@ hl.groups = {
 		---@type number, number, number Main color.
 		local ML, MA, MB = hl.rgb_to_oklab(
 			hl.num_to_rgb(
-				hl.get_attr("fg", { "DiagnosticWarn" }) or hl.choice(1234, 1244)
+				hl.get_attr("fg", { "DiagnosticWarn" }) or hl.choice(14650909, 16376495)
 			)
 		);
 
 		---@type number, number, number Background color.
 		local BL, BA, BB = hl.rgb_to_oklab(
 			hl.num_to_rgb(
-				hl.get_attr("bg", { "Normal" }) or hl.choice(1234, 1244)
+				hl.get_attr("bg", { "Normal" }) or hl.choice(15725045, 1973806)
 			)
 		);
 
@@ -571,14 +564,14 @@ hl.groups = {
 		---@type number, number, number Main color.
 		local ML, MA, MB = hl.rgb_to_oklab(
 			hl.num_to_rgb(
-				hl.get_attr("fg", { "DiagnosticError", "Error" }) or hl.choice(1234, 1244)
+				hl.get_attr("fg", { "DiagnosticError", "Error" }) or hl.choice(13766457, 15961000)
 			)
 		);
 
 		---@type number, number, number Background color.
 		local BL, BA, BB = hl.rgb_to_oklab(
 			hl.num_to_rgb(
-				hl.get_attr("bg", { "Normal" }) or hl.choice(1234, 1244)
+				hl.get_attr("bg", { "Normal" }) or hl.choice(15725045, 1973806)
 			)
 		);
 
@@ -612,7 +605,7 @@ hl.groups = {
 		---@type number, number, number Main color.
 		local ML, MA, MB = hl.rgb_to_oklab(
 			hl.num_to_rgb(
-				hl.get_attr("fg", { "@function", "Function" }) or hl.choice(1234, 1244)
+				hl.get_attr("fg", { "@function", "Function" }) or hl.choice(1992437, 9024762)
 			)
 		);
 
@@ -628,20 +621,20 @@ hl.groups = {
 		---|fE
 	end,
 
-	history_toggle = function ()
+	history_button = function ()
 		---|fS
 
 		---@type number, number, number Main color.
 		local ML, MA, MB = hl.rgb_to_oklab(
 			hl.num_to_rgb(
-				hl.get_attr("fg", { "DiagnosticWarn" }) or hl.choice(1234, 1244)
+				hl.get_attr("fg", { "DiagnosticWarn" }) or hl.choice(14650909, 16376495)
 			)
 		);
 
 		---@type number, number, number Background color.
 		local BL, BA, BB = hl.rgb_to_oklab(
 			hl.num_to_rgb(
-				hl.get_attr("bg", { "Normal" }) or hl.choice(1234, 1244)
+				hl.get_attr("bg", { "Normal" }) or hl.choice(15725045, 1973806)
 			)
 		);
 
@@ -670,8 +663,39 @@ hl.groups = {
 		---|fE
 	end,
 
-	history_close = function ()
-	end
+	popupmenu_select = function ()
+		---|fS
+
+		---@type number, number, number Main color.
+		local ML, MA, MB = hl.rgb_to_oklab(
+			hl.num_to_rgb(
+				hl.get_attr("fg", { "Normal" }) or hl.choice(5001065, 13489908)
+			)
+		);
+
+		---@type number, number, number Background color.
+		local BL, BA, BB = hl.rgb_to_oklab(
+			hl.num_to_rgb(
+				hl.get_attr("bg", { "Normal" }) or hl.choice(15725045, 1973806)
+			)
+		);
+
+		local Y = 0.8;
+		local RL = hl.lerp(ML, BL, Y);
+		local RA = hl.lerp(MA, BA, Y);
+		local RB = hl.lerp(MB, BB, Y);
+
+		return {
+			{
+				group_name = "UIMenuSelect",
+				value = {
+					bg = string.format("#%x%x%x", hl.oklab_to_rgb(RL, RA, RB)),
+				}
+			}
+		};
+
+		---|fE
+	end,
 };
 
 hl.setup = function ()

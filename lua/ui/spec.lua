@@ -13,7 +13,9 @@ spec.default = {
 				padding_right = " ",
 
 				icon = "󰘎 ",
-				icon_hl = "Special"
+				icon_hl = "Special",
+
+				select_hl = "UIMenuSelect"
 			},
 
 			vim_variable = {
