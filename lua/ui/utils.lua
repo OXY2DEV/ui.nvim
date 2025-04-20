@@ -420,8 +420,32 @@ utils.to_row = function (parts)
 	---|fE
 end
 
+--- Gets the last window the user was in.
+---@return integer
 utils.last_win = function ()
 	return vim.fn.win_getid(vim.fn.winnr("#"));
+end
+
+--- Evaluates `val`
+---@param val any
+---@param ... any
+---@return any
+utils.eval = function (val, ...)
+	---|fS
+
+	if type(val) ~= "function" then
+		return val;
+	end
+
+	local can_call, new_val = pcall(val, ...);
+
+	if can_call == false then
+		return;
+	else
+		return new_val;
+	end
+
+	---|fE
 end
 
 return utils;

@@ -58,6 +58,8 @@ popup.__prepare = function ()
 end
 
 popup.__hide = function ()
+	---|fS
+
 	local tab = vim.api.nvim_get_current_tabpage();
 	local win_config = {
 		relative = "editor",
@@ -75,6 +77,8 @@ popup.__hide = function ()
 	};
 
 	pcall(vim.api.nvim_win_set_config, popup.window[tab], win_config);
+
+	---|fE
 end
 
 popup.__render = function ()
@@ -143,6 +147,25 @@ popup.__render = function ()
 					hl_group = hl[3]
 				}
 			)
+		);
+	end
+
+	local tooltip = utils.eval(spec.config.popupmenu.tooltip, popup.state);
+
+	if tooltip then
+		pcall(
+			vim.api.nvim_buf_set_extmark,
+
+			popup.buffer,
+			popup.namespace,
+
+			0,
+			0,
+
+			{
+				virt_text_pos = "right_align",
+				virt_text = tooltip
+			}
 		);
 	end
 
