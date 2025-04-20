@@ -3,8 +3,11 @@ local log = require("ui.log")
 
 local utils = require("ui.utils");
 
+---@type ui.config
 spec.default = {
 	popupmenu = {
+		---|fS
+
 		enable = true,
 
 		tooltip = function ()
@@ -17,6 +20,8 @@ spec.default = {
 		end,
 
 		entries = {
+			---|fS
+
 			default = {
 				padding_left = " ",
 				padding_right = " ",
@@ -75,9 +80,15 @@ spec.default = {
 
 				icon = "󰏖 "
 			},
+
+			---|fE
 		}
+
+		---|fE
 	},
 	cmdline = {
+		---|fS
+
 		styles = {
 			default = {
 				---|fS
@@ -306,9 +317,13 @@ spec.default = {
 				---|fE
 			}
 		}
+
+		---|fE
 	},
 
 	message = {
+		---|fS
+
 		message_winconfig = {},
 		history_winconfig = {},
 
@@ -883,6 +898,8 @@ spec.default = {
 				end
 			}
 		}
+
+		---|fE
 	}
 };
 
@@ -1116,10 +1133,17 @@ spec.is_list = function (msg)
 	---|fE
 end
 
+--- Gets popup menu item style.
+---@param word string
+---@param kind ui.popupmenu.kind
+---@param menu string
+---@param info string
+---@return ui.popupmenu.style__static
 spec.get_item_config = function (word, kind, menu, info)
 	---|fS
 
 	local styles = spec.default.popupmenu.entries or {};
+	---@type ui.popupmenu.style
 	local _output = styles.default or {};
 
 	---@type string[]
@@ -1141,6 +1165,7 @@ spec.get_item_config = function (word, kind, menu, info)
 	    ::continue::
 	end
 
+	---@type ui.popupmenu.style__static
 	local output = {};
 
 	--- Turn dynamic values into static
