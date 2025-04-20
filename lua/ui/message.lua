@@ -874,7 +874,7 @@ end
 message.msg_clear = function ()
 	---|fS
 
-	if #vim.g.__confirm_keys == 0 then
+	if not vim.g.__confirm_keys or #vim.g.__confirm_keys == 0 then
 		return;
 	end
 
