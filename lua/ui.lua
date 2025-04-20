@@ -5,7 +5,7 @@ local ui = {};
 local log = require('ui.log');
 
 --- Maps event names to modules.
----@type table<string, "cmdline" | "linegrid" | "message">
+---@type table<string, "cmdline" | "linegrid" | "message" | "popup">
 ui.event_map = {
 	grid_resize = "linegrid",
 	default_colors_set = "linegrid",
@@ -31,7 +31,11 @@ ui.event_map = {
 	msg_showcmd = "message",
 	msg_ruler = "message",
 	msg_history_show = "message",
-	msg_history_clear = "message"
+	msg_history_clear = "message",
+
+	popupmenu_show = "popup",
+	popupmenu_select = "popup",
+	popupmenu_hide = "popup",
 };
 
 ---@type boolean
@@ -42,6 +46,8 @@ ui.namespace = vim.api.nvim_create_namespace("ui");
 
 --- Attaches to UI listener.
 ui.attach = function ()
+	local spec = require("ui.spec");
+
 	ui.enabled = true;
 
 	---@type table<string, table>
@@ -49,6 +55,7 @@ ui.attach = function ()
 		cmdline = require("ui.cmdline"),
 		linegrid = require("ui.linegrid"),
 		message = require("ui.message"),
+		popup = require("ui.popup"),
 	};
 
 	log.print("Setting up UI modules:");
@@ -66,6 +73,8 @@ ui.attach = function ()
 	vim.ui_attach(ui.namespace, {
 		ext_cmdline = true,
 		ext_messages = true,
+
+		ext_popupmenu = spec.config.popupmenu.enable == true,
 		-- ext_linegrid = true
 	}, function (event, ...)
 		log.print("Event, " .. event);

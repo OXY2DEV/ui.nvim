@@ -4,6 +4,68 @@ local log = require("ui.log")
 local utils = require("ui.utils");
 
 spec.default = {
+	popupmenu = {
+		enable = true,
+
+		entries = {
+			default = {
+				padding_left = " ",
+				padding_right = " ",
+
+				icon = "󰘎 ",
+				icon_hl = "Special"
+			},
+
+			vim_variable = {
+				condition = function (word)
+					return string.match(word, "^v:");
+				end,
+
+				icon = " "
+			},
+
+
+			class = {
+				condition = function (_, kind)
+					return kind == "m";
+				end,
+
+				icon = " "
+			},
+
+			["function"] = {
+				condition = function (_, kind)
+					return kind == "f";
+				end,
+
+				icon = "󰡱 "
+			},
+
+			macro = {
+				condition = function (_, kind)
+					return kind == "d";
+				end,
+
+				icon = "󰕠 "
+			},
+
+			type_definiton = {
+				condition = function (_, kind)
+					return kind == "t";
+				end,
+
+				icon = " "
+			},
+
+			variable = {
+				condition = function (_, kind)
+					return kind == "v";
+				end,
+
+				icon = "󰏖 "
+			},
+		}
+	},
 	cmdline = {
 		styles = {
 			default = {
@@ -1031,12 +1093,64 @@ spec.get_msg_processor = function (msg, lines, extmarks)
 end
 
 spec.is_list = function (msg)
+	---|fS
+
 	if not spec.config.message.is_list then
 		return false;
 	end
 
 	local can_cond, cond = pcall(spec.config.message.is_list, msg);
 	return can_cond and cond;
+
+	---|fE
+end
+
+spec.get_item_config = function (word, kind, menu, info)
+	---|fS
+
+	local styles = spec.default.popupmenu.entries or {};
+	local _output = styles.default or {};
+
+	---@type string[]
+	local keys = vim.tbl_keys(styles);
+	table.sort(keys);
+
+	--- Iterate over keys and get the first
+	--- match.
+	for _, key in ipairs(keys) do
+		if key == "default" then goto continue; end
+		local entry = styles[key] or {};
+		local can_validate, valid = pcall(entry.condition, word, kind, menu, info);
+
+		if can_validate and valid ~= false then
+			_output = vim.tbl_extend("force", _output, entry);
+			break;
+		end
+
+	    ::continue::
+	end
+
+	local output = {};
+
+	--- Turn dynamic values into static
+	--- values
+	for k, v in pairs(_output) do
+		if type(v) ~= "function" then
+			output[k] = v;
+		elseif k ~= "condition" then
+			local can_run, val = pcall(v, word, kind, menu, info);
+
+			if can_run and val ~= nil then
+				output[k] = val;
+			else
+				output[k] = nil;
+			end
+		end
+	end
+
+	return output;
+
+	---|fE
 end
 
 return spec;
