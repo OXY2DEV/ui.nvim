@@ -47,7 +47,6 @@ ui.namespace = vim.api.nvim_create_namespace("ui");
 --- Attaches to UI listener.
 ui.attach = function ()
 	local spec = require("ui.spec");
-
 	ui.enabled = true;
 
 	---@type table<string, table>
@@ -98,7 +97,12 @@ ui.detach = function ()
 	vim.ui_detach(ui.namespace);
 end
 
-ui.setup = function ()
+ui.setup = function (config)
+	if config then
+		local spec = require("ui.spec");
+		spec.config = vim.tbl_deep_extend("force", spec.config, config);
+	end
+
 	ui.attach();
 end
 
