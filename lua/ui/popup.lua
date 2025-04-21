@@ -6,7 +6,16 @@ local utils = require("ui.utils");
 
 ------------------------------------------------------------------------------
 
-popup.state = {};
+---@type ui.popupmenu.state
+popup.state = {
+	items = {},
+	selected = -1,
+
+	row = 0,
+	col = 0,
+
+	grid = -1,
+};
 
 ------------------------------------------------------------------------------
 
@@ -93,6 +102,7 @@ popup.__prepare = function ()
 	---|fE
 end
 
+--- Hides completion & information window.
 popup.__hide = function ()
 	---|fS
 
@@ -118,6 +128,8 @@ popup.__hide = function ()
 	---|fE
 end
 
+--- Shows additional information in a window.
+---@param item ui.popupmenu.item
 popup.__info = function (item)
 	---|fS
 
@@ -156,6 +168,7 @@ popup.__info = function (item)
 	---|fE
 end
 
+--- Renders popup menu.
 popup.__render = function ()
 	---|fS
 
@@ -274,7 +287,14 @@ end
 
 ------------------------------------------------------------------------------
 
+---@param items ui.popupmenu.item[]
+---@param selected integer | -1
+---@param row integer
+---@param col integer
+---@param grid integer | -1
 popup.popupmenu_show = function (items, selected, row, col, grid)
+	---|fS
+
 	popup.state = vim.tbl_extend("force", popup.state, {
 		items = items,
 
@@ -286,22 +306,33 @@ popup.popupmenu_show = function (items, selected, row, col, grid)
 	});
 
 	popup.__render();
+
+	---|fE
 end
 
+---@param selected integer | -1
 popup.popupmenu_select = function (selected)
+	---|fS
+
 	popup.state = vim.tbl_extend("force", popup.state, {
 		selected = selected,
 	});
 
 	popup.__render();
+
+	---|fE
 end
 
 popup.popupmenu_hide = function ()
+	---|fS
+
 	popup.state = vim.tbl_extend("force", popup.state, {
 		items = {}
 	});
 
 	popup.__hide();
+
+	---|fE
 end
 
 ------------------------------------------------------------------------------
