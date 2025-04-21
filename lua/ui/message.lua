@@ -703,7 +703,7 @@ message.__history = function (entries)
 
 	---|fS
 
-	if vim.g.__history_src == "vim" and entries then
+	if vim.g.__ui_history_pref == "vim" and entries then
 		-- Show raw history from Vim.
 		for _, entry in ipairs(entries) do
 			local _lines, _exts = utils.process_content(entry[2]);
@@ -860,11 +860,9 @@ message.msg_history_show = function (entries)
 	-- Escape hit-enter from opening messages.
 	vim.api.nvim_feedkeys(vim.api.nvim_replace_termcodes("<CR>", true, false, true), "n", false);
 
-	vim.schedule(function ()
-		log.assert(
-			pcall(message.__history, entries)
-		);
-	end);
+	log.assert(
+		pcall(message.__history, entries)
+	);
 
 	---|fE
 end
