@@ -116,6 +116,8 @@ message.__prepare = function ()
 		row = 0, col = 0,
 		width = 1, height = 1,
 
+		border = "none",
+
 		style = "minimal",
 		hide = true
 	};
@@ -360,7 +362,7 @@ message.__confirm = function (obj)
 			width = config.width or utils.max_len(lines),
 			height = config.height or utils.wrapped_height(lines, config.width),
 
-			border = config.border,
+			border = config.border or "none",
 			style = "minimal",
 
 			zindex = 90,
@@ -469,7 +471,7 @@ message.__list = function (obj)
 			width = config.width or W,
 			height = config.height or H,
 
-			border = config.border,
+			border = config.border or "none",
 			style = "minimal",
 
 			zindex = 90,
@@ -621,6 +623,8 @@ message.__render = function ()
 
 		width = W + decor_size,
 		height = utils.wrapped_height(lines, W),
+
+		border = "none",
 
 		zindex = 80,
 		hide = false

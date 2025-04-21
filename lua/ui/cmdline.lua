@@ -78,6 +78,8 @@ cmdline.__prepare = function ()
 			width = 1,
 			height = 1,
 
+			border = "none",
+
 			hide = true,
 			focusable = false
 		});
@@ -258,6 +260,8 @@ cmdline.__render = function ()
 
 		row = vim.o.lines - (cmdline.__statualine_visible and 1 or 1) - (vim.o.cmdheight + H),
 		col = 0,
+
+		border = "none",
 
 		width = vim.o.columns,
 		height = H,

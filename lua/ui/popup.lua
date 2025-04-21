@@ -58,6 +58,8 @@ popup.__prepare = function ()
 			width = 1,
 			height = 1,
 
+			border = "none",
+
 			hide = true,
 			focusable = false
 		});
@@ -88,6 +90,8 @@ popup.__prepare = function ()
 
 			width = 1,
 			height = 1,
+
+			border = "none",
 
 			hide = true,
 			focusable = false
