@@ -50,6 +50,8 @@
 ---@field level integer Level of the command-line.
 ---@field hl_id? integer Highlight group ID for `prompt`.
 ---@field lines? ui.cmdline.content[] Context lines.
+---@field c? string Character to show under the cursor.
+---@field shift? boolean Whether `c` should shift the text.
 
 
 ---@alias ui.cmdline.lines string[] Lines of text shown in the command-line.
