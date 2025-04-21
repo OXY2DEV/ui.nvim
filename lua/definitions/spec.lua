@@ -41,6 +41,8 @@
 ---@field message_winconfig? table Window configuration for the message window.
 ---@field history_winconfig? table Window configuration for the history window.
 ---
+---@field is_list fun(msg: ui.message.entry): boolean Is `msg` a list-type message?
+---
 ---@field processors? table<string, ui.message.processor> Message processors.
----@field confirm? table<string, ui.message.processor> Confirmation message style.
----@field list? table<string, ui.message.processor> List message style.
+---@field confirm? table<string, ui.message.confirm> Confirmation message style.
+---@field list? table<string, ui.message.list> List message style.

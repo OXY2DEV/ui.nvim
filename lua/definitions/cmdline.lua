@@ -3,6 +3,9 @@
 ---@meta
 
 
+---@alias ui.virt_lines ( [ string, string | nil ][] )[]
+
+
 ---@class ui.cmdline.configuration Configuration table for the command-line.
 ---
 ---@field styles table<string, ui.cmdline.style>
@@ -21,7 +24,7 @@
 ---@field filetype? string | fun(state: ui.cmdline.state, lines: string[]): string File type for the command-line buffer.
 ---@field icon? [ string, string? ][] | fun(state: ui.cmdline.state, lines: string[]): [ string, string? ][] Icon shown on the left side of the command-line. Same structure as virtual text.
 ---@field offset? integer | fun(state: ui.cmdline.state, lines: string[]): integer Number of characters to hide from the start(used for `:lua`, `:=`).
----@field title? ( [ string, string? ][] )[] | fun(state: ui.cmdline.state, lines: string[]): ( [ string, string? ][] )[] Title for the command-line. Same structure as virtual lines.
+---@field title? ui.virt_lines | fun(state: ui.cmdline.state, lines: string[]): ui.virt_lines Title for the command-line. Same structure as virtual lines.
 ---@field winhl? string | fun(state: ui.cmdline.state, lines: string[]): string Value of 'winhl' for the command-line window.
 
 
@@ -33,7 +36,7 @@
 ---@field filetype? string File type for the command-line buffer.
 ---@field icon? [ string, string? ][] Icon shown on the left side of the command-line. Same structure as virtual text.
 ---@field offset? integer Number of characters to hide from the start(used for `:lua`, `:=`).
----@field title? ( [ string, string? ][] )[] Title for the command-line. Same structure as virtual lines.
+---@field title? ui.virt_lines Title for the command-line. Same structure as virtual lines.
 ---@field winhl? string Value of 'winhl' for the command-line window.
 
 

@@ -1,6 +1,4 @@
 local spec = {};
-local log = require("ui.log")
-
 local utils = require("ui.utils");
 
 ---@type ui.config
@@ -908,6 +906,7 @@ spec.default = {
 	}
 };
 
+---@type ui.config
 spec.config = vim.deepcopy(spec.default);
 
 --- Gets cmdline style.
@@ -1076,6 +1075,11 @@ spec.get_listmsg_config = function (msg, lines, extmarks)
 	---|fE
 end
 
+--- Gets the message processor for `msg`.
+---@param msg ui.message.entry
+---@param lines string[]
+---@param extmarks ui.message.extmarks
+---@return ui.message.processor__static
 spec.get_msg_processor = function (msg, lines, extmarks)
 	---|fS
 
@@ -1147,6 +1151,9 @@ spec.get_msg_processor = function (msg, lines, extmarks)
 	---|fE
 end
 
+--- Is `msg` a list type message?
+---@param msg ui.message.entry
+---@return boolean
 spec.is_list = function (msg)
 	---|fS
 

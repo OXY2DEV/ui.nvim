@@ -5,12 +5,16 @@
 
 ---@class ui.message.processor Message processor.
 ---
+---@field condition? fun(msg: ui.message.entry, lines: string[], extmarks: ui.message.extmarks): boolean Condition for this processor.
+---
 ---@field duration? integer | fun(msg: ui.message.entry, lines: string[], extmarks: ui.message.extmarks): integer Message visibility duration(in milliseconds).
 ---@field modifier? ui.message.modified | fun(msg: ui.message.entry, lines: string[], extmarks: ui.message.extmarks): ui.message.modified Modified version of the message.
 ---@field decorations? ui.message.decorations | fun(msg: ui.message.entry, lines: string[], extmarks: ui.message.extmarks): ui.message.decorations Decorations for the message.
 
 
 ---@class ui.message.processor__static Static message processor.
+---
+---@field condition? boolean Condition for this processor.
 ---
 ---@field duration? integer Message visibility duration(in milliseconds).
 ---@field modifier? ui.message.modified Modified version of the message.
@@ -51,6 +55,8 @@
 
 ---@class ui.message.confirm Style for the confirmation window.
 ---
+---@field condition? fun(msg: ui.message.entry, lines: string[], extmarks: ui.message.extmarks): boolean Condition for this confirm message.
+---
 ---@field border? ui.message.border | fun(msg: ui.message.entry, lines: string[], extmarks: ui.message.extmarks): ui.message.border Confirmation window border.
 ---
 ---@field row? integer | fun(msg: ui.message.entry, lines: string[], extmarks: ui.message.extmarks): integer Row position of the confirmation window.
@@ -64,6 +70,8 @@
 
 
 ---@class ui.message.confirm__static Static style for the confirmation window.
+---
+---@field condition? boolean Condition for this confirm message.
 ---
 ---@field border? ui.message.border Confirmation window border.
 ---
@@ -79,19 +87,23 @@
 
 ---@class ui.message.list Style for the list window.
 ---
----@field border? ui.message.border Confirmation window border.
+---@field condition? fun(msg: ui.message.entry, lines: string[], extmarks: ui.message.extmarks): boolean Condition for this list message.
 ---
----@field row? integer Row position of the list window.
----@field col? integer Column position of the list window.
+---@field border? ui.message.border | fun(msg: ui.message.entry, lines: string[], extmarks: ui.message.extmarks): ui.message.border List window border.
 ---
----@field width? integer Width of the list window.
----@field height? integer Width of the list window.
+---@field row? integer | fun(msg: ui.message.entry, lines: string[], extmarks: ui.message.extmarks): integer Row position of the list window.
+---@field col? integer | fun(msg: ui.message.entry, lines: string[], extmarks: ui.message.extmarks): integer Column position of the list window.
 ---
----@field modifier? ui.message.modified Modified version of the message.
----@field winhl? string Value of 'winhl' for the list window.
+---@field width? integer | fun(msg: ui.message.entry, lines: string[], extmarks: ui.message.extmarks): integer Width of the list window.
+---@field height? integer | fun(msg: ui.message.entry, lines: string[], extmarks: ui.message.extmarks): integer Width of the list window.
+---
+---@field modifier? ui.message.modified | fun(msg: ui.message.entry, lines: string[], extmarks: ui.message.extmarks): ui.message.modified Modified version of the message.
+---@field winhl? string | fun(msg: ui.message.entry, lines: string[], extmarks: ui.message.extmarks): string Value of 'winhl' for the list window.
 
 
 ---@class ui.message.list__static Static style for the list window.
+---
+---@field condition? boolean Condition for this list message.
 ---
 ---@field border? ui.message.border Confirmation window border.
 ---
