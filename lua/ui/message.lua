@@ -58,7 +58,7 @@ message.statuscolumn = function ()
 	---@type integer Current line-number(0-indexed).
 	local lnum = vim.v.lnum - 1;
 
-	for _, entry in ipairs(win == message.history_window[tab] and message.history_decorations or message.decorations) do
+	for _, entry in ipairs(win == message.history_window[tab] and (message.history_decorations or {}) or (message.decorations or {})) do
 		if lnum >= entry.from and lnum <= entry.to then
 			if lnum == entry.from then
 				return utils.to_statuscolumn(entry.icon);
