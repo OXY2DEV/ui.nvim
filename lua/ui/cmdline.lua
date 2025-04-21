@@ -190,22 +190,51 @@ cmdline.__cursor = function ()
 		});
 	end
 
+	local char = cmdline.get_state("c", "");
+	local shift = cmdline.get_state("shift", false);
+
 	-- Add a fake Cursor.
-	log.assert(
-		pcall(vim.api.nvim_buf_set_extmark,
+	if char ~= "" then
+		log.assert(
+			pcall(vim.api.nvim_buf_set_extmark,
 
-			cmdline.buffer,
-			cmdline.cursor_ns,
+				cmdline.buffer,
+				cmdline.cursor_ns,
 
-			#lines - 1,
-			pos,
+				#lines - 1,
+				pos,
 
-			{
-				end_col = pos + to,
-				hl_group = cmdline.style.cursor or "Cursor"
-			}
-		)
-	);
+				{
+					end_col = pos + to,
+					virt_text_pos = shift == true and "inline" or "overlay",
+
+					virt_text = {
+						{ char, cmdline.style.cursor or "Cursor" }
+					}
+				}
+			)
+		);
+
+		cmdline.set_state({
+			c = ""
+		});
+	else
+		log.assert(
+			pcall(vim.api.nvim_buf_set_extmark,
+
+				cmdline.buffer,
+				cmdline.cursor_ns,
+
+				#lines - 1,
+				pos,
+
+				{
+					end_col = pos + to,
+					hl_group = cmdline.style.cursor or "Cursor"
+				}
+			)
+		);
+	end
 
 	---|fE
 end
@@ -390,6 +419,26 @@ cmdline.cmdline_pos = function (pos, level)
 		cmdline.__cursor();
 		vim.api.nvim__redraw({ flush = true, win = cmdline.window[tab] })
 	end);
+
+	---|fE
+end
+
+cmdline.cmdline_special_char = function (c, shift, level)
+	---|fS
+
+	cmdline.set_state({
+		c = c,
+		shift = shift,
+		level = level
+	});
+
+	---@type integer
+	local tab = vim.api.nvim_get_current_tabpage();
+
+	-- Special characters should be rendered
+	-- immediately.
+	cmdline.__cursor();
+	vim.api.nvim__redraw({ flush = true, win = cmdline.window[tab] })
 
 	---|fE
 end
