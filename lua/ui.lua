@@ -1,12 +1,13 @@
 --- Example UI module
 --- for Neovim.
 local ui = {};
-
 local log = require('ui.log');
 
 --- Maps event names to modules.
 ---@type table<string, "cmdline" | "linegrid" | "message" | "popup">
 ui.event_map = {
+	---|fS
+
 	grid_resize = "linegrid",
 	default_colors_set = "linegrid",
 	hl_attr_define = "linegrid",
@@ -36,6 +37,8 @@ ui.event_map = {
 	popupmenu_show = "popup",
 	popupmenu_select = "popup",
 	popupmenu_hide = "popup",
+
+	---|fE
 };
 
 ---@type boolean
@@ -46,6 +49,8 @@ ui.namespace = vim.api.nvim_create_namespace("ui");
 
 --- Attaches to UI listener.
 ui.attach = function ()
+	---|fS
+
 	local spec = require("ui.spec");
 	ui.enabled = true;
 
@@ -57,7 +62,7 @@ ui.attach = function ()
 		popup = require("ui.popup"),
 	};
 
-	log.print("Setting up UI modules:");
+	log.print("Setting up UI modules,");
 	log.level_inc();
 
 	for k, v in pairs(modules) do
@@ -74,7 +79,6 @@ ui.attach = function ()
 		ext_messages = true,
 
 		ext_popupmenu = spec.config.popupmenu.enable == true,
-		-- ext_linegrid = true
 	}, function (event, ...)
 		log.print("Event, " .. event);
 		log.level_inc();
@@ -89,6 +93,8 @@ ui.attach = function ()
 
 		log.level_dec();
 	end);
+
+	---|fE
 end
 
 --- Detaches from UI listener.
@@ -97,13 +103,18 @@ ui.detach = function ()
 	vim.ui_detach(ui.namespace);
 end
 
+---@param config ui.config
 ui.setup = function (config)
+	---|fS
+
 	if config then
 		local spec = require("ui.spec");
 		spec.config = vim.tbl_deep_extend("force", spec.config, config);
 	end
 
 	ui.attach();
+
+	---|fE
 end
 
 return ui;

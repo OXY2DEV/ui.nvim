@@ -18,6 +18,9 @@ cmdline.state = {
 	indent = 0,
 	level = 1,
 	prompt = nil,
+
+	c = "",
+	shift = false
 };
 
 --- Gets cmdline state.
