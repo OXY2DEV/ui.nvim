@@ -36,7 +36,7 @@ message.history = {};
 ---@type ui.message.entry[] Currently visible message.
 message.visible = {};
 
----@type table[] Decorations to show in the statuscolumn.
+---@type ui.message.decorations[] Decorations to show in the statuscolumn.
 message.decorations = nil;
 
 --- Custom statuscolumn for the message window.
@@ -236,6 +236,7 @@ message.__add = function (kind, content)
 		local current_id = message.id;
 		local lines = utils.to_lines(content);
 
+		---@type ui.message.processor__static
 		local processor = spec.get_msg_processor({ kind = kind, content = content }, lines, {}) or {};
 		local duration = processor.duration or 600;
 
@@ -308,6 +309,7 @@ message.__replace = function (kind, content)
 
 		local lines = utils.to_lines(content);
 
+		---@type ui.message.processor__static
 		local processor = spec.get_msg_processor({ kind = kind, content = content }, lines, {}) or {};
 		local duration = processor.duration or 600;
 
@@ -337,6 +339,8 @@ message.__confirm = function (obj)
 		local lines, exts = utils.process_content(obj.content);
 
 		message.__prepare();
+
+		---@type ui.message.confirm__static
 		local config = spec.get_confirm_config(obj, lines, exts);
 
 		if config.modifier then
@@ -418,6 +422,8 @@ message.__list = function (obj)
 		local lines, exts = utils.process_content(obj.content);
 
 		message.__prepare();
+
+		---@type ui.message.list__static
 		local config = spec.get_listmsg_config(obj, lines, exts);
 
 		if config.modifier then
@@ -541,6 +547,7 @@ message.__render = function ()
 	end
 
 	message.__prepare();
+
 	local lines, exts = {}, {};
 	message.decorations = {};
 
@@ -548,6 +555,7 @@ message.__render = function ()
 		local value = message.visible[key];
 		local m_lines, m_exts = utils.process_content(value.content);
 
+		---@type ui.message.processor__static
 		local processor = spec.get_msg_processor(value, m_lines, m_exts) or {};
 
 		if processor.modifier then
@@ -613,8 +621,6 @@ message.__render = function ()
 
 		width = W + decor_size,
 		height = utils.wrapped_height(lines, W),
-
-		-- style = "minimal",
 
 		zindex = 80,
 		hide = false

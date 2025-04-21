@@ -2,16 +2,33 @@
 --- Maintainer: MD. Mouinul Hossain
 ---@meta
 
---- Configuration table for the command-line.
----@class ui.cmdline.configuration
+
+---@class ui.cmdline.configuration Configuration table for the command-line.
 ---
 ---@field styles table<string, ui.cmdline.style>
+
+
+---@class ui.cmdline.configuration__static Static configuration table for the command-line.
+---
+---@field styles table<string, ui.cmdline.style__static>
 
 
 --- Style for the command-line.
 ---@class ui.cmdline.style
 ---
----@field condition? fun(state: ui.cmdline.state): boolean Condition for this style(`nil` for the default style).
+---@field condition? fun(state: ui.cmdline.state, lines: string[]): boolean Condition for this style(`nil` for the default style).
+---@field cursor? string | fun(state: ui.cmdline.state, lines: string[]): string Highlight group for the cursor in the command-line.
+---@field filetype? string | fun(state: ui.cmdline.state, lines: string[]): string File type for the command-line buffer.
+---@field icon? [ string, string? ][] | fun(state: ui.cmdline.state, lines: string[]): [ string, string? ][] Icon shown on the left side of the command-line. Same structure as virtual text.
+---@field offset? integer | fun(state: ui.cmdline.state, lines: string[]): integer Number of characters to hide from the start(used for `:lua`, `:=`).
+---@field title? ( [ string, string? ][] )[] | fun(state: ui.cmdline.state, lines: string[]): ( [ string, string? ][] )[] Title for the command-line. Same structure as virtual lines.
+---@field winhl? string | fun(state: ui.cmdline.state, lines: string[]): string Value of 'winhl' for the command-line window.
+
+
+---@class ui.cmdline.style__static Static style for the command-line.
+---
+---@field condition? boolean Condition for this style(`nil` for the default style).
+---
 ---@field cursor? string Highlight group for the cursor in the command-line.
 ---@field filetype? string File type for the command-line buffer.
 ---@field icon? [ string, string? ][] Icon shown on the left side of the command-line. Same structure as virtual text.

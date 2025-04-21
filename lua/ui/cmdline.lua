@@ -8,7 +8,7 @@ local utils = require("ui.utils");
 
 ------------------------------------------------------------------------------
 
----@type ui.cmdline.style
+---@type ui.cmdline.style__static
 cmdline.style = nil;
 
 ---@type ui.cmdline.state
@@ -106,7 +106,7 @@ cmdline.__lines = function ()
 		current_exts[e] = {};
 	end
 
-	---@type ui.cmdline.style
+	---@type ui.cmdline.style__static
 	cmdline.style = spec.get_cmdline_style(cmdline.state, current_lines);
 
 	--- Add an extra space at the end.

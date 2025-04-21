@@ -86,6 +86,7 @@ spec.default = {
 
 		---|fE
 	},
+
 	cmdline = {
 		---|fS
 
@@ -170,6 +171,7 @@ spec.default = {
 				end,
 
 				icon = function ()
+					---@diagnostic disable:undefined-field
 					if not _G.is_within_termux then
 						return {
 							{ "  ", "UICmdlineEvalIcon" }
@@ -183,6 +185,7 @@ spec.default = {
 							{ " 󰀵 ", "UICmdlineEvalIcon" }
 						};
 					end
+					---@diagnostic enable:undefined-field
 				end,
 
 				---|fE
@@ -262,6 +265,7 @@ spec.default = {
 				end,
 
 				title = function (state)
+					---@type ( [ string, string? ][] )[]
 					local title = {};
 					local is_first = true;
 
@@ -292,6 +296,7 @@ spec.default = {
 				end,
 
 				title = function (state)
+					---@type ( [ string, string? ][] )[]
 					local output = {};
 					local lines = utils.text_wrap({ state.prompt or "" }, math.floor(vim.o.columns * 0.8));
 					local hl = "UICmdlineLuaIcon";
@@ -490,7 +495,7 @@ spec.default = {
 
 				modifier = function (_, lines)
 					if vim.g.__ui_history then
-						return;
+						return {};
 					end
 
 					local path, line, actual_error = "", "", "";
@@ -905,10 +910,15 @@ spec.default = {
 
 spec.config = vim.deepcopy(spec.default);
 
+--- Gets cmdline style.
+---@param state ui.cmdline.state
+---@param lines string[]
+---@return ui.cmdline.style__static
 spec.get_cmdline_style = function (state, lines)
 	---|fS
 
 	local styles = spec.config.cmdline.styles or {};
+	---@type ui.cmdline.style
 	local _output = styles.default or {};
 
 	---@type string[]
@@ -919,6 +929,7 @@ spec.get_cmdline_style = function (state, lines)
 	--- match.
 	for _, key in ipairs(keys) do
 		if key == "default" then goto continue; end
+
 		local entry = styles[key] or {};
 		local can_validate, valid = pcall(entry.condition, state, lines);
 
@@ -930,6 +941,7 @@ spec.get_cmdline_style = function (state, lines)
 	    ::continue::
 	end
 
+	---@type ui.cmdline.style__static
 	local output = {};
 
 	--- Turn dynamic values into static
@@ -953,10 +965,16 @@ spec.get_cmdline_style = function (state, lines)
 	---|fE
 end
 
+--- Gets confirmation message style.
+---@param msg ui.message.entry
+---@param lines string[]
+---@param extmarks ui.message.extmarks
+---@return ui.message.confirm__static
 spec.get_confirm_config = function (msg, lines, extmarks)
 	---|fS
 
 	local styles = spec.config.message.confirm or {};
+	---@type ui.message.confirm
 	local _output = styles.default or {};
 
 	---@type string[]
@@ -978,6 +996,7 @@ spec.get_confirm_config = function (msg, lines, extmarks)
 	    ::continue::
 	end
 
+	---@type ui.message.confirm__static
 	local output = {};
 
 	--- Turn dynamic values into static
@@ -1001,10 +1020,17 @@ spec.get_confirm_config = function (msg, lines, extmarks)
 	---|fE
 end
 
+
+--- Gets list message style.
+---@param msg ui.message.entry
+---@param lines string[]
+---@param extmarks ui.message.extmarks
+---@return ui.message.list__static
 spec.get_listmsg_config = function (msg, lines, extmarks)
 	---|fS
 
 	local styles = spec.config.message.list or {};
+	---@type ui.message.list
 	local _output = styles.default or {};
 
 	---@type string[]
@@ -1026,6 +1052,7 @@ spec.get_listmsg_config = function (msg, lines, extmarks)
 	    ::continue::
 	end
 
+	---@type ui.message.list__static
 	local output = {};
 
 	--- Turn dynamic values into static
