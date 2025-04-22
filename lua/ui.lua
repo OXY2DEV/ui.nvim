@@ -1,7 +1,7 @@
 --- Example UI module
 --- for Neovim.
 local ui = {};
-local log = require('ui.log');
+local log = require("ui.log");
 
 --- Maps event names to modules.
 ---@type table<string, "cmdline" | "linegrid" | "message" | "popup">

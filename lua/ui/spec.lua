@@ -732,6 +732,8 @@ spec.default = {
 			},
 
 			write = {
+				---|fS
+
 				condition = function (msg)
 					return msg.kind == "bufwrite";
 				end,
@@ -767,6 +769,8 @@ spec.default = {
 						{ "▍  ", "UIMessageOk" }
 					},
 				}
+
+				---|fE
 			}
 		},
 
