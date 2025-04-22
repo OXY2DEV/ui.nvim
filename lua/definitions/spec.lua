@@ -42,6 +42,8 @@
 ---@field enable? boolean Should this module be enabled?
 ---
 ---@field message_winconfig? table Window configuration for the message window.
+---@field list_winconfig? table Window configuration for the list message window.
+---@field confirm_winconfig? table Window configuration for the confirmation window.
 ---@field history_winconfig? table Window configuration for the history window.
 ---
 ---@field is_list fun(msg: ui.message.entry): boolean Is `msg` a list-type message?

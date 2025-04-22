@@ -369,7 +369,7 @@ message.__confirm = function (obj)
 		---@type integer
 		local tab = vim.api.nvim_get_current_tabpage();
 
-		local window_config = {
+		local window_config = vim.tbl_extend("force", {
 			relative = "editor",
 
 			row = config.row or math.ceil((vim.o.lines - #lines) / 2),
@@ -383,7 +383,7 @@ message.__confirm = function (obj)
 
 			zindex = 90,
 			hide = false
-		};
+		}, spec.config.message.confirm_winconfig or {});
 
 		vim.api.nvim_buf_clear_namespace(message.confirm_buffer, message.namespace, 0, -1);
 		vim.api.nvim_buf_set_lines(message.confirm_buffer, 0, -1, false, lines);
@@ -478,7 +478,7 @@ message.__list = function (obj)
 		---@type integer
 		local tab = vim.api.nvim_get_current_tabpage();
 
-		local window_config = {
+		local window_config = vim.tbl_extend("force", {
 			relative = "editor",
 
 			row = config.row or math.ceil((vim.o.lines - H) / 2),
@@ -492,7 +492,7 @@ message.__list = function (obj)
 
 			zindex = 90,
 			hide = false
-		};
+		}, spec.config.message.list_winconfig or {});
 
 		vim.api.nvim_buf_clear_namespace(message.list_buffer, message.namespace, 0, -1);
 		vim.api.nvim_buf_set_lines(message.list_buffer, 0, -1, false, lines);
@@ -631,7 +631,7 @@ message.__render = function ()
 	---@type integer
 	local tab = vim.api.nvim_get_current_tabpage();
 
-	local window_config = vim.tbl_extend("keep", spec.config.message.window or {}, {
+	local window_config = vim.tbl_extend("keep", spec.config.message.message_winconfig or {}, {
 		relative = "editor",
 
 		row = vim.o.lines - (vim.o.cmdheight + (vim.g.__ui_cmd_height or 0) + 1) - utils.wrapped_height(lines, W),
@@ -818,7 +818,7 @@ message.__history = function (entries)
 		height = 10,
 
 		hide = false
-	}, spec.config.message.message_winconfig or {});
+	}, spec.config.message.history_winconfig or {});
 
 	if message.history_window[tab] and vim.api.nvim_win_is_valid(message.history_window[tab]) then
 		vim.api.nvim_win_set_config(message.history_window[tab], window_config);

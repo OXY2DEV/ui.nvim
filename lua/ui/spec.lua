@@ -332,6 +332,8 @@ spec.default = {
 		enable = true,
 
 		message_winconfig = {},
+		confirm_winconfig = {},
+		list_winconfig = {},
 		history_winconfig = {},
 
 		ignore = function (kind, content)
@@ -739,7 +741,13 @@ spec.default = {
 				end,
 
 				modifier = function (_, lines)
-					local filename, _, bytes = string.match(lines[#lines], '^"(.+)" (%d+)L, (%d+)B written$');
+					local filename, _, bytes;
+
+					if string.match(lines[#lines], "%[New%]") then
+						filename, _, bytes = string.match(lines[#lines], '^"(.+)" %[New%] (%d+)L, (%d+)B written$');
+					else
+						filename, _, bytes = string.match(lines[#lines], '^"(.+)" (%d+)L, (%d+)B written$');
+					end
 
 					return {
 						lines = {
