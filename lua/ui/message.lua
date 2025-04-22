@@ -49,8 +49,6 @@ message.statuscolumn = function ()
 	local tab = vim.api.nvim_get_current_tabpage();
 	local win = vim.g.statusline_winid;
 
-	log.print(vim.inspect(win == message.history_window[tab] and (message.history_decorations) or (message.decorations)));
-
 	if win ~= message.msg_window[tab] and win ~= message.history_window[tab] then
 		-- Wrong window.
 		return "";

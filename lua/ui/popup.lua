@@ -337,8 +337,6 @@ popup.__completion_renderer = function ()
 	local H = math.min(#popup.state.items, spec.config.popupmenu.max_height or 5);
 	local screenpos = vim.fn.screenpos(win, pos[1], pos[2]);
 
-	log.print(vim.inspect(screenpos))
-
 	local tab = vim.api.nvim_get_current_tabpage();
 	local win_config = {
 		relative = "cursor",
@@ -379,6 +377,7 @@ popup.__completion_renderer = function ()
 		end
 	end
 
+	pcall(vim.api.nvim_ui_pum_set_bounds, screenpos.row, screenpos.curscol, W, H);
 	pcall(vim.api.nvim_win_set_config, popup.window[tab], win_config);
 	pcall(vim.api.nvim_win_set_cursor, popup.window[tab], { popup.state.selected + 1, 0 });
 
