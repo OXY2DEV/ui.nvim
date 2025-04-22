@@ -48,6 +48,6 @@ return {
 
 ## 📚 Guide
 
-The [wiki](https://www.github.com/OXY2DEV/ui.nvim.wiki.git) explains how to create your own UIs using lua.
+The [wiki](https://github.com/OXY2DEV/ui.nvim/wiki) explains how to create your own UIs using lua.
 
 
