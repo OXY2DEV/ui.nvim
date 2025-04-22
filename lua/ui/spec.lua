@@ -88,6 +88,8 @@ spec.default = {
 	cmdline = {
 		---|fS
 
+		enable = true,
+
 		styles = {
 			default = {
 				---|fS
@@ -326,6 +328,8 @@ spec.default = {
 
 	message = {
 		---|fS
+
+		enable = true,
 
 		message_winconfig = {},
 		history_winconfig = {},
