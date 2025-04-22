@@ -377,7 +377,6 @@ popup.__completion_renderer = function ()
 		end
 	end
 
-	pcall(vim.api.nvim_ui_pum_set_bounds, screenpos.row, screenpos.curscol, W, H);
 	pcall(vim.api.nvim_win_set_config, popup.window[tab], win_config);
 	pcall(vim.api.nvim_win_set_cursor, popup.window[tab], { popup.state.selected + 1, 0 });
 

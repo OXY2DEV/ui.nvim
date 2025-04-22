@@ -78,7 +78,7 @@ message.statuscolumn = function ()
 		end
 	end
 
-	return "X";
+	return "";
 
 	---|fE
 end
