@@ -1,10 +1,11 @@
+require("ui").setup({});
+
+
 vim.api.nvim_create_autocmd("VimEnter", {
 	callback = function ()
+		require("ui.highlight").setup();
 		local log = require("ui.log");
 		-- vim.g.__ui_dev = true;
-
-		require("ui").setup();
-		require("ui.highlight").setup();
 
 		log.print("Attached to UI");
 		log.level_inc();
