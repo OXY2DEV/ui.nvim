@@ -370,15 +370,24 @@ spec.default = {
 							config.icon = {
 								{ "▍ ", "UIMessageWarnSign" }
 							};
+							config.padding = {
+								{ "▍  ", "UIMessageWarnSign" }
+							};
 							config.line_hl_group = "UIMessageWarn";
 						elseif hl == "ErrorMsg" then
 							config.icon = {
 								{ "▍ ", "UIMessageErrorSign" }
 							};
+							config.padding = {
+								{ "▍  ", "UIMessageErrorSign" }
+							};
 							config.line_hl_group = "UIMessageError";
 						else
 							config.icon = {
 								{ "▍ ", "UIMessageInfoSign" }
+							};
+							config.padding = {
+								{ "▍  ", "UIMessageInfoSign" }
 							};
 							config.line_hl_group = "UIMessageInfo";
 						end
@@ -438,6 +447,9 @@ spec.default = {
 					icon = {
 						{ "▍󰣖 ", "UIMessageHint" }
 					},
+					padding = {
+						{ "▍  ", "UIMessageHint" }
+					},
 					line_hl_group = "UIMessageHint"
 				}
 
@@ -467,12 +479,18 @@ spec.default = {
 							icon = {
 								{ "▍ ", "UICmdlineSearchUpIcon" }
 							},
+							padding = {
+								{ "▍  ", "UICmdlineSearchUpIcon" }
+							},
 							line_hl_group = "UICmdlineSearchUp"
 						};
 					else
 						return {
 							icon = {
 								{ "▍ ", "UICmdlineSearchDownIcon" }
+							},
+							padding = {
+								{ "▍  ", "UICmdlineSearchDownIcon" }
 							},
 							line_hl_group = "UICmdlineSearchDown"
 						};
@@ -569,7 +587,7 @@ spec.default = {
 						{ "▍ ", "UIMessageErrorSign" }
 					},
 					padding = {
-						{ "▍", "UIMessageErrorSign" }
+						{ "▍  ", "UIMessageErrorSign" }
 					},
 					line_hl_group = "UIMessageError",
 				}
@@ -635,7 +653,7 @@ spec.default = {
 						{ "▍ ", "UIMessagePaletteSign" }
 					},
 					padding = {
-						{ "▍", "UIMessagePaletteSign" }
+						{ "▍  ", "UIMessagePaletteSign" }
 					},
 				}
 
@@ -688,7 +706,7 @@ spec.default = {
 						{ "▍ ", "UIMessagePaletteSign" }
 					},
 					padding = {
-						{ "▍", "UIMessagePaletteSign" }
+						{ "▍  ", "UIMessagePaletteSign" }
 					},
 				}
 
@@ -707,7 +725,7 @@ spec.default = {
 				return false;
 			end
 
-			local invalid_commands = { "^highlight .+", "^hi .+" };
+			local invalid_commands = { "^highlight .+", "^hi .+", "^set .+" };
 			local last_cmd = vim.fn.histget("cmd", -1);
 
 			for _, pattern in ipairs(invalid_commands) do
