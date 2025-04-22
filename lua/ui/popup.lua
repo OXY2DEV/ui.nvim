@@ -344,7 +344,7 @@ popup.__completion_renderer = function ()
 	local win = vim.api.nvim_get_current_win();
 	local pos = vim.api.nvim_win_get_cursor(win);
 
-	local H = #popup.state.items;
+	local H = math.min(#popup.state.items, spec.config.popupmenu.max_height or 5);
 	local screenpos = vim.fn.screenpos(win, pos[1], pos[2]);
 
 	log.print(vim.inspect(screenpos))

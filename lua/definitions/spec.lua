@@ -11,6 +11,9 @@
 ---
 ---@field enable? boolean Should this module be enabled?
 ---@field tooltip? [ string, string? ][] | fun(): [ string, string? ][] Tooltip(as virtual text)
+---
+---@field max_height? integer Maximum height of the completion menu.
+---
 ---@field entries table<string, ui.popupmenu.style> Styles for the completion items.
 
 
