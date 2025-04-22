@@ -164,11 +164,6 @@ popup.__info = function (item)
 
 	pcall(vim.api.nvim_win_set_config, popup.info_window[tab], win_config);
 
-	vim.api.nvim__redraw({
-		flush = true,
-		win = popup.info_window[tab]
-	});
-
 	---|fE
 end
 
@@ -281,11 +276,6 @@ popup.__strip_renderer = function ()
 	pcall(vim.api.nvim_win_set_config, popup.window[tab], win_config);
 	pcall(vim.api.nvim_win_set_cursor, popup.window[tab], { 1, X });
 
-	vim.api.nvim__redraw({
-		flush = true,
-		win = popup.window[tab]
-	});
-
 	---|fE
 end
 
@@ -391,11 +381,6 @@ popup.__completion_renderer = function ()
 
 	pcall(vim.api.nvim_win_set_config, popup.window[tab], win_config);
 	pcall(vim.api.nvim_win_set_cursor, popup.window[tab], { popup.state.selected + 1, 0 });
-
-	vim.api.nvim__redraw({
-		flush = true,
-		win = popup.window[tab]
-	});
 
 	---|fE
 end
