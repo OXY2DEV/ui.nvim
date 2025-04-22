@@ -1,9 +1,6 @@
 # 💻 ui.nvim
 
-A minimal command-line & message UI for Neovim.
-
->[!TIP]
-> You can use this repo as a `blueprint` to create your own version of the UI(s).
+A blueprint/template/guide to customize Neovim's UI using Lua.
 
 ## ✨ Features
 
@@ -15,11 +12,23 @@ A minimal command-line & message UI for Neovim.
     - `VimResized` support.
     - Changing appearance based on command-line state.
     - Syntax highlighting(tree-sitter based).
+
 - Custom UI for the message. It supports,
+	- Ignoring specific messages.
     - Changing message content and highlighting.
     - Separate window(s) for `confirmation` and `list` style messages.
     - Custom `:messages` window.
+
+- Custom UI for the pop-up menu. It supports,
+	- Icons for different entry types.
+    - Changing how each entry is shown(padding, background, select color).
+
 - Dynamic highlight groups.
+
+## 🤦‍♂️ Known issues
+
+- Pum menu giving incorrect position & size in completion events.
+  Breaks: `mini.completion`
 
 ## 📥 Installation
 
@@ -45,6 +54,32 @@ return {
     lazy = false
 };
 ```
+
+### 🦠 Mini.deps
+
+```lua
+local MiniDeps = require("mini.deps");
+
+MiniDeps.add({
+    source = "OXY2DEV/ui.nvim"
+});
+```
+
+<!-- ### 🌒 Rocks.nvim -->
+<!---->
+<!-- >[!WARNING] -->
+<!-- > `luarocks package` may sometimes be a bit behind `main`. -->
+<!---->
+<!-- ```vim -->
+<!-- :Rocks install ui.nvim -->
+<!-- ``` -->
+
+## 🔩 Configuration
+
+The plugin can be configured via the `setup()` function.
+
+>[!TIP]
+> You can call the `setup()` as many times as you want!
 
 ## 📚 Guide
 
