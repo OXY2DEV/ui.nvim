@@ -412,7 +412,12 @@ popup.__render = function ()
 		popup.__completion_renderer();
 	end
 
-	if package.loaded["ui.cmdline"] then
+	---@type string
+	local current_mode = vim.api.nvim_get_mode().mode;
+
+	if current_mode == "c" and package.loaded["ui.cmdline"] then
+		-- Only force redraw the command-line on
+		-- command mode.
 		pcall(package.loaded["ui.cmdline"].__render)
 	end
 
