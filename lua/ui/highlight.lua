@@ -200,13 +200,6 @@ hl.groups = {
 					bg = string.format("#%x%x%x", hl.oklab_to_rgb(RL, RA, RB)),
 				}
 			},
-
-			{
-				group_name = "UIMessageOk",
-				value = {
-					bg = string.format("#%x%x%x", hl.oklab_to_rgb(RL, RA, RB)),
-				}
-			},
 		};
 
 		---|fE

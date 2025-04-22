@@ -718,6 +718,7 @@ spec.default = {
 						extmarks = _extmarks
 					};
 				end,
+
 				decorations = {
 					icon = {
 						{ "▍ ", "UIMessagePaletteSign" }
@@ -730,11 +731,43 @@ spec.default = {
 				---|fE
 			},
 
-			-- echo = {
-			-- 	condition = function (msg)
-			-- 		return msg.kind == "echo";
-			-- 	end,
-			-- }
+			write = {
+				condition = function (msg)
+					return msg.kind == "bufwrite";
+				end,
+
+				modifier = function (_, lines)
+					local filename, _, bytes = string.match(lines[#lines], '^"(.+)" (%d+)L, (%d+)B written$');
+
+					return {
+						lines = {
+							string.format("Saved to %s!", filename),
+							string.format("Wrote: %s Bytes", bytes)
+						},
+						extmarks = {
+							{
+								{ 0, 9, "Comment" },
+								{ 9, 9 + #filename, "Special" },
+								{ 9 + #filename, 10 + #filename, "Comment" }
+							},
+							{
+								{ 0, 7, "Comment" },
+								{ 7, 7 + #bytes, "@constant" },
+								{ 8 + #bytes, 13 + #bytes, "Comment" }
+							},
+						}
+					};
+				end,
+
+				decorations = {
+					icon = {
+						{ "▍󰳻 ", "UIMessageOk" }
+					},
+					padding = {
+						{ "▍  ", "UIMessageOk" }
+					},
+				}
+			}
 		},
 
 		is_list = function (msg)
