@@ -225,6 +225,13 @@ message.__add = function (kind, content)
 	vim.schedule(function ()
 		---|fS
 
+		---@type boolean Should this message be ignored?
+		local condition = utils.eval(spec.config.message.ignore, kind, content);
+
+		if condition == true then
+			return;
+		end
+
 		if spec.is_list({ kind = kind, content = content }) == true then
 			-- If the message is a list message,
 			-- pass it to the list renderer.
@@ -278,6 +285,13 @@ message.__replace = function (kind, content)
 	---|fS
 
 	vim.schedule(function ()
+		---@type boolean Should this message be ignored?
+		local condition = utils.eval(spec.config.message.ignore, kind, content, true);
+
+		if condition == true then
+			return;
+		end
+
 		if spec.is_list({ kind = kind, content = content }) == true then
 			-- If a list message for some reason gets here then
 			-- we redirect it.

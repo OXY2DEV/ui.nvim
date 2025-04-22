@@ -334,6 +334,23 @@ spec.default = {
 		message_winconfig = {},
 		history_winconfig = {},
 
+		ignore = function (kind, content)
+			---|fS
+
+			if kind == "bufwrite" then
+				local lines = utils.process_content(content);
+
+				if string.match(lines[#lines], "written$") == nil then
+					--- Ignore the first message after `:w`.
+					return true;
+				end
+			end
+
+			return false;
+
+			---|fE
+		end,
+
 		processors = {
 			default = {
 				---|fS

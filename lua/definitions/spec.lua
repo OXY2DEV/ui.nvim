@@ -45,6 +45,7 @@
 ---@field history_winconfig? table Window configuration for the history window.
 ---
 ---@field is_list fun(msg: ui.message.entry): boolean Is `msg` a list-type message?
+---@field is_list fun(kind: ui.message.kind, content: ui.message.fragment[]): boolean Should this message be ignored?
 ---
 ---@field processors? table<string, ui.message.processor> Message processors.
 ---@field confirm? table<string, ui.message.confirm> Confirmation message style.
