@@ -75,8 +75,8 @@ ui.attach = function ()
 	log.level_dec();
 
 	vim.ui_attach(ui.namespace, {
-		ext_cmdline = true,
-		ext_messages = true,
+		ext_cmdline = (spec.config.cmdline.enable == true or spec.config.message.enable == true) and true or false,
+		ext_messages = spec.config.message.enable == true,
 
 		ext_popupmenu = spec.config.popupmenu.enable == true,
 	}, function (event, ...)
