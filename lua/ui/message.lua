@@ -37,15 +37,19 @@ message.history = {};
 message.visible = {};
 
 ---@type ui.message.decorations[] Decorations to show in the statuscolumn.
-message.decorations = nil;
+message.decorations = {};
+
+---@type ui.message.decorations[] Decorations to show in the statuscolumn for history.
+message.history_decorations = {};
 
 --- Custom statuscolumn for the message window.
 ---@return string
 message.statuscolumn = function ()
 	---|fS
-
 	local tab = vim.api.nvim_get_current_tabpage();
 	local win = vim.g.statusline_winid;
+
+	log.print(vim.inspect(win == message.history_window[tab] and (message.history_decorations) or (message.decorations)));
 
 	if win ~= message.msg_window[tab] and win ~= message.history_window[tab] then
 		-- Wrong window.
@@ -76,7 +80,7 @@ message.statuscolumn = function ()
 		end
 	end
 
-	return "";
+	return "X";
 
 	---|fE
 end
@@ -637,6 +641,7 @@ message.__render = function ()
 		vim.api.nvim_win_set_var(message.msg_window[tab], "ui_window", true);
 	end
 
+	vim.wo[message.msg_window[tab]].statuscolumn = "%!v:lua.__ui_statuscolumn()";
 	vim.wo[message.msg_window[tab]].winhl = "Normal:Normal";
 
 	vim.wo[message.msg_window[tab]].wrap = true;
@@ -811,6 +816,8 @@ message.__history = function (entries)
 	end
 
 	vim.api.nvim_set_current_win(message.history_window[tab]);
+
+	vim.wo[message.history_window[tab]].statuscolumn = "%!v:lua.__ui_statuscolumn()";
 
 	vim.wo[message.history_window[tab]].wrap = true;
 	vim.wo[message.history_window[tab]].linebreak = true;
