@@ -3,22 +3,24 @@
 ---@meta
 
 
----@class ui.message.processor Message processor.
+---@class ui.message.style Message pstyle
 ---
 ---@field condition? fun(msg: ui.message.entry, lines: string[], extmarks: ui.message.extmarks): boolean Condition for this processor.
 ---
 ---@field duration? integer | fun(msg: ui.message.entry, lines: string[], extmarks: ui.message.extmarks): integer Message visibility duration(in milliseconds).
 ---@field modifier? ui.message.modified | fun(msg: ui.message.entry, lines: string[], extmarks: ui.message.extmarks): ui.message.modified Modified version of the message.
 ---@field decorations? ui.message.decorations | fun(msg: ui.message.entry, lines: string[], extmarks: ui.message.extmarks): ui.message.decorations Decorations for the message.
+---@field history_decorations? ui.message.decorations | fun(msg: ui.message.entry, lines: string[], extmarks: ui.message.extmarks): ui.message.decorations Decorations for the message in history.
 
 
----@class ui.message.processor__static Static message processor.
+---@class ui.message.style__static Static message style.
 ---
 ---@field condition? boolean Condition for this processor.
 ---
 ---@field duration? integer Message visibility duration(in milliseconds).
 ---@field modifier? ui.message.modified Modified version of the message.
 ---@field decorations? ui.message.decorations Decorations for the message.
+---@field history_decorations? ui.message.decorations Decorations for the message in history.
 
 
 ---@class ui.message.modified Modified version of a message

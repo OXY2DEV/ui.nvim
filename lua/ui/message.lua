@@ -247,9 +247,9 @@ message.__add = function (kind, content)
 		local current_id = message.id;
 		local lines = utils.to_lines(content);
 
-		---@type ui.message.processor__static
-		local processor = spec.get_msg_processor({ kind = kind, content = content }, lines, {}) or {};
-		local duration = processor.duration or 600;
+		---@type ui.message.style__static
+		local style = spec.get_msg_style({ kind = kind, content = content }, lines, {}) or {};
+		local duration = style.duration or 600;
 
 		-- Store the message in history & visible
 		-- message table.
@@ -327,9 +327,9 @@ message.__replace = function (kind, content)
 
 		local lines = utils.to_lines(content);
 
-		---@type ui.message.processor__static
-		local processor = spec.get_msg_processor({ kind = kind, content = content }, lines, {}) or {};
-		local duration = processor.duration or 600;
+		---@type ui.message.style__static
+		local style = spec.get_msg_style({ kind = kind, content = content }, lines, {}) or {};
+		local duration = style.duration or 600;
 
 		last.timer:start(duration, 0, vim.schedule_wrap(function ()
 			message.__remove(keys[#keys]);
@@ -359,7 +359,7 @@ message.__confirm = function (obj)
 		message.__prepare();
 
 		---@type ui.message.confirm__static
-		local config = spec.get_confirm_config(obj, lines, exts);
+		local config = spec.get_confirm_style(obj, lines, exts);
 
 		if config.modifier then
 			lines = config.modifier.lines or lines;
@@ -442,7 +442,7 @@ message.__list = function (obj)
 		message.__prepare();
 
 		---@type ui.message.list__static
-		local config = spec.get_listmsg_config(obj, lines, exts);
+		local config = spec.get_listmsg_style(obj, lines, exts);
 
 		if config.modifier then
 			lines = config.modifier.lines or lines;
@@ -573,16 +573,16 @@ message.__render = function ()
 		local value = message.visible[key];
 		local m_lines, m_exts = utils.process_content(value.content);
 
-		---@type ui.message.processor__static
-		local processor = spec.get_msg_processor(value, m_lines, m_exts) or {};
+		---@type ui.message.style__static
+		local style = spec.get_msg_style(value, m_lines, m_exts) or {};
 
-		if processor.modifier then
-			m_lines = processor.modifier.lines or m_lines;
-			m_exts = processor.modifier.extmarks or m_exts;
+		if style.modifier then
+			m_lines = style.modifier.lines or m_lines;
+			m_exts = style.modifier.extmarks or m_exts;
 		end
 
-		if processor.decorations then
-			table.insert(message.decorations, vim.tbl_extend("force", processor.decorations, {
+		if style.decorations then
+			table.insert(message.decorations, vim.tbl_extend("force", style.decorations, {
 				from = #lines,
 				to = #lines + (#m_lines - 1)
 			}));
@@ -743,7 +743,7 @@ message.__history = function (entries)
 			local value = message.history[key];
 			local m_lines, m_exts = utils.process_content(value.content);
 
-			local processor = spec.get_msg_processor(value, m_lines, m_exts) or {};
+			local processor = spec.get_msg_style(value, m_lines, m_exts) or {};
 
 			if processor.modifier then
 				m_lines = processor.modifier.lines or m_lines;

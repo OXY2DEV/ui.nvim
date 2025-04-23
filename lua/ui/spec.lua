@@ -353,7 +353,7 @@ spec.default = {
 			---|fE
 		end,
 
-		processors = {
+		msg_styles = {
 			default = {
 				---|fS
 
@@ -799,7 +799,7 @@ spec.default = {
 			return true;
 		end,
 
-		list = {
+		list_styles = {
 			default = {},
 
 			ls = {
@@ -940,12 +940,14 @@ spec.default = {
 			},
 		},
 
-		confirm = {
+		confirm_styles = {
 			default = {
 				winhl = "Normal:Normal"
 			},
 
 			swap_alert = {
+				---|fS
+
 				condition = function (_, lines)
 					return string.match(lines[2] or "", '^Swap') ~= nil
 				end,
@@ -960,9 +962,13 @@ spec.default = {
 				},
 
 				row = 0,
+
+				---|fE
 			},
 
 			write_confirm = {
+				---|fS
+
 				condition = function (_, lines)
 					return string.match(lines[2] or "", '^Save changes to "([^"]+)"') ~= nil
 				end,
@@ -983,6 +989,8 @@ spec.default = {
 						}
 					};
 				end
+
+				---|fE
 			}
 		}
 
@@ -1053,10 +1061,10 @@ end
 ---@param lines string[]
 ---@param extmarks ui.message.extmarks
 ---@return ui.message.confirm__static
-spec.get_confirm_config = function (msg, lines, extmarks)
+spec.get_confirm_style = function (msg, lines, extmarks)
 	---|fS
 
-	local styles = spec.config.message.confirm or {};
+	local styles = spec.config.message.confirm_styles or {};
 	---@type ui.message.confirm
 	local _output = styles.default or {};
 
@@ -1109,10 +1117,10 @@ end
 ---@param lines string[]
 ---@param extmarks ui.message.extmarks
 ---@return ui.message.list__static
-spec.get_listmsg_config = function (msg, lines, extmarks)
+spec.get_listmsg_style = function (msg, lines, extmarks)
 	---|fS
 
-	local styles = spec.config.message.list or {};
+	local styles = spec.config.message.list_styles or {};
 	---@type ui.message.list
 	local _output = styles.default or {};
 
@@ -1163,11 +1171,11 @@ end
 ---@param msg ui.message.entry
 ---@param lines string[]
 ---@param extmarks ui.message.extmarks
----@return ui.message.processor__static
-spec.get_msg_processor = function (msg, lines, extmarks)
+---@return ui.message.style__static
+spec.get_msg_style = function (msg, lines, extmarks)
 	---|fS
 
-	local processors= spec.config.message.processors or {};
+	local processors= spec.config.message.msg_styles or {};
 	local _output = processors.default or {};
 
 	---@type string[]
