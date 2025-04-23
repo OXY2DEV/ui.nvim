@@ -1,0 +1,350 @@
+*ui.nvim-cmdline*                    Customizing Neovim's command-line using Lua
+
+▌ This file explains how the ui/cmdline.lua¹ file works.
+
+You can change how the command-line(cmdline) looks by listening to the
+`ext_cmdline` events. You will typically use something like this,
+
+>lua
+  ---@type integer Namespace for the UI(s).
+  local namespace = vim.api.nvim_create_namespace("ui");
+  
+  vim.ui_attach(namespace, {
+      ext_cmdline = true
+  }, function (event, ...)
+      --- {event}, Event name
+      --- {...}, Arguments this event produces.
+      --- Do stuff...
+  end);
+<
+
+------------------------------------------------------------------------------
+📜 Event list
+
+The command-line receives the following events,
+
+  • `cmdline_show`
+    Triggered when showing/updating the command-line.
+
+▌ 🧩 Important
+▌ The `cmdline_show` event will trigger even if you are idle. If you plan on
+▌ doing something complicated when updating the command-line then you should
+▌ `throttle` it.
+▌ `cmdline_show` event can be triggered multiple times per second.
+
+  • `cmdline_pos`
+    Triggered when cursor position changes in the command-line.
+  • `cmdline_special_char`
+    Triggered when displaying special characters under the cursor(e.g.
+    `CTRL-v`).
+  • `cmdline_hide`
+    Triggered when hiding the command-line.
+  • `cmdline_block_show`
+    Triggered when switching to `block mode`.
+  • `cmdline_block_append`
+    Triggered when adding a line in `block mode`.
+  • `cmdline_block_hide`
+    Triggered when exiting out of `block mode`.
+
+You can find more information regarding this event in `:h ui-cmdline`.
+
+------------------------------------------------------------------------------
+🔍 State
+
+As different events give different kinds of information we would need to
+remember the other information too when redrawing the command-line.
+
+▌ 🧩 Important
+
+The `cmdline.set_state()` is used to update the state and
+`cmdline.get_state()` is used to retrieve different information from the
+state.
+
+------------------------------------------------------------------------------
+💭 State to text
+
+When Neovim sends information regarding the text in the command-line, it’s in
+the form of `{ attribute_id, text }`. As we will be using `tree-sitter` for
+highlighting the text, we can ignore the `attribute_id` for now.
+
+▌ 🧩 Important
+▌ group.
+
+  >lua
+    local group_name = vim.fn.synIDattr(
+        vim.fn.synIDtrans(attribute_id),
+        "name"
+    );
+<
+
+We use the cmdline.__lines()³ function to create the lines of text the user
+will see.
+
+The text creation can be divided into 3 parts,
+
+  • Title
+    Users can define custom titles to show on top of the command-line text.
+    These
+    title’s are defined in the same format as `virual lines`(see `virt_lines`
+    in
+    `:h nvim_buf_set_extmark`).
+    
+    So, we need to turn them into lines of text and lists of highlight groups.
+
+▌ 🧩 Important
+▌ Cause it makes customization easier for the user.
+
+We can turn a single virtual line into a list of lines with something like
+this,
+
+>lua
+  local virt_line = {
+      { "Some " },
+      { "dumb", "Special" },
+      { " text" }
+  };
+  local line = "";
+  local highlights = {};
+  
+  for _, item in ipairs(virt_line) do
+      if type(item[2]) == "string" then
+          -- { Start, End, Group name }
+          table.insert(highlights, { #line, #line + #item[1], item[2] });
+      end
+  
+      line = line .. item[1];
+  end
+<
+
+  • Context
+    Show previous lines of the command-line as context(in `block mode`). Each
+    line is made up of lists of `{ attribute_id, text }`.
+
+We can turn them into lines of text & lists of highlights like so,
+
+>lua
+  local lines = {};
+  local highlights = {};
+  
+  for _, line in ipairs(context or {}) do
+      table.insert(lines, "");
+      table.insert(highlights, {});
+  
+      for _, entry in ipairs(line) do
+          local len = #lines[#lines];
+  
+          if type(entry[1]) == "number" then
+              ---@type string | "" highlight group name, "" if not found.
+              local hl = vim.fn.synIDattr(vim.fn.synIDtrans(entry[1]), "name");
+  
+              if hl ~= "" then
+                  table.insert(highlights[#highlights], {
+                      len,
+                      len + #entry[2],
+                      hl
+                  });
+              end
+          end
+  
+          lines[#lines] = lines[#lines] .. entry[2];
+      end
+  end
+<
+
+  • Command-line text
+    The text that is being written in the command-line. It’s a list of
+    `{ attribute_id, text }`. So, it can be handled the same way as
+    `context`(except you only need the inner loop).
+
+Once the lines are merged together you should have something like this.
+
+>vim
+  Some title...           " Title(user provided)
+  function Test()         " Context
+      echo "Some text"
+  endfunction             " Command-line text
+<
+
+------------------------------------------------------------------------------
+🐁 Cursor position
+
+Cursor position is given as a parameter for the `cmdline_show` & `cmdline_pos`
+events. We will also need to show a fake cursor to the user.
+
+▌ 🧩 Important
+▌ Because otherwise there’s flickering issues with the cursor and the cursor
+▌ will fly out of the screen when resizing the window.
+
+We use cmdline.__lines()⁴ function first to retrieve the lines of text to show
+on the screen. We will then use this piece of code to get the width of the
+fake cursor.
+
+>lua
+  -- `pos` is the byte-index of the cursor.
+  -- `lines` is the visible lines.
+  
+  ---@type string Text in the command-line.
+  local last_line = lines[#lines];
+  
+  ---@type string Character under the cursor.
+  local char = vim.fn.strcharpart(string.sub(last_line, pos, #last_line), 0, 1);
+  
+  ---@type integer Width of the cursor.
+  local cursor_width = #char;
+<
+
+We will then use `nvim_buf_set_extmark()` to place the fake cursor. As we are
+using extmarks for the cursor, it’s very easy to add support for
+`spacial characters` under cursor(e.g. when using `CTRL-v`).
+
+It looks something like this,
+
+>lua
+  -- `c` is the special character.
+  -- `shift` determines whether the text should be shifted by `c`.
+  -- `lines` is the lines to show.
+  -- `pos` is the cursor position.
+  
+  if c then
+      vim.api.nvim_buf_set_extmark(window, namespace, #lines - 1, pos, {
+          virt_text_pos = shift == true and "inline" or "overlay",
+          virt_text = {
+              { c, "Cursor" }
+          }
+      });
+  else
+      vim.api.nvim_buf_set_extmark(window, namespace, #lines - 1, pos, {
+          end_col = pos + cursor_width,
+          hl_group = "Cursor"
+      });
+  end
+  
+  -- Now, we place the actual cursor.
+  -- This may fail in certain occasions, so we wrap it
+  -- in `pcall()`
+  pcall(vim.api.nvim_win_set_cursor, window, { #lines, pos });
+<
+
+We can also use `extmarks` to hide some text(e.g. `!` in `:!`, `=` in `:=`,
+`lua` in `:lua`) from the user.
+
+▌ 🧩 Important
+
+Let’s assume the first 3 characters are meant to be hidden. We will hide these
+characters if the cursor position is higher then the first 3 characters
+byte-length.
+
+So, we will have code that looks like this,
+
+▌ 📜 Note
+▌ For this to work, you need to set the `conceallevel` of the command-line
+▌ window to 3.
+
+>lua
+  -- `pos` is the cursor position.
+  -- `hide` is the number of characters to hide.
+  -- `lines` is the lines to show.
+  
+  ---@type integer Byte length of the characters to hide.
+  local length = #vim.fn.strcharpart(lines[#lines], 0, hide);
+  
+  if pos >= length then
+      vim.api.nvim_buf_set_extmark(window, namespace, #lines - 1, 0, {
+          end_col = length,
+          conceal = ""
+      });
+  end
+<
+
+------------------------------------------------------------------------------
+🪟 Command-line window
+
+The command-line window is created by the cmdline.__render()⁵ function.
+
+Initially a `hidden window` is created by the cmdline.__prepare()⁶.
+
+▌ 📜 Note
+▌ Neovim will sometimes not show newly created window when handling UI events
+▌ so by having an already open window we don’t encounter the bug where the
+▌ command-line window doesn’t get shown when changing modes.
+
+Every tab has a hidden window for the command-line, this allows the
+command-line to work seamlessly across tabs.
+
+▌ 💡 Tip
+▌ You can check if a window is used for the UI by checking if it’s
+▌ window-local variable `ui_window` is set to `true`.
+
+This is how the window creation is handled internally,
+
+>lua
+  if not cmdline.buffer or not vim.api.nvim_buf_is_valid(cmdline.buffer) then
+      cmdline.buffer = vim.api.nvim_create_buf(false, true);
+  end
+  
+  ---@type integer Current tab's ID.
+  local tab = vim.api.nvim_get_current_tabpage();
+  
+  if not cmdline.window[tab] or not vim.api.nvim_win_is_valid(cmdline.window[tab]) then
+      cmdline.window[tab] = vim.api.nvim_open_win(cmdline.buffer, false, {
+          relative = "editor",
+  
+          row = 0,
+          col = 0,
+  
+          width = 1,
+          height = 1,
+  
+          style = "minimal",
+          focusable = false,
+          hide = true
+      });
+  end
+<
+
+Then when the `cmdline.__render()` function is called we change the window’s
+configuration like so,
+
+>lua
+  ---@type integer Current tab's ID.
+  local tab = vim.api.nvim_get_current_tabpage();
+  
+  vim.api.nvim_win_set_config(cmdline.window[tab], {
+      relative = "editor",
+  
+      row = vim.o.lines - (1 + #lines), -- Places it right above the statusline.
+      col = 0,
+  
+      width = vim.o.columns,
+      height = #lines,
+  
+      style = "minimal",
+      focusable = false,
+      hide = false
+  });
+<
+
+We will hide the command-line window like so,
+
+>lua
+  ---@type integer Current tab's ID.
+  local tab = vim.api.nvim_get_current_tabpage();
+  
+  vim.api.nvim_win_set_config(cmdline.window[tab], {
+      hide = true
+  });
+<
+
+------------------------------------------------------------------------------
+
+Link references ~
+
+ 1: https://github.com/OXY2DEV/ui.nvim/blob/main/lua/ui/cmdline.lua
+ 2: https://github.com/OXY2DEV/ui.nvim/blob/4c2aeb8847677e318f835f710fdc7f0073c6f719/lua/ui/cmdline.lua#L15-L38
+ 3: https://github.com/OXY2DEV/ui.nvim/blob/4c2aeb8847677e318f835f710fdc7f0073c6f719/lua/ui/cmdline.lua#L98-L163
+ 4: https://github.com/OXY2DEV/ui.nvim/blob/4c2aeb8847677e318f835f710fdc7f0073c6f719/lua/ui/cmdline.lua#L98-L163
+ 5: https://github.com/OXY2DEV/ui.nvim/blob/4c2aeb8847677e318f835f710fdc7f0073c6f719/lua/ui/cmdline.lua#L248-L380
+ 6: https://github.com/OXY2DEV/ui.nvim/blob/4c2aeb8847677e318f835f710fdc7f0073c6f719/lua/ui/cmdline.lua#L54-L92
+
+
+vim:ft=help:tw=78:ts=2:
