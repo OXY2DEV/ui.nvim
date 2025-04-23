@@ -12,16 +12,21 @@
 ---@field enable? boolean Should this module be enabled?
 ---@field tooltip? [ string, string? ][] | fun(): [ string, string? ][] Tooltip(as virtual text)
 ---
+---@field winconfig? table | fun(state: ui.popupmenu.state): table Window configuration for the pop-up menu.
 ---@field max_height? integer Maximum height of the completion menu.
 ---
----@field entries table<string, ui.popupmenu.style> Styles for the completion items.
+---@field styles table<string, ui.popupmenu.style> Styles for the completion items.
 
 
 ---@class ui.config.popupmenu__static Static configuration for the completion popup menu.
 ---
 ---@field enable? boolean Should this module be enabled?
 ---@field tooltip? [ string, string? ][] Tooltip(as virtual text)
----@field entries table<string, ui.popupmenu.style__static>
+---
+---@field winconfig? table Window configuration for the pop-up menu.
+---@field max_height? integer Maximum height of the completion menu.
+---
+---@field styles table<string, ui.popupmenu.style__static>
 
 
 ---@class ui.config.cmdline Configuration for the command-line.
@@ -34,7 +39,6 @@
 ---
 ---@field enable? boolean Should this module be enabled?
 ---@field styles? table<string, ui.cmdline.style__static> Styles for the cmdline
-
 
 
 ---@class ui.config.message

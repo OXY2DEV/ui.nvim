@@ -185,7 +185,7 @@ popup.__strip_renderer = function ()
 	local X = 0;
 
 	for i, item in ipairs(popup.state.items) do
-		local item_config = spec.get_item_config(item[1], item[2], item[3], item[4]) or {};
+		local item_config = spec.get_item_style(item[1], item[2], item[3], item[4]) or {};
 		local text = table.concat({
 			item_config.padding_left or "",
 			item_config.icon or "",
@@ -259,7 +259,7 @@ popup.__strip_renderer = function ()
 	end
 
 	local tab = vim.api.nvim_get_current_tabpage();
-	local win_config = {
+	local win_config = vim.tbl_extend("force", {
 		relative = "editor",
 
 		row = vim.o.lines - 1,
@@ -271,7 +271,7 @@ popup.__strip_renderer = function ()
 		style = "minimal",
 		hide = false,
 		focusable = false
-	};
+	}, utils.eval(spec.config.popupmenu.winconfig, popup.state) or {});
 
 	pcall(vim.api.nvim_win_set_config, popup.window[tab], win_config);
 	pcall(vim.api.nvim_win_set_cursor, popup.window[tab], { 1, X });
@@ -291,7 +291,7 @@ popup.__completion_renderer = function ()
 	local W = 0;
 
 	for i, item in ipairs(popup.state.items) do
-		local item_config = spec.get_item_config(item[1], item[2], item[3], item[4]) or {};
+		local item_config = spec.get_item_style(item[1], item[2], item[3], item[4]) or {};
 		local text = table.concat({
 			item_config.padding_left or "",
 			item_config.icon or "",
@@ -338,7 +338,7 @@ popup.__completion_renderer = function ()
 	local screenpos = vim.fn.screenpos(win, pos[1], pos[2]);
 
 	local tab = vim.api.nvim_get_current_tabpage();
-	local win_config = {
+	local win_config = vim.tbl_extend("force", {
 		relative = "cursor",
 
 		row = 0,
@@ -353,7 +353,7 @@ popup.__completion_renderer = function ()
 		style = "minimal",
 		hide = false,
 		focusable = false
-	};
+	}, utils.eval(spec.config.popupmenu.winconfig, popup.state) or {});
 
 	if screenpos.row + H >= vim.o.lines then
 		win_config.row = 0;

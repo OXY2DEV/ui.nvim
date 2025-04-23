@@ -8,6 +8,7 @@ spec.default = {
 
 		enable = true,
 
+		winconfig = {},
 		tooltip = function ()
 			local mode = vim.api.nvim_get_mode().mode;
 			return mode == "c" and {
@@ -17,7 +18,7 @@ spec.default = {
 			};
 		end,
 
-		entries = {
+		styles = {
 			---|fS
 
 			default = {
@@ -1266,10 +1267,10 @@ end
 ---@param menu string
 ---@param info string
 ---@return ui.popupmenu.style__static
-spec.get_item_config = function (word, kind, menu, info)
+spec.get_item_style = function (word, kind, menu, info)
 	---|fS
 
-	local styles = spec.default.popupmenu.entries or {};
+	local styles = spec.default.popupmenu.styles or {};
 	---@type ui.popupmenu.style
 	local _output = styles.default or {};
 

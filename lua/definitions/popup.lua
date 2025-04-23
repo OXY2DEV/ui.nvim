@@ -20,7 +20,7 @@
 ---@field [4] string Extra information.
 
 
----@alias ui.popupmenu.kind "v" | "f" | "m" | "t" | "d"
+---@alias ui.popupmenu.kind "" | "v" | "f" | "m" | "t" | "d"
 
 
 ---@class ui.popupmenu.style Style for popup menu entry.
