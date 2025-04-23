@@ -232,7 +232,7 @@ message.__add = function (kind, content)
 			return;
 		end
 
-		if spec.is_list({ kind = kind, content = content }) == true then
+		if spec.is_list(kind, content) == true then
 			-- If the message is a list message,
 			-- pass it to the list renderer.
 			log.assert(
@@ -292,7 +292,7 @@ message.__replace = function (kind, content)
 			return;
 		end
 
-		if spec.is_list({ kind = kind, content = content }) == true then
+		if spec.is_list(kind, content) == true then
 			-- If a list message for some reason gets here then
 			-- we redirect it.
 			log.assert(

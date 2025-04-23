@@ -782,8 +782,8 @@ spec.default = {
 			}
 		},
 
-		is_list = function (msg)
-			if msg.kind ~= "list_cmd" then
+		is_list = function (kind)
+			if kind ~= "list_cmd" then
 				return false;
 			end
 
@@ -1244,16 +1244,17 @@ spec.get_msg_style = function (msg, lines, extmarks)
 end
 
 --- Is `msg` a list type message?
----@param msg ui.message.entry
+---@param kind ui.message.kind
+---@param content ui.message.fragment[]
 ---@return boolean
-spec.is_list = function (msg)
+spec.is_list = function (kind, content)
 	---|fS
 
 	if not spec.config.message.is_list then
 		return false;
 	end
 
-	local can_cond, cond = pcall(spec.config.message.is_list, msg);
+	local can_cond, cond = pcall(spec.config.message.is_list, kind, content);
 	return can_cond and cond;
 
 	---|fE
