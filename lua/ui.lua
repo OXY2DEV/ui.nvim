@@ -103,6 +103,19 @@ ui.detach = function ()
 	vim.ui_detach(ui.namespace);
 end
 
+ui.actions = {
+	attach = ui.attach,
+	detach = ui.detach,
+
+	toggle = function ()
+		if ui.enabled == false then
+			ui.actions.attach();
+		else
+			ui.actions.detach();
+		end
+	end
+};
+
 ---@param config ui.config
 ui.setup = function (config)
 	---|fS

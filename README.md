@@ -83,6 +83,18 @@ The plugin can be configured via the `setup()` function.
 
 ## 📚 Guide
 
-The [wiki](https://github.com/OXY2DEV/ui.nvim/wiki) explains how to create your own UIs using lua.
+The [wiki](https://github.com/OXY2DEV/ui.nvim/wiki/Configuration) explains how to create your own UIs using lua.
 
+## 💻 Commands
+
+You can run `:UI` to toggle the custom UI. It has the following sub-commands,
+
+- `enable`
+  Enables custom UI.
+
+- `disable`
+  Disables custom UI.
+
+- `toggle`
+  Toggles custom UI.
 
