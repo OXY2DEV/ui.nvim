@@ -158,6 +158,7 @@ Used by the messages. It has the following structure,
       message_winconfig = {},
       list_winconfig = {},
       confirm_winconfig = {},
+      showcmd_winconfig = {},
   
       is_list = function ()
           return false;
@@ -174,6 +175,13 @@ Used by the messages. It has the following structure,
       },
       msg_styles = {
           default = {}
+      },
+  
+      showcmd = {
+          max_width = 20,
+          modifier = function ()
+              return {};
+          end
       }
   }
 <
@@ -212,6 +220,13 @@ confirm_winconfig ~
 
 Configuration table for the confirmation message window. Has the same options
 as `{opts}` in `nvim_open_win()`.
+
+showcmd_winconfig ~
+
+  • Type: `table`
+
+Configuration table for the `showcmd` message window. Has the same options as
+`{opts}` in `nvim_open_win()`.
 
 is_list ~
 
@@ -266,7 +281,7 @@ following structure,
 CONDITION
 
   • Type: fun(msg: ui.mesaage.entry, lines: string[], extmarks:
-    ui.message.fragment[][]): boolean
+    ui.message.hl_fragment[][]): boolean
 
 Condition for this style.
 
@@ -292,8 +307,8 @@ Height of the confirmation window.
 MODIFIER
 
   • Type: fun(msg: ui.mesaage.entry, lines: string[], extmarks:
-    ui.message.fragment[][]): { lines: string[], extmarks:
-    ui.message.fragment[][] }
+    ui.message.hl_fragment[][]): { lines: string[], extmarks:
+    ui.message.hl_fragment[][] }
 
 Used to modify the contents of the message.
 
@@ -350,7 +365,7 @@ Changes how messages are shown. Each style has the following structure,
 CONDITION
 
   • Type: fun(msg: ui.mesaage.entry, lines: string[], extmarks:
-    ui.message.fragment[][]): boolean
+    ui.message.hl_fragment[][]): boolean
 
 Condition for this style.
 
@@ -411,13 +426,13 @@ The number of milliseconds the message should be visible for.
 MODIFIER
 
   • Type: fun(msg: ui.mesaage.entry, lines: string[], extmarks:
-    ui.message.fragment[][]): { lines: string[], extmarks:
-    ui.message.fragment[][] }
+    ui.message.hl_fragment[][]): { lines: string[], extmarks:
+    ui.message.hl_fragment[][] }
 
 Used to modify the contents of the message.
 
 ------------------------------------------------------------------------------
-🔩 Popupmenu options                                *ui.nvim-config.popupmenu*
+🔩 Popupmenu options
 
 Used by the pop-up menu. It has the following structure,
 
@@ -531,6 +546,33 @@ tooltip ~
 
 Allows adding some tooltip to the menu(the window must have a border for it to
 work outside of command mode).
+
+showcmd ~
+
+Configuration options for the showcmd messages. It has the following
+structure,
+
+>lua
+  showcmd = {
+      max_width = math.floor(vim.o.columns * 0.5),
+  
+      modifier = nil
+  }
+<
+
+MAX_WIDTH
+
+  • Type: `integer`
+
+Maximum width of the showcmd window.
+
+MODIFIER
+
+  • Type: fun(msg: ui.mesaage.fragment[], lines: string[], extmarks:
+    ui.message.hl_fragment[][]): { lines: string[], extmarks:
+    ui.message.hl_fragment[][] }
+
+Modifier for the showcmd message.
 
 ------------------------------------------------------------------------------
 
