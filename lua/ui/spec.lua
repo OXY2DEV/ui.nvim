@@ -874,21 +874,22 @@ spec.default = {
 			}
 		},
 
-		is_list = function (kind)
+		is_list = function (kind, content)
 			if kind ~= "list_cmd" then
 				return false;
 			end
 
-			local invalid_commands = { "^highlight .+", "^hi .+", "^set .+" };
-			local last_cmd = vim.fn.histget("cmd", -1);
+			local lines = utils.to_lines(content);
+			local merged = table.concat(lines, "\n");
 
-			for _, pattern in ipairs(invalid_commands) do
-				if string.match(last_cmd, pattern) then
-					return false;
-				end
+			---@type string[] Trimmed lines
+			local trimmed = vim.split(merged, "\n", { trimempty = true });
+
+			if string.match(trimmed[1] or "", "^%s*%d+.-line %d+$") then
+				return true;
 			end
 
-			return true;
+			return #trimmed ~= 1;
 		end,
 
 		list_styles = {
