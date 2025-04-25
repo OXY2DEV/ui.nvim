@@ -1,5 +1,7 @@
 # 💻 ui.nvim
 
+<img src="https://github.com/OXY2DEV/ui.nvim/blob/images/images/repo/ui.nvim.png">
+
 A blueprint/template/guide to customize Neovim's UI using Lua.
 
 ## ✨ Features
@@ -82,6 +84,8 @@ The plugin can be configured via the `setup()` function.
 > You can call the `setup()` as many times as you want!
 
 ## 📚 Guide
+
+<img src="https://github.com/OXY2DEV/ui.nvim/blob/images/images/repo/ui.nvim-messsages.png">
 
 The [wiki](https://github.com/OXY2DEV/ui.nvim/wiki/Configuration) explains how to create your own UIs using lua.
 
