@@ -1,3 +1,3 @@
 [submodule "ui.nvim.wiki"]
 	path = ui.nvim.wiki
-	url = https://github.com/OXY2DEV/ui.nvim.wiki.git
+	url = git@github.com:OXY2DEV/ui.nvim.wiki.git
