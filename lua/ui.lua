@@ -101,6 +101,12 @@ end
 ui.detach = function ()
 	ui.enabled = false;
 	vim.ui_detach(ui.namespace);
+
+	local message = package.loaded["ui.message"];
+
+	if message then
+		message.__showcmd({});
+	end
 end
 
 ui.actions = {
