@@ -361,9 +361,12 @@ spec.default = {
 				---|fS
 
 				local mode = vim.api.nvim_get_mode().mode;
+				local text = lines[#lines];
 
 				if string.match(mode, "[vVsS]") then
-					local line = string.format("󰾂 %s", lines[#lines]);
+					-- Visual mode ranges should be handled
+					-- differently.
+					local line = string.format("󰾂 %s", text);
 
 					return {
 						lines = { line },
@@ -373,8 +376,9 @@ spec.default = {
 							}
 						}
 					};
-				elseif string.match(lines[#lines], "^%d*q") then
-					local line = string.format("󰻂 %s", lines[#lines]);
+				elseif string.match(text, "^%d*q") then
+					-- Macro recording.
+					local line = string.format("󰻂 %s", text);
 
 					return {
 						lines = { line },
@@ -384,8 +388,9 @@ spec.default = {
 							}
 						}
 					};
-				elseif string.match(lines[#lines], "^%d*@") then
-					local line = string.format(" %s", lines[#lines]);
+				elseif string.match(text, "^%d*@") then
+					-- Macro playing.
+					local line = string.format(" %s", text);
 
 					return {
 						lines = { line },
@@ -395,8 +400,9 @@ spec.default = {
 							}
 						}
 					};
-				elseif string.match(lines[#lines], "^%d+$") then
-					local line = string.format(" %s", lines[#lines]);
+				elseif string.match(text, "^%d+$") then
+					-- Count.
+					local line = string.format(" %s", text);
 
 					return {
 						lines = { line },
@@ -408,7 +414,7 @@ spec.default = {
 					};
 				end
 
-				local line = string.format("󰌏 %s", lines[#lines]);
+				local line = string.format("󰌏 %s", text);
 
 				return {
 					lines = { line },
