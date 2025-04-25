@@ -495,6 +495,8 @@ spec.default = {
 			},
 
 			__swap = {
+				---|fS
+
 				condition = function (_, lines)
 					return string.match(lines[2], "Found a swap file") ~= nil;
 				end,
@@ -507,6 +509,23 @@ spec.default = {
 						{ "▍  ", "UIMessageWarnSign" }
 					},
 					line_hl_group = "UIMessageWarn",
+				}
+
+				---|fE
+			},
+
+			__spell = {
+				condition = function (_, lines)
+					return string.match(lines[1], "Word (.+) added to .-%.add$") ~= nil;
+				end,
+
+				decorations = {
+					icon = {
+						{ "▍ ", "UIMessageOk" }
+					},
+					padding = {
+						{ "▍  ", "UIMessageOk" }
+					},
 				}
 			},
 
@@ -616,7 +635,7 @@ spec.default = {
 
 				condition = function (_, lines)
 					for _, line in ipairs(lines) do
-						if string.match(line, ".-:%d+: ?.-$") then
+						if string.match(line, ".-Error.-:%d+: ?.-$") then
 							return true;
 						end
 					end
@@ -633,8 +652,8 @@ spec.default = {
 					local exec, code;
 
 					for _, _line in ipairs(lines) do
-						if string.match(_line, "Error executing (.-):") then
-							exec = string.match(_line, "Error executing (.-):");
+						if string.match(_line, "Error executing (.+):%d") then
+							exec = string.match(_line, "Error executing (.+):%d");
 						end
 
 						if string.match(_line, ".-:%d+: ?.-$") then
