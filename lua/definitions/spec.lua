@@ -49,10 +49,12 @@
 ---@field list_winconfig? table Window configuration for the list message window.
 ---@field confirm_winconfig? table Window configuration for the confirmation window.
 ---@field history_winconfig? table Window configuration for the history window.
+---@field showcmd_winconfig? table Window configuration for the showcmd window.
 ---
 ---@field is_list fun(kind: ui.message.kind, content: ui.message.fragment[]): boolean Is `msg` a list-type message?
 ---@field ignore fun(kind: ui.message.kind, content: ui.message.fragment[]): boolean Should this message be ignored?
 ---
----@field msg_styles? table<string, ui.message.style> Message processors.
+---@field showcmd? ui.message.showcmd Showcmd options.
+---@field msg_styles? table<string, ui.message.style> Message styles.
 ---@field confirm_styles? table<string, ui.message.confirm> Confirmation message style.
 ---@field list_styles? table<string, ui.message.list> List message style.

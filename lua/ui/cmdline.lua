@@ -359,6 +359,10 @@ cmdline.__render = function ()
 			log.assert(
 				pcall(package.loaded["ui.message"].__render)
 			);
+
+			log.assert(
+				pcall(package.loaded["ui.message"].__showcmd)
+			);
 		end
 
 		vim.api.nvim__redraw({ flush = true, win = cmdline.window[tab] });

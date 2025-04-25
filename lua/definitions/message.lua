@@ -168,3 +168,8 @@
 ---@field [2] integer End byte index of the highlight group.
 ---@field [3] string Name of the highlight group
 
+
+---@class ui.message.showcmd
+---
+---@field max_width? integer Maximum width of the showcmd window.
+---@field modifier? fun(content: ui.message.fragment[][], lines: string[], extmarks: ui.message.hl_fragment[][]): ui.message.modified Modified version of the showcmd.

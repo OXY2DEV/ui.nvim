@@ -354,6 +354,75 @@ spec.default = {
 			---|fE
 		end,
 
+		showcmd = {
+			max_width = math.floor(vim.o.columns * 0.4),
+
+			modifier = function (_, lines)
+				---|fS
+
+				local mode = vim.api.nvim_get_mode().mode;
+
+				if string.match(mode, "[vVsS]") then
+					local line = string.format("󰾂 %s", lines[#lines]);
+
+					return {
+						lines = { line },
+						extmarks = {
+							{
+								{ 0, #line, "@constant" }
+							}
+						}
+					};
+				elseif string.match(lines[#lines], "^%d*q") then
+					local line = string.format("󰻂 %s", lines[#lines]);
+
+					return {
+						lines = { line },
+						extmarks = {
+							{
+								{ 0, #line, "@constant" }
+							}
+						}
+					};
+				elseif string.match(lines[#lines], "^%d*@") then
+					local line = string.format(" %s", lines[#lines]);
+
+					return {
+						lines = { line },
+						extmarks = {
+							{
+								{ 0, #line, "DiagnosticOk" }
+							}
+						}
+					};
+				elseif string.match(lines[#lines], "^%d+$") then
+					local line = string.format(" %s", lines[#lines]);
+
+					return {
+						lines = { line },
+						extmarks = {
+							{
+								{ 0, #line, "DiagnosticWarn" }
+							}
+						}
+					};
+				end
+
+				local line = string.format("󰌏 %s", lines[#lines]);
+
+				return {
+					lines = { line },
+					extmarks = {
+						{
+							{ 0, #line, "@function" }
+						}
+					}
+				};
+
+				---|fE
+			end
+		},
+
 		msg_styles = {
 			default = {
 				---|fS
@@ -417,6 +486,22 @@ spec.default = {
 				end,
 
 				---|fE
+			},
+
+			__swap = {
+				condition = function (_, lines)
+					return string.match(lines[2], "Found a swap file") ~= nil;
+				end,
+
+				decorations = {
+					icon = {
+						{ "▍ ", "UIMessageWarnSign" }
+					},
+					padding = {
+						{ "▍  ", "UIMessageWarnSign" }
+					},
+					line_hl_group = "UIMessageWarn",
+				}
 			},
 
 			option = {

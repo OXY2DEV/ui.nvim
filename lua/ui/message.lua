@@ -20,11 +20,14 @@ message.msg_buffer, message.msg_window = nil, {};
 ---@type integer, integer[] Buffer & window for showing larger messages.
 message.list_buffer, message.list_window = nil, {};
 
----@type integer, integer[] Buffer & window for showing stuff.
+---@type integer, integer[] Buffer & window for confirmation messages.
 message.confirm_buffer, message.confirm_window = nil, {};
 
----@type integer, integer[] Buffer & window for showing stuff.
+---@type integer, integer[] Buffer & window for message history.
 message.history_buffer, message.history_window = nil, {};
+
+---@type integer, integer[] Buffer & window for showmode.
+message.show_buffer, message.show_window = nil, {};
 
 ------------------------------------------------------------------------------
 
@@ -136,6 +139,8 @@ message.__prepare = function ()
 		vim.wo[message.msg_window[tab]].statuscolumn = "%!v:lua.__ui_statuscolumn()";
 	end
 
+	----------
+
 	if not message.list_buffer or vim.api.nvim_buf_is_valid(message.list_buffer) == false then
 		message.list_buffer = vim.api.nvim_create_buf(false, true);
 	end
@@ -145,6 +150,8 @@ message.__prepare = function ()
 		vim.api.nvim_win_set_var(message.list_window[tab], "ui_window", true);
 	end
 
+	----------
+
 	if not message.confirm_buffer or vim.api.nvim_buf_is_valid(message.confirm_buffer) == false then
 		message.confirm_buffer = vim.api.nvim_create_buf(false, true);
 	end
@@ -153,6 +160,8 @@ message.__prepare = function ()
 		message.confirm_window[tab] = vim.api.nvim_open_win(message.confirm_buffer, false, win_config);
 		vim.api.nvim_win_set_var(message.confirm_window[tab], "ui_window", true);
 	end
+
+	----------
 
 	if not message.history_buffer or vim.api.nvim_buf_is_valid(message.history_buffer) == false then
 		message.history_buffer = vim.api.nvim_create_buf(false, true);
@@ -164,6 +173,19 @@ message.__prepare = function ()
 
 		vim.wo[message.history_window[tab]].numberwidth = 1;
 		vim.wo[message.history_window[tab]].statuscolumn = "%!v:lua.__ui_statuscolumn()";
+	end
+
+	----------
+
+	if not message.show_buffer or vim.api.nvim_buf_is_valid(message.show_buffer) == false then
+		message.show_buffer = vim.api.nvim_create_buf(false, true);
+	end
+
+	if not message.show_window[tab] or vim.api.nvim_win_is_valid(message.show_window[tab]) == false then
+		message.show_window[tab] = vim.api.nvim_open_win(message.show_buffer, false, win_config);
+		vim.api.nvim_win_set_var(message.show_window[tab], "ui_window", true);
+
+		vim.wo[message.show_window[tab]].sidescrolloff = 0;
 	end
 
 	---|fE
@@ -847,6 +869,95 @@ end
 
 ------------------------------------------------------------------------------
 
+message.__showcmd = function (content)
+	---|fS
+
+	content = content or vim.g.__ui_showcmd or {};
+
+	---@type integer
+	local tab = vim.api.nvim_get_current_tabpage();
+	vim.g.__ui_showcmd = content;
+
+	local window_config = vim.tbl_extend("keep", spec.config.message.showcmd_winconfig or {}, {
+		relative = "editor",
+
+		row = vim.o.lines - (vim.o.cmdheight + (vim.g.__ui_cmd_height or 0) + 2) ,
+		col = 0,
+
+		width = 10,
+		height = 1,
+
+		border = "none",
+
+		zindex = 80,
+		hide = false
+	});
+
+	local text, extmarks = utils.process_content(content);
+
+	if #text == 0 or text[1] == "" then
+		-- Close the window if there is no text.
+		vim.g.__ui_showcmd = {};
+		window_config.hide = true;
+
+		pcall(vim.api.nvim_win_set_config, message.show_window[tab], window_config);
+		return;
+	elseif spec.config.message.showcmd.modifier then
+		local modifier = utils.eval(spec.config.message.showcmd.modifier, content, text, extmarks);
+
+		if type(modifier) == "table" then
+			text = modifier.lines or text;
+			extmarks = modifier.extmarks or extmarks;
+		end
+	end
+
+	--- Change window width.
+	window_config.width = math.min(
+		vim.fn.strdisplaywidth(text[1]),
+		spec.config.message.showcmd.max_width or 0
+	);
+
+	vim.api.nvim_buf_clear_namespace(message.show_buffer, message.namespace, 0, -1);
+	vim.api.nvim_buf_set_lines(message.show_buffer, 0, -1, false, text);
+
+	for l, line in ipairs(extmarks) do
+		for _, ext in ipairs(line) do
+			if ext[3] == "" then
+				goto continue;
+			end
+
+			vim.api.nvim_buf_set_extmark(message.show_buffer, message.namespace, l - 1, ext[1], {
+				end_col = ext[2],
+				hl_group = ext[3]
+			});
+
+		    ::continue::
+		end
+	end
+
+	if message.show_window[tab] and vim.api.nvim_win_is_valid(message.show_window[tab]) then
+		vim.api.nvim_win_set_config(message.show_window[tab], window_config);
+	else
+		message.show_window[tab] = vim.api.nvim_open_win(message.show_buffer, false, window_config);
+		vim.api.nvim_win_set_var(message.show_window[tab], "ui_window", true);
+
+		vim.wo[message.show_window[tab]].sidescrolloff = 0;
+	end
+
+	pcall(vim.api.nvim_win_set_cursor, message.show_window[tab], { 1, math.floor(#text[1] / 2) })
+
+	vim.api.nvim__redraw({
+		flush = true,
+
+		win = message.show_window[tab],
+		statuscolumn = true,
+	});
+
+	---|fE
+end
+
+------------------------------------------------------------------------------
+
 ---@param kind ui.message.kind
 ---@param content ui.message.fragment[]
 ---@param replace_last boolean
@@ -894,9 +1005,9 @@ end
 -- 	table.insert(log.entries, vim.inspect(content))
 -- end
 
--- message.msg_showcmd = function (content)
--- 	table.insert(log.entries, vim.inspect(content))
--- end
+message.msg_showcmd = function (content)
+	message.__showcmd(content);
+end
 
 message.msg_clear = function ()
 	---|fS
@@ -951,6 +1062,10 @@ message.setup = function ()
 				--- If a list message window is active,
 				--- redraw it.
 				message.__list(vim.g.__ui_list_msg);
+			end
+
+			if vim.g.__ui_showcmd then
+				message.__showcmd(vim.g.__ui_showcmd);
 			end
 
 			message.__render();
