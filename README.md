@@ -291,3 +291,36 @@ You can run `:UI` to toggle the custom UI. It has the following sub-commands,
 - `toggle`
   Toggles custom UI.
 
+## 🎨 Highlight groups
+
+By default this plugin comes with the following highlight groups,
+
+- `UICmdlineDefault`
+- `UICmdlineDefaultIcon`
+- `UICmdlineLua`
+- `UICmdlineLuaIcon`
+- `UICmdlineEval`
+- `UICmdlineEvalIcon`
+- `UICmdlineSearchUp`
+- `UICmdlineSearchUpIcon`
+- `UICmdlineSearchDown`
+- `UICmdlineSearchDownIcon`
+- `UICmdlineSubstitute`
+- `UICmdlineSubstituteIcon`
+
+- `UIMessageDefault`
+- `UIMessageOk`
+- `UIMessageInfo`
+- `UIMessageInfoSign`
+- `UIMessageWarn`
+- `UIMessageWarnSign`
+- `UIMessageError`
+- `UIMessageErrorSign`
+- `UIMessagePalette`
+- `UIMessageErrorSign`
+
+- `UIHistoryKeymap`
+- `UIHistoryDesc`
+- `UIMenuSelect`
+- `UIMenuKeymap`
+
