@@ -1,23 +1,60 @@
 local log = {};
 
+log.kinds = {
+	default = "󰛱 ",
+
+	info = "i ",
+	hint = "h ",
+	warn = "w ",
+	["error"] = "e ",
+	log = "l ",
+
+	debug = "d "
+};
+
 log.entries = {};
 
 ---@type integer Indentation level of log.
 log.level = 0;
 
-log.export = function (path)
+log.verbose = false;
+
+log.export = function (path, verbose)
+	verbose = verbose or log.verbose;
+
 	local file = io.open(path or "log.log", "w");
 	if not file then return; end
 
 	for _, entry in ipairs(log.entries) do
 		if type(entry) == "string" then
-			file:write(string.rep(" ", vim.o.tabstop * log.level));
+			-- Handle old log messages.
+			file:write(string.rep(" ", 2 * log.level));
 			file:write(entry, "\n");
-		else
+		elseif entry.kind ~= "debug" or verbose == true then
+			-- Handle new log messages.
 			local msg = type(entry.msg) ~= "string" and vim.inspect(entry.msg) or entry.msg;
+			local lines = vim.split(msg or "", "\n", { trimempty = true });
 
-			for _, line in ipairs(vim.split(msg or "", "\n", {})) do
-				file:write(string.rep(" ", vim.o.tabstop * (entry.level or 0)));
+			if verbose then
+				if entry.from then
+					table.insert(lines, 1, string.format(
+						"From: %s",
+						entry.from
+					));
+				end
+			end
+
+			for l, line in ipairs(lines) do
+				file:write(string.rep(" ", 2 * (entry.level or 0)));
+
+				if l == 1 then
+					file:write(log.kinds[entry.kind or "default"] or "");
+				elseif l == #lines then
+					file:write("  ");
+				else
+					file:write("  ");
+				end
+
 				file:write(line, "\n");
 			end
 		end
@@ -27,15 +64,17 @@ log.export = function (path)
 end
 
 --- Like `assert()`.
----@param val boolean
----@param msg? string
-log.assert = function (val, msg)
-	if val == false and type(msg) == "string" then
+---@param from string
+---@param value any
+---@param message string
+log.assert = function (from, value, message)
+	if value == false then
 		table.insert(log.entries, {
-			kind = "assert",
-			msg = msg,
+			kind = "error",
+			level = log.level,
 
-			level = log.level
+			msg = message or "Assertion failed",
+			from = from
 		});
 	end
 end
@@ -48,13 +87,13 @@ log.level_dec = function ()
 	log.level = log.level - 1;
 end
 
-log.print = function (msg, kind)
-	kind = kind or "print";
-
+log.print = function (msg, from, kind)
 	table.insert(log.entries, {
-		kind = kind,
+		kind = kind or "log",
 		msg = msg,
-		level = log.level
+
+		level = log.level,
+		from = tostring(from)
 	});
 end
 
