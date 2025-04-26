@@ -25,7 +25,6 @@ spec.default = {
 					},
 				};
 			elseif position == "top_right" then
-				print("hwre")
 				return {
 					border = {
 						{ "╭", "@comment" },
@@ -92,12 +91,64 @@ spec.default = {
 				select_hl = "UIMenuSelect"
 			},
 
-			vim_variable = {
+			-- Buffer variables(b:).
+			buffer_variable = {
 				condition = function (word)
-					return string.match(word, "^v:");
+					return string.match(word, "^b:") ~= nil;
 				end,
 
-				icon = " "
+				icon = "󱂕 ",
+				icon_hl = "@constant",
+			},
+
+			-- Global variables(g:).
+			global_variable = {
+				condition = function (word)
+					return string.match(word, "^g:") ~= nil;
+				end,
+
+				icon = " ",
+				icon_hl = "@constant",
+			},
+
+			-- Local/argument variables(l:,a:,s:).
+			local_variable = {
+				condition = function (word)
+					return string.match(word, "^[las]:") ~= nil;
+				end,
+
+				icon = " ",
+				icon_hl = "@constant",
+			},
+
+			-- Tab variables(t:).
+			tabpage_variable = {
+				condition = function (word)
+					return string.match(word, "^t:") ~= nil;
+				end,
+
+				icon = "󰓩 ",
+				icon_hl = "@constant",
+			},
+
+			-- Vim variables(v:).
+			vim_variable = {
+				condition = function (word)
+					return string.match(word, "^v:") ~= nil;
+				end,
+
+				icon = " ",
+				icon_hl = "@constant",
+			},
+
+			-- Window variables(w:).
+			window_variable = {
+				condition = function (word)
+					return string.match(word, "^w:") ~= nil;
+				end,
+
+				icon = " ",
+				icon_hl = "@constant",
 			},
 
 
