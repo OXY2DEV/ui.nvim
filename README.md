@@ -75,6 +75,9 @@ You can check the [wiki](https://github.com/OXY2DEV/ui.nvim/wiki) for the explan
 - Pum menu giving incorrect position & size in completion events.
   Breaks: `mini.completion`
 
+- Going into `command mode` after a write causes duplicate message with wrong kind.
+  Breaks: `nvim-0.11`
+
 ## 📥 Installation
 
 ### 💤 lazy.nvim
