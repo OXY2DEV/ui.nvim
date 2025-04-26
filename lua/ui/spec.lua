@@ -161,11 +161,12 @@ spec.default = {
 			},
 
 			["function"] = {
-				condition = function (_, kind)
-					return kind == "f";
+				condition = function (word, kind)
+					return kind == "f" or string.match(word, "%(%)?$") ~= nil;
 				end,
 
-				icon = "󰡱 "
+				icon = "󰡱 ",
+				icon_hl = "@function",
 			},
 
 			macro = {
@@ -173,7 +174,8 @@ spec.default = {
 					return kind == "d";
 				end,
 
-				icon = "󰕠 "
+				icon = "󰕠 ",
+				icon_hl = "Macro"
 			},
 
 			type_definiton = {
@@ -181,7 +183,8 @@ spec.default = {
 					return kind == "t";
 				end,
 
-				icon = " "
+				icon = " ",
+				icon_hl = "Typedef",
 			},
 
 			variable = {
@@ -189,7 +192,8 @@ spec.default = {
 					return kind == "v";
 				end,
 
-				icon = "󰏖 "
+				icon = "󰏖 ",
+				icon_hl = "@constant",
 			},
 
 			---|fE
