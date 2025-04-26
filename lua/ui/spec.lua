@@ -8,13 +8,74 @@ spec.default = {
 
 		enable = true,
 
-		winconfig = {},
+		winconfig = function (_, position)
+			---|fS
+
+			if position == "top_left" then
+				return {
+					border = {
+						{ "╭", "@comment" },
+						{ "─", "@comment" },
+						{ "╮", "@comment" },
+						{ "│", "@comment" },
+						{ "╯", "@comment" },
+						{ "─", "@comment" },
+						{ "├", "@comment" },
+						{ "│", "@comment" },
+					},
+				};
+			elseif position == "top_right" then
+				print("hwre")
+				return {
+					border = {
+						{ "╭", "@comment" },
+						{ "─", "@comment" },
+						{ "╮", "@comment" },
+						{ "│", "@comment" },
+						{ "╯", "@comment" },
+						{ "─", "@comment" },
+						{ "├", "@comment" },
+						{ "│", "@comment" },
+					},
+				};
+			elseif position == "bottom_left" then
+				return {
+					border = {
+						{ "╭", "@comment" },
+						{ "─", "@comment" },
+						{ "┤", "@comment" },
+						{ "│", "@comment" },
+						{ "╯", "@comment" },
+						{ "─", "@comment" },
+						{ "╰", "@comment" },
+						{ "│", "@comment" },
+					},
+				};
+			elseif position == "bottom_right" then
+				return {
+					border = {
+						{ "├", "@comment" },
+						{ "─", "@comment" },
+						{ "╮", "@comment" },
+						{ "│", "@comment" },
+						{ "╯", "@comment" },
+						{ "─", "@comment" },
+						{ "╰", "@comment" },
+						{ "│", "@comment" },
+					},
+				};
+			end
+
+			return {};
+
+			---|fE
+		end,
 		tooltip = function ()
 			local mode = vim.api.nvim_get_mode().mode;
 			return mode == "c" and {
 				{ " 󰸾 󰹀 ", "UIMenuKeymap" },
 			} or {
-				{ " 󰹁 󰸽 ", "UIMenuKeymap" },
+				{ " 󰹁 󰸽 ", "@comment" },
 			};
 		end,
 
@@ -994,22 +1055,22 @@ spec.default = {
 						local row, row_exts = utils.to_row({
 							{
 								string.format(" %-" .. widths.id .. "s ", entry.id),
-								"Comment"
+								"@comment"
 							},
 							{ border, "@function" },
 							{
 								string.format(" %-" .. widths.name .. "s ", entry.name),
-								"Comment"
+								"@comment"
 							},
 							{ border, "@function" },
 							{
 								string.format(" %-" .. widths.indicators .. "s ", entry.indicators),
-								"Comment"
+								"@comment"
 							},
 							{ border, "@function" },
 							{
 								string.format(" %-" .. widths.lnum .. "s ", entry.lnum),
-								"Comment"
+								"@comment"
 							},
 						});
 
@@ -1068,7 +1129,7 @@ spec.default = {
 					lines = { "󰾴 Swap file detected!" },
 					extmarks = {
 						{
-							{ 0, 24, "Special" }
+							{ 0, 24, "@character.special" }
 						}
 					}
 				},
@@ -1094,9 +1155,9 @@ spec.default = {
 						},
 						extmarks = {
 							{
-								{ 0, 13, "Comment" },
+								{ 0, 13, "@comment" },
 								{ 13, 15 + #file, "DiagnosticVirtualTextHint" },
-								{ 15 + #file, 16 + #file, "Comment" },
+								{ 15 + #file, 16 + #file, "@comment" },
 							}
 						}
 					};
