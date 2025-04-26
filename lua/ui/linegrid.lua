@@ -1,5 +1,3 @@
---- Custom linegrid for
---- Neovim.
 local linegrid = {};
 
 --- Handles linegrid events.

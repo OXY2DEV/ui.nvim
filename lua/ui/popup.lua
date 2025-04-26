@@ -222,6 +222,7 @@ popup.__strip_renderer = function ()
 
 	for _, hl in ipairs(hls) do
 		log.assert(
+			"ui/popup.lua → strip_window_config",
 			pcall(
 				vim.api.nvim_buf_set_extmark,
 
@@ -475,13 +476,25 @@ end
 ---@param event string
 ---@param ... any
 popup.handle = function (event, ...)
+	---|fS
+
+	log.level_inc();
+
 	log.assert(
+		"ui/popup.lua",
 		pcall(popup[event], ...)
 	);
+
+	log.level_dec();
+	log.print(vim.inspect({ ... }), "ui/popup.lua", "debug");
+
+	---|fE
 end
 
 --- Sets up the popup module.
 popup.setup = function ()
+	---|fS
+
 	vim.api.nvim_create_autocmd("TabEnter", {
 		callback = function ()
 			popup.__prepare();
@@ -489,6 +502,8 @@ popup.setup = function ()
 	});
 
 	popup.__prepare();
+
+	---|fE
 end
 
 return popup;

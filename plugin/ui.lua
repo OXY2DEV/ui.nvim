@@ -8,7 +8,7 @@ vim.api.nvim_create_autocmd("VimEnter", {
 		local log = require("ui.log");
 		-- vim.g.__ui_dev = true;
 
-		log.print("Attached to UI");
+		log.print("Attached to UI!", "plugin/ui.lua", "log");
 		log.level_inc();
 	end
 });
@@ -18,7 +18,7 @@ vim.api.nvim_create_autocmd("VimLeave", {
 		local log = require("ui.log");
 
 		log.level_dec();
-		log.print("Exporting log");
+		log.print("Exporting log!", "plugin/ui.lua", "log");
 
 		if vim.g.__ui_dev then
 			log.export();

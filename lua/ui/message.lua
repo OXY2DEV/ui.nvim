@@ -223,6 +223,7 @@ message.__remove = function (id)
 
 		vim.schedule(function ()
 			log.assert(
+				"ui/message.lua → remove_render",
 				pcall(message.__render)
 			)
 		end)
@@ -259,6 +260,7 @@ message.__add = function (kind, content)
 			-- If the message is a list message,
 			-- pass it to the list renderer.
 			log.assert(
+				"ui/message.lua → add_list",
 				pcall(message.__list, {
 					kind = kind,
 					content = content
@@ -292,6 +294,7 @@ message.__add = function (kind, content)
 		message.id = message.id + 1;
 
 		log.assert(
+			"ui/message.lua → add_render",
 			pcall(message.__render)
 		);
 
@@ -319,6 +322,7 @@ message.__replace = function (kind, content)
 			-- If a list message for some reason gets here then
 			-- we redirect it.
 			log.assert(
+				"ui/message.lua → replace_list",
 				pcall(message.__list, {
 					kind = kind,
 					content = content
@@ -359,6 +363,7 @@ message.__replace = function (kind, content)
 		end));
 
 		log.assert(
+			"ui/message.lua → replace_render",
 			pcall(message.__render)
 		);
 	end);
@@ -523,6 +528,7 @@ message.__list = function (obj)
 		for l, line in ipairs(exts) do
 			for _, ext in ipairs(line) do
 				log.assert(
+					"ui/message.lua → list_highlights",
 					pcall(
 						vim.api.nvim_buf_set_extmark,
 						message.list_buffer,
@@ -722,6 +728,7 @@ message.__history = function (entries)
 				utils.last_win()
 			);
 			log.assert(
+				"ui/message.lua → history_quit",
 				pcall(vim.api.nvim_win_set_config, message.history_window[tab], {
 					relative = "editor",
 
@@ -967,6 +974,7 @@ message.msg_show = function (kind, content, replace_last)
 
 	if kind == "confirm" then
 		log.assert(
+			"ui/message.lua → __confirm",
 			pcall(message.__confirm, {
 				kind = kind,
 				content = content,
@@ -996,6 +1004,7 @@ message.msg_history_show = function (entries)
 	vim.api.nvim_feedkeys(vim.api.nvim_replace_termcodes("<CR>", true, false, true), "n", false);
 
 	log.assert(
+		"ui/message.lua → history_show",
 		pcall(message.__history, entries)
 	);
 
@@ -1035,13 +1044,15 @@ end
 message.handle = function (event, ...)
 	---|fS
 
-	if not message[event] then
-		return;
-	end
+	log.level_inc();
 
 	log.assert(
+		"ui/message.lua",
 		pcall(message[event], ...)
 	);
+
+	log.level_dec();
+	log.print(vim.inspect({ ... }), "ui/message.lua", "debug");
 
 	---|fE
 end

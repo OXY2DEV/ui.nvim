@@ -178,10 +178,18 @@ cmdline.__cursor = function ()
 	---@type integer
 	local tab = vim.api.nvim_get_current_tabpage();
 
-	vim.api.nvim_win_set_cursor(cmdline.window[tab], {
-		vim.api.nvim_buf_line_count(cmdline.buffer), -- This is 1-indexed.
-		pos
-	})
+	log.assert(
+		"ui/cmdline.lua → nvim_win_set_cursor",
+		pcall(
+			vim.api.nvim_win_set_cursor,
+
+			cmdline.window[tab],
+			{
+				vim.api.nvim_buf_line_count(cmdline.buffer), -- This is 1-indexed.
+				pos
+			}
+		)
+	);
 
 	-- Clear previous cursor.
 	vim.api.nvim_buf_clear_namespace(cmdline.buffer, cmdline.cursor_ns, 0, -1);
@@ -189,10 +197,20 @@ cmdline.__cursor = function ()
 	if cmdline.style.offset and pos >= cmdline.style.offset then
 		-- If `offset` exists and the cursor position is >= to the offset
 		-- we hide the leading part of the command-line(till `offset` characters).
-		vim.api.nvim_buf_set_extmark(cmdline.buffer, cmdline.cursor_ns, #lines - 1, 0, {
-			end_col = #vim.fn.strcharpart(line, 0, cmdline.style.offset),
-			conceal = ""
-		});
+		log.assert(
+			"ui/cmdline.lua → text_conceal",
+			pcall(
+				vim.api.nvim_buf_set_extmark,
+
+				cmdline.buffer, cmdline.cursor_ns,
+				#lines - 1, 0,
+
+				{
+					end_col = #vim.fn.strcharpart(line, 0, cmdline.style.offset),
+					conceal = ""
+				}
+			)
+		);
 	end
 
 	local char = cmdline.get_state("c", "");
@@ -201,6 +219,7 @@ cmdline.__cursor = function ()
 	-- Add a fake Cursor.
 	if char ~= "" then
 		log.assert(
+			"ui/cmdline.lua → fake_cursor_char",
 			pcall(vim.api.nvim_buf_set_extmark,
 
 				cmdline.buffer,
@@ -225,6 +244,7 @@ cmdline.__cursor = function ()
 		});
 	else
 		log.assert(
+			"ui/cmdline.lua → fake_cursor",
 			pcall(vim.api.nvim_buf_set_extmark,
 
 				cmdline.buffer,
@@ -248,7 +268,10 @@ end
 cmdline.__render = function ()
 	---|fS
 
-	cmdline.__prepare();
+	log.assert(
+		"ui/cmdline.lua → __prepare",
+		pcall(cmdline.__prepare)
+	);
 
 	local lines, extmarks, stat = cmdline.__lines();
 	local H = #lines;
@@ -337,16 +360,10 @@ cmdline.__render = function ()
 		---@type integer
 		local tab = vim.api.nvim_get_current_tabpage();
 
-		if not cmdline.window[tab] or vim.api.nvim_win_is_valid(cmdline.window[tab]) == false then
-			cmdline.window[tab] = vim.api.nvim_open_win(cmdline.buffer, false, win_config);
-
-			vim.api.nvim_win_set_var(cmdline.window[tab], "ui_window", true);
-			vim.wo[cmdline.window[tab]].sidescrolloff = math.floor(vim.o.columns * 0.5) or 36;
-		else
-			log.assert(
-				pcall(vim.api.nvim_win_set_config, cmdline.window[tab], win_config)
-			);
-		end
+		log.assert(
+			"ui/cmdline.lua → window",
+			pcall(vim.api.nvim_win_set_config, cmdline.window[tab], win_config)
+		);
 
 		cmdline.__cursor();
 
@@ -357,10 +374,12 @@ cmdline.__render = function ()
 
 		if package.loaded["ui.message"] then
 			log.assert(
+				"ui/cmdline.lua → message_refresh",
 				pcall(package.loaded["ui.message"].__render)
 			);
 
 			log.assert(
+				"ui/cmdline.lua → showcmd_refresh",
 				pcall(package.loaded["ui.message"].__showcmd)
 			);
 		end
@@ -468,6 +487,7 @@ cmdline.cmdline_hide = function ()
 		-- But, we can hide them here.
 		for _, win in pairs(cmdline.window) do
 			log.assert(
+				"ui/cmdline.lua",
 				pcall(vim.api.nvim_win_set_config, win, { hide = true })
 			);
 		end
@@ -476,6 +496,7 @@ cmdline.cmdline_hide = function ()
 		--- position.
 		if package.loaded["ui.message"] then
 			log.assert(
+				"ui/cmdline.lua",
 				pcall(package.loaded["ui.message"].__render)
 			);
 		end
@@ -539,20 +560,40 @@ end
 ---@param event string
 ---@param ... any
 cmdline.handle = function (event, ...)
+	---|fS
+
+	log.level_inc();
+
 	log.assert(
+		"ui/cmdline.lua",
 		pcall(cmdline[event], ...)
 	);
+
+	log.level_dec();
+	log.print(vim.inspect(cmdline.state), "ui/cmdline.lua", "debug");
+
+	---|fE
 end
 
 --- Sets up the cmdline module.
 cmdline.setup = function ()
+	---|fS
+
 	vim.api.nvim_create_autocmd("TabEnter", {
 		callback = function ()
-			cmdline.__prepare();
+			log.assert(
+				"ui/cmdline.lua",
+				pcall(cmdline.__prepare)
+			);
 		end
 	});
 
-	cmdline.__prepare();
+	log.assert(
+		"ui/cmdline.lua",
+		pcall(cmdline.__prepare)
+	);
+
+	---|fE
 end
 
 return cmdline;

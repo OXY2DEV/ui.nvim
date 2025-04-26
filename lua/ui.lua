@@ -62,14 +62,19 @@ ui.attach = function ()
 		popup = require("ui.popup"),
 	};
 
-	log.print("Setting up UI modules,");
+	log.print("Setting up UI modules,", "ui.lua");
 	log.level_inc();
 
 	for k, v in pairs(modules) do
-		log.print("Module: " .. k);
+		log.print("Module setup: " .. k, "ui.lua", "log");
+		log.level_inc();
+
 		log.assert(
+			"ui.lua",
 			pcall(v["setup"])
 		);
+
+		log.level_dec();
 	end
 
 	log.level_dec();
@@ -80,7 +85,7 @@ ui.attach = function ()
 
 		ext_popupmenu = spec.config.popupmenu.enable == true,
 	}, function (event, ...)
-		log.print("Event, " .. event);
+		log.print("Event: " .. event, "ui.lua", "log");
 		log.level_inc();
 
 		local mod_name = ui.event_map[event];
@@ -88,6 +93,7 @@ ui.attach = function ()
 
 		---@type boolean, string?
 		log.assert(
+			"ui.lua",
 			pcall(modules[mod_name].handle, event, ...)
 		)
 
