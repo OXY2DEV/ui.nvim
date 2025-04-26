@@ -124,7 +124,8 @@ message.__prepare = function ()
 		border = "none",
 
 		style = "minimal",
-		hide = true
+		hide = true,
+		focusable = false
 	};
 
 	if not message.msg_buffer or vim.api.nvim_buf_is_valid(message.msg_buffer) == false then
