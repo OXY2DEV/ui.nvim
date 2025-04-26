@@ -338,7 +338,7 @@ popup.__completion_renderer = function ()
 	local screenpos = vim.fn.screenpos(win, pos[1], pos[2]);
 
 	local tab = vim.api.nvim_get_current_tabpage();
-	local win_config = vim.tbl_extend("force", {
+	local win_config = {
 		relative = "cursor",
 
 		row = 0,
@@ -353,15 +353,21 @@ popup.__completion_renderer = function ()
 		style = "minimal",
 		hide = false,
 		focusable = false
-	}, utils.eval(spec.config.popupmenu.winconfig, popup.state) or {});
+	};
+
+	local position;
 
 	if screenpos.row + H >= vim.o.lines then
 		win_config.row = 0;
 
 		if screenpos.curscol + W >= vim.o.columns then
+			position = "top_left";
+
 			win_config.anchor = "SE";
 			win_config.col = 2;
 		else
+			position = "top_right";
+
 			win_config.anchor = "SW";
 			win_config.col = 1;
 		end
@@ -369,13 +375,19 @@ popup.__completion_renderer = function ()
 		win_config.row = 1;
 
 		if screenpos.curscol + W >= vim.o.columns then
+			position = "bottom_left";
+
 			win_config.anchor = "NE";
 			win_config.col = 2;
 		else
+			position = "bottom_right";
+
 			win_config.anchor = "NW";
 			win_config.col = 1;
 		end
 	end
+
+	win_config = vim.tbl_extend("force", win_config, utils.eval(spec.config.popupmenu.winconfig, popup.state, position) or {});
 
 	pcall(vim.api.nvim_win_set_config, popup.window[tab], win_config);
 	pcall(vim.api.nvim_win_set_cursor, popup.window[tab], { popup.state.selected + 1, 0 });

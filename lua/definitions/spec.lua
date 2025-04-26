@@ -12,7 +12,7 @@
 ---@field enable? boolean Should this module be enabled?
 ---@field tooltip? [ string, string? ][] | fun(): [ string, string? ][] Tooltip(as virtual text)
 ---
----@field winconfig? table | fun(state: ui.popupmenu.state): table Window configuration for the pop-up menu.
+---@field winconfig? table | fun(state: ui.popupmenu.state, position?: "top_left" | "top_right" | "bottom_left" | "bottom_right"): table Window configuration for the pop-up menu.
 ---@field max_height? integer Maximum height of the completion menu.
 ---
 ---@field styles table<string, ui.popupmenu.style> Styles for the completion items.
