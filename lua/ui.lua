@@ -125,6 +125,10 @@ ui.actions = {
 		else
 			ui.actions.detach();
 		end
+	end,
+
+	log = function ()
+		require("ui.log").export(nil, true);
 	end
 };
 

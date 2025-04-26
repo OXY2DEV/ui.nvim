@@ -46,11 +46,11 @@ end, {
 		local tokens = vim.split(before, " ", { trimempty = true });
 
 		if #tokens == 1 then
-			return { "enable", "disable", "toggle" };
+			return { "enable", "disable", "toggle", "log" };
 		elseif #tokens == 2 and string.match(before, "%S$") then
 			local completions = {};
 
-			for _, cmd in ipairs({ "enable", "disable", "toggle" }) do
+			for _, cmd in ipairs({ "enable", "disable", "toggle", "log" }) do
 				if string.match(cmd, tokens[2]) then
 					table.insert(completions, cmd);
 				end
