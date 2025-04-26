@@ -121,7 +121,9 @@ MiniDeps.add({
 
 ## 🔩 Configuration
 
-The plugin can be configured via the `setup()` function. You can check the default configuration table [here]().
+The plugin can be configured via the `setup()` function. You can check the default configuration table [here](https://github.com/OXY2DEV/ui.nvim/blob/752ef3a1eb2aa2ffa33efd055f3cbbc6b417b435/lua/ui/spec.lua#L5-L1172).
+
+A simplified version of the configuration table is given below,
 
 ```lua
 require("ui").setup({
@@ -170,11 +172,97 @@ require("ui").setup({
             },
 
             example = {
-	            condition = function ()
-                	return true;
+                condition = function ()
+                    return true;
                 end,
 
                 cursor = "@comment"
+            }
+        }
+    },
+
+    message = {
+        enable = true,
+
+        mesaage_winconfig = {},
+        list_winconfig = {},
+        confirm_winconfig = {},
+        history_winconfig = {},
+
+        ignore = function ()
+            return false:
+        end,
+
+        showcmd = {
+            max_width = 10,
+            modifier = nil
+        },
+
+        msg_styles = {
+            default = {
+                duration = 500,
+
+                modifier = nil,
+                decorations = {
+                    icon = { { "I " } }
+                }
+            },
+
+            example = {
+                condition = function ()
+                    return true;
+                end,
+
+                decorations = {
+                    icon = { { "B " } }
+                }
+            }
+        },
+
+        is_list = function ()
+            return false;
+        end,
+
+        list_styles = {
+            default = {
+                modifier = nil,
+
+                row = nil,
+                col = nil,
+
+                width = nil,
+                height = nil,
+
+                winhl = nil
+            },
+
+            example = {
+                condition = function ()
+                    return true;
+                end,
+
+                border = "rounded"
+            }
+        },
+        confirm_styles = {
+            default = {
+                modifier = nil,
+
+                row = nil,
+                col = nil,
+
+                width = nil,
+                height = nil,
+
+                winhl = nil
+            },
+
+            example = {
+                condition = function ()
+                    return true;
+                end,
+
+                border = "rounded"
             }
         }
     }
