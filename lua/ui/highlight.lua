@@ -604,7 +604,7 @@ hl.groups = {
 
 		return {
 			{
-				group_name = "UIMessagePaletteSign",
+				group_name = "UIMessagePalette",
 				value = {
 					fg = string.format("#%x%x%x", hl.oklab_to_rgb(ML, MA, MB)),
 				}

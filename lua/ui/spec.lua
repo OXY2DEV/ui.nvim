@@ -895,10 +895,10 @@ spec.default = {
 
 				decorations = {
 					icon = {
-						{ "▍ ", "UIMessagePaletteSign" }
+						{ "▍ ", "UIMessagePalette" }
 					},
 					padding = {
-						{ "▍  ", "UIMessagePaletteSign" }
+						{ "▍  ", "UIMessagePalette" }
 					},
 				}
 
