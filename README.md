@@ -4,25 +4,68 @@
 
 A blueprint/template/guide to customize Neovim's UI using Lua.
 
+<details><!--|fS-->
+    <summary>Expand for advanced usage!</summary>
+
+## 🤔 So, what is this?
+
+This is a simple customisable UI plugin written in Lua for you to play around with!
+
+If you ever worked on modifying Neovim's UI, it might feel frustrating to work with. The docs(as of `0.11`) don't go too deep into it either(as this is still **experimental**). This repository is meant to change that.
+
+You no longer need to write `boilerplate` or handle errors without using messages or spend **hours** trying to figure put how to handle different Ui events. As this is also usable as a plugin, you don't have to worry about things being outdated either!
+
+## 📦 What's included?
+
+As of now, this plugin comes with the following things,
+
+- Basic UI event handler(separated into parts for better readability & portability).
+- Working example on handling *most* events.
+- Type definitions for different events.
+- Helpful `heads up` for various *quirky scenarios*.
+- Basic state manager for command-line & messages.
+- A simple logger for logging messages(WIP).
+
+A bunch of helpers are also provided,
+
+- Dynamic highlight groups(see `ui/highlights.lua`). This automatically makes the plugin supported by *almost* all colorschemes.
+- Utility function for showing `virtual text` & `UI contents` into a buffer as **actual text** with highlights!
+- Utility function for turning `virtual text` into statuscolumn content. This makes adding complex signs on wrapped lines much easier!
+- A basic reading time calculator. This makes long messages stay on the screen for longer durations.
+- A basic value evaluator. Useful if you want to support `functions` as configuration options without using `conditionals` everywhere.
+
+## 📜 Where to start?
+
+I recommend reading `:h ui.txt` first(don't worry if you don't understand it).
+
+>[!TIP]
+> The wiki is also available in vimdoc(see `:h ui.nvim`)!
+
+You can check the [wiki](https://github.com/OXY2DEV/ui.nvim/wiki) for the explanations and read the source files for the actual implementation.
+
+>[!NOTE]
+> If you want to help, feel free to point out issues with the wiki!
+
+</details><!--|fE-->
+
 ## ✨ Features
 
 - Custom UI for the command-line. It supports,
-    - Block mode(with context lines too).
-    - Icons based on command-line state.
-    - Titles.
-    - Concealing text(for `:lua`, `:=` etc.).
-    - `VimResized` support.
-    - Changing appearance based on command-line state.
+    - Block mode support(with context lines too).
+    - Changing appearance(background color, filetype etc.) based on command-line state.
+    - Custom titles.
+    - Concealing text(for `:lua`, `:=`, `:!` etc.).
     - Syntax highlighting(tree-sitter based).
 
 - Custom UI for the message. It supports,
-	- Ignoring specific messages.
+    - Ignoring specific messages.
     - Changing message content and highlighting.
     - Separate window(s) for `confirmation` and `list` style messages.
-    - Custom `:messages` window.
+    - Custom `:messages` window with support for multiple message providers(`vim` & `internal`).
+    - `showcmd` support.
 
 - Custom UI for the pop-up menu. It supports,
-	- Icons for different entry types.
+    - Icons for different entry types.
     - Changing how each entry is shown(padding, background, select color).
 
 - Dynamic highlight groups.
@@ -67,18 +110,76 @@ MiniDeps.add({
 });
 ```
 
-<!-- ### 🌒 Rocks.nvim -->
-<!---->
-<!-- >[!WARNING] -->
-<!-- > `luarocks package` may sometimes be a bit behind `main`. -->
-<!---->
-<!-- ```vim -->
-<!-- :Rocks install ui.nvim -->
-<!-- ``` -->
+### 🌒 Rocks.nvim
+
+>[!WARNING]
+> `luarocks package` may sometimes be a bit behind `main`.
+
+```vim
+:Rocks install ui.nvim
+```
 
 ## 🔩 Configuration
 
-The plugin can be configured via the `setup()` function.
+The plugin can be configured via the `setup()` function. You can check the default configuration table [here]().
+
+```lua
+require("ui").setup({
+    popupmenu = {
+        enable = true,
+
+        winconfig = {},
+        tooltip = nil,
+
+        styles = {
+            default = {
+                padding_left = " ",
+                padding_right = " ",
+
+                icon = nil,
+                text = nil,
+
+                normal_hl = nil,
+                select_hl = "CursorLine",
+                icon_hl = nil
+            },
+
+            example = {
+                condition = function ()
+                    return true;
+                end,
+
+                icon = "I "
+            }
+        }
+    },
+
+    cmdline = {
+        enable = true,
+
+        styles = {
+            default = {
+                cursor = "Cursor",
+                filetype = "vim",
+
+                icon = { { "I ", "@comment" } },
+                offset = 0,
+
+                title = nil,
+                winhl = ""
+            },
+
+            example = {
+	            condition = function ()
+                	return true;
+                end,
+
+                cursor = "@comment"
+            }
+        }
+    }
+});
+```
 
 >[!TIP]
 > You can call the `setup()` as many times as you want!
