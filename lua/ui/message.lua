@@ -342,14 +342,16 @@ message.__replace = function (kind, content)
 
 		local last = message.visible[keys[#keys]];
 
-		if not last or last.kind ~= kind then
+		if not last then
 			-- Current messages `kind` doesn't match
 			-- the previous messages `kind`.
 			message.__add(kind, content);
 			return;
 		end
 
+		last.kind = kind;
 		last.content = content;
+
 		last.timer:stop();
 
 		local lines = utils.to_lines(content);
@@ -982,7 +984,7 @@ message.msg_show = function (kind, content, replace_last)
 		);
 	elseif kind == "search_count" then
 		--- Do not handle search count as messages.
-		return;
+		message.__replace(kind, content);
 	elseif kind == "return_prompt" then
 		--- Hit `<ESC>` on hit-enter prompts.
 		--- or else we get stuck.
