@@ -81,6 +81,10 @@ You can check the [wiki](https://github.com/OXY2DEV/ui.nvim/wiki) for the explan
 - Going into `command mode` after a write causes duplicate message with wrong kind.
   Breaks: `nvim-0.11`
 
+## 📝 Requirements
+
+- Neovim 0.11, though 0.10 also works *for the most part*.
+
 ## 📥 Installation
 
 ### 💤 lazy.nvim
