@@ -450,4 +450,22 @@ utils.eval = function (val, ...)
 	---|fE
 end
 
+---@param path string
+---@return string
+utils.path = function (path)
+	---|fS
+
+	local stat = vim.uv.fs_stat(path);
+
+	if not stat then
+		return path;
+	elseif stat.type == "directory" then
+		return vim.fn.fnamemodify(path, ":~:.");
+	else
+		return path;
+	end
+
+	---|fE
+end
+
 return utils;

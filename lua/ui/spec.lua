@@ -748,7 +748,7 @@ spec.default = {
 				---|fE
 			},
 
-			lua_error = {
+			__lua_error = {
 				---|fS
 
 				condition = function (_, lines)
@@ -772,6 +772,7 @@ spec.default = {
 					for _, _line in ipairs(lines) do
 						if string.match(_line, "Error executing (.+):%d") then
 							exec = string.match(_line, "Error executing (.+):%d");
+							exec = utils.path(exec);
 						end
 
 						if string.match(_line, ".-:%d+: ?.-$") then
@@ -780,9 +781,8 @@ spec.default = {
 							if string.match(path, "%[.-%]$") then
 								path = string.match(path, "%[.-%]$");
 							else
-								path = vim.fn.fnamemodify(
-									string.match(path, "%S+$"),
-									":~"
+								path = utils.path(
+									string.match(path, "%S+$")
 								);
 							end
 
@@ -843,7 +843,7 @@ spec.default = {
 				---|fE
 			},
 
-			z_error_msg = {
+			error_msg = {
 				---|fS
 
 				condition = function (msg)
