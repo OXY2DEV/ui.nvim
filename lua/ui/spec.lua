@@ -374,7 +374,9 @@ spec.default = {
 				---|fE
 			},
 
-			keymap = {
+			-- Used for prompt keys,
+			-- E.g. [O]pen, (E)dit, (Q)uit
+			__keymap = {
 				---|fS
 
 				condition = function (state)
@@ -405,7 +407,7 @@ spec.default = {
 				---|fE
 			},
 
-			zz_prompt = {
+			prompt = {
 				---|fS
 
 				condition = function (state)
@@ -1181,15 +1183,23 @@ spec.default = {
 				end,
 
 				modifier = {
-					lines = { "󰾴 Swap file detected!" },
+					lines = {
+						" 󰾴 Swap file detected! ",
+						"      See  :swap "
+					},
 					extmarks = {
 						{
-							{ 0, 24, "@character.special" }
+							{ 0, 26, "DiagnosticWarn" }
+						},
+						{
+							{ 6, 10, "@comment" },
+							{ 10, 17, "DiagnosticVirtualTextHint" }
 						}
 					}
 				},
 
-				row = 0,
+				border = "rounded",
+				winhl = "FloatBorder:DiagnosticWarn,Normal:Normal"
 
 				---|fE
 			},
@@ -1216,7 +1226,9 @@ spec.default = {
 							}
 						}
 					};
-				end
+				end,
+
+				border = "rounded",
 
 				---|fE
 			}

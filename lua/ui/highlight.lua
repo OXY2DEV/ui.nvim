@@ -614,6 +614,7 @@ hl.groups = {
 		---|fE
 	end,
 
+
 	history_button = function ()
 		---|fS
 
@@ -655,6 +656,7 @@ hl.groups = {
 
 		---|fE
 	end,
+
 
 	popupmenu_select = function ()
 		---|fS
