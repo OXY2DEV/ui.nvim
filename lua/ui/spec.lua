@@ -772,7 +772,12 @@ spec.default = {
 					for _, _line in ipairs(lines) do
 						if string.match(_line, "Error executing (.+):%d") then
 							exec = string.match(_line, "Error executing (.+):%d");
-							exec = utils.path(exec);
+
+							if string.match(exec, "lua (.+)$") then
+								exec = "lua " .. utils.path(
+									string.match(exec, "lua (.+)$")
+								);
+							end
 						end
 
 						if string.match(_line, ".-:%d+: ?.-$") then
