@@ -1,6 +1,9 @@
 # 💻 ui.nvim
 
-<img src="https://github.com/OXY2DEV/ui.nvim/blob/images/images/repo/ui.nvim.png">
+<img src="https://github.com/OXY2DEV/ui.nvim/blob/images/images/ui.nvim.png">
+<img src="https://github.com/OXY2DEV/ui.nvim/blob/images/images/ui.nvim-cmdline.png">
+<img src="https://github.com/OXY2DEV/ui.nvim/blob/images/images/ui.nvim-messages.png">
+<img src="https://github.com/OXY2DEV/ui.nvim/blob/images/images/ui.nvim-popupmenu_cmp.png">
 
 A blueprint/template/guide to customize Neovim's UI using Lua.
 
@@ -274,12 +277,6 @@ require("ui").setup({
 
 >[!TIP]
 > You can call the `setup()` as many times as you want!
-
-## 📚 Guide
-
-<img src="https://github.com/OXY2DEV/ui.nvim/blob/images/images/repo/ui.nvim-messsages.png">
-
-The [wiki](https://github.com/OXY2DEV/ui.nvim/wiki/Configuration) explains how to create your own UIs using lua.
 
 ## 💻 Commands
 
