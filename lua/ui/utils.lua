@@ -289,7 +289,9 @@ utils.confirm_keys = function (prompt, content)
 	if not prompt and not content then
 		vim.g.__confirm_keys = {};
 	elseif prompt then
-		local keys = {};
+		-- You can hit `<CR>` to confirm the default
+		-- action.
+		local keys = { "\r" };
 
 		for key in string.gmatch(prompt, "[%[%(](.)[%]%)]") do
 			table.insert(keys, string.lower(key));
