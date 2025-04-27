@@ -15,7 +15,7 @@
 
 >txt
   ui.lua ─── vim.ui_attach() ┬┬─> cmdline.lua ──> handle() ──> state change ──> __render() | __close()
-                             │└─> mesaage.lua ──> handle() ──> __add() | __replace() | __confirm() | __list() ──> __render() 
+                             │└─> message.lua ──> handle() ──> __add() | __replace() | __confirm() | __list() ──> __render() 
                              └──> popup.lua   ──> handle() ──> state change ──> __render()
   
                              ───> linegrid.lua ──> handle()
@@ -34,7 +34,7 @@ You can visualize the files like so,
   plugin/ui.lua
    │    ↓
    │  ui.lua ┬┬┬─> cmdline.lua
-   │         ││└─> mesaage.lua 
+   │         ││└─> message.lua 
    │         │└──> popup.lua 
    │         └───> linegrid.lua 
    │
@@ -80,7 +80,7 @@ window.
 
 🔰 Messages ~
 
-The messages sub-module(aka `mesaage.lua`) works by using a table(see here⁸)
+The messages sub-module(aka `message.lua`) works by using a table(see here⁸)
 to store messages.
 
 ▌ Messages initially gets stored in the `message.visible` table which

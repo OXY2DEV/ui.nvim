@@ -280,7 +280,7 @@ following structure,
 
 CONDITION
 
-  • Type: fun(msg: ui.mesaage.entry, lines: string[], extmarks:
+  • Type: fun(msg: ui.message.entry, lines: string[], extmarks:
     ui.message.hl_fragment[][]): boolean
 
 Condition for this style.
@@ -306,7 +306,7 @@ Height of the confirmation window.
 
 MODIFIER
 
-  • Type: fun(msg: ui.mesaage.entry, lines: string[], extmarks:
+  • Type: fun(msg: ui.message.entry, lines: string[], extmarks:
     ui.message.hl_fragment[][]): { lines: string[], extmarks:
     ui.message.hl_fragment[][] }
 
@@ -364,14 +364,14 @@ Changes how messages are shown. Each style has the following structure,
 
 CONDITION
 
-  • Type: fun(msg: ui.mesaage.entry, lines: string[], extmarks:
+  • Type: fun(msg: ui.message.entry, lines: string[], extmarks:
     ui.message.hl_fragment[][]): boolean
 
 Condition for this style.
 
 DECORATIONS
 
-  • Type: `ui.mesaage.decorations`
+  • Type: `ui.message.decorations`
 
 Decorations for the message. It has the following structure,
 
@@ -425,7 +425,7 @@ The number of milliseconds the message should be visible for.
 
 MODIFIER
 
-  • Type: fun(msg: ui.mesaage.entry, lines: string[], extmarks:
+  • Type: fun(msg: ui.message.entry, lines: string[], extmarks:
     ui.message.hl_fragment[][]): { lines: string[], extmarks:
     ui.message.hl_fragment[][] }
 
@@ -568,7 +568,7 @@ Maximum width of the showcmd window.
 
 MODIFIER
 
-  • Type: fun(msg: ui.mesaage.fragment[], lines: string[], extmarks:
+  • Type: fun(msg: ui.message.fragment[], lines: string[], extmarks:
     ui.message.hl_fragment[][]): { lines: string[], extmarks:
     ui.message.hl_fragment[][] }
 

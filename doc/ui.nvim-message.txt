@@ -211,7 +211,7 @@ then use `vim.list_extend()` to merge them together
   local lines, highlights = {}, {};
   
   ---@type integer[]
-  local IDs = vim.tbl_keys(mesaage.visible);
+  local IDs = vim.tbl_keys(message.visible);
   table.sort(IDs);
   
   for _, ID in ipairs(IDs) do

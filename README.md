@@ -194,7 +194,7 @@ require("ui").setup({
     message = {
         enable = true,
 
-        mesaage_winconfig = {},
+        message_winconfig = {},
         list_winconfig = {},
         confirm_winconfig = {},
         history_winconfig = {},
