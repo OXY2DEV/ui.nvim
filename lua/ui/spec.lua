@@ -651,22 +651,38 @@ spec.default = {
 				---|fS
 
 				condition = function (_, lines)
-					return string.match(lines[1], "^%s+%w+=") ~= nil or string.match(lines[1], "^no%w+$") ~= nil;
+					if string.match(lines[1], "^%s+%w+=") then
+						return true;
+					end
+
+					local option = string.match(lines[1], "^%s*(%w%w+)$");
+
+					if not option then
+						return false;
+					end
+
+					option = string.gsub(option, "^no", "");
+
+					local completions = vim.fn.getcompletion(option, "option");
+					return #completions > 0;
 				end,
 
 				modifier = function (_, lines)
-					if string.match(lines[1], "^no%w+$") then
-						local key = string.match(lines[1], "^no(.*)$");
+					if string.match(lines[1], "^%s*(%w+)$") then
+						local key = string.match(lines[1], "^%s*(.*)$");
+						local state = string.match(key, "^no") == nil;
+
+						key = string.gsub(key, "^no", "");
 
 						return {
 							lines = {
-								string.format("%s: false", key)
+								string.format("%s: %s", key, tostring(state))
 							},
 							extmarks = {
 								{
 									{ 0, #key, "@property" },
 									{ #key, #key + 1, "@punctuation" },
-									{ #key + 2, #key + 7, "@boolean" },
+									{ #key + 2, #key + 2 + #tostring(state), "@boolean" },
 								}
 							}
 						};
@@ -698,7 +714,6 @@ spec.default = {
 					padding = {
 						{ "▍  ", "UIMessageHint" }
 					},
-					line_hl_group = "UIMessageHint"
 				}
 
 				---|fE
