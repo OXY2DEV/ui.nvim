@@ -65,7 +65,7 @@ spec.default = {
 				};
 			end
 
-			return {};
+			return { border = "none" };
 
 			---|fE
 		end,
