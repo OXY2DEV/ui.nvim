@@ -244,6 +244,24 @@ message.__add = function (kind, content)
 			content = content
 		});
 		return;
+	elseif kind == "" and vim.tbl_isempty(message.visible) == false then
+		local IDs = vim.tbl_keys(message.visible);
+		table.sort(IDs);
+
+		-- Last visible message.
+		local last = message.visible[IDs[#IDs]];
+
+		if vim.deep_equal(last.content, content) then
+			-- BUG, Vim resends old message on redraw.
+			-- Last message will be replaced with this
+			-- one.
+			--
+			-- The second message has the wrong kind so
+			-- we use the original kind.
+
+			message.__replace(last.kind, content);
+			return;
+		end
 	end
 
 	vim.schedule(function ()
