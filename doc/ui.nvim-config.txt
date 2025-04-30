@@ -109,7 +109,8 @@ CURSOR
 
   • Type: `string`
 
-Highlight group for the cursor.
+Highlight group for the `special character` shown under cursor(see
+`<CTRL-v>`).
 
 FILETYPE
 
