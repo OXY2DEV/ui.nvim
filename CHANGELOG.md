@@ -1,5 +1,16 @@
 # Changelog
 
+## [1.0.1](https://github.com/OXY2DEV/ui.nvim/compare/v1.0.0...v1.0.1) (2025-04-30)
+
+
+### Bug Fixes
+
+* **cmdline:** Fixed a bug with command-line sometimes not showing up ([6570fcc](https://github.com/OXY2DEV/ui.nvim/commit/6570fcc6e86bfb4ba2ebcdb2faa687f95a6da803)), closes [#9](https://github.com/OXY2DEV/ui.nvim/issues/9)
+* **cmdline:** Fixed issues with cursor flickering in `:s/` ([17ed49d](https://github.com/OXY2DEV/ui.nvim/commit/17ed49d9fcc9329fe3844610647a6d7480f2e33c)), closes [#9](https://github.com/OXY2DEV/ui.nvim/issues/9)
+* **config:** Fixed a bug with borders in the command-line pop-up menu ([dfe2e38](https://github.com/OXY2DEV/ui.nvim/commit/dfe2e38c642d76ac607e634774a9f0ecb4fda296))
+* **config:** Made rules stricter for detecting option messages ([73b5572](https://github.com/OXY2DEV/ui.nvim/commit/73b5572efe856cfd7a889d71a4ad3943e3ffd2a6))
+* **messages:** Fixed a bug with mesaages appearing twice on redraw ([952ca02](https://github.com/OXY2DEV/ui.nvim/commit/952ca027480a89a725c7bcb48abd5a234682b792)), closes [#10](https://github.com/OXY2DEV/ui.nvim/issues/10)
+
 ## 1.0.0 (2025-04-27)
 
 
