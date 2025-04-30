@@ -652,6 +652,14 @@ spec.default = {
 
 				condition = function (_, lines)
 					if string.match(lines[1], "^%s+%w+=") then
+						local opt, val = string.match(lines[1], "^%s+(%w+)=(.*)$");
+
+						if vim.o[opt] == nil then
+							return false;
+						elseif type(vim.o[opt]) ~= utils.get_type(val) then
+							return false;
+						end
+
 						return true;
 					end
 
@@ -662,9 +670,7 @@ spec.default = {
 					end
 
 					option = string.gsub(option, "^no", "");
-
-					local completions = vim.fn.getcompletion(option, "option");
-					return #completions > 0;
+					return vim.o[option] ~= nil and type(vim.o[option]) == "boolean";
 				end,
 
 				modifier = function (_, lines)
