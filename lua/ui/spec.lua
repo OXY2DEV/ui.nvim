@@ -429,7 +429,7 @@ spec.default = {
 							table.insert(_line, { " │ ", hl });
 						end
 
-						table.insert(_line, { line, "Comment" });
+						table.insert(_line, { line, "@comment" })
 						table.insert(output, _line);
 					end
 

@@ -8,11 +8,33 @@ local utils = require("ui.utils");
 
 ------------------------------------------------------------------------------
 
+---@type integer Namespace for the decorations in the command-line.
+cmdline.namespace = vim.api.nvim_create_namespace("ui.cmdline");
+
+---@type integer Namespace for the cursor in command-line.
+cmdline.cursor_ns = vim.api.nvim_create_namespace("ui.cmdline.cursor");
+
+---@type integer, integer[] Cmdline buffer & window.
+cmdline.buffer, cmdline.window = nil, {};
+
+------------------------------------------------------------------------------
+
 ---@type ui.cmdline.style__static
 cmdline.style = nil;
 
 ---@type ui.cmdline.state
 cmdline.state = {
+	pos = 0,
+	firstc = ":",
+	indent = 0,
+	level = 1,
+	prompt = nil,
+
+	c = "",
+	shift = false
+};
+
+cmdline.old_state = {
 	pos = 0,
 	firstc = ":",
 	indent = 0,
@@ -39,17 +61,6 @@ end
 
 ------------------------------------------------------------------------------
 
----@type integer Namespace for the decorations in the command-line.
-cmdline.namespace = vim.api.nvim_create_namespace("ui.cmdline");
-
----@type integer Namespace for the cursor in command-line.
-cmdline.cursor_ns = vim.api.nvim_create_namespace("ui.cmdline.cursor");
-
----@type integer, integer[] Cmdline buffer & window.
-cmdline.buffer, cmdline.window = nil, {};
-
-------------------------------------------------------------------------------
-
 --- Preparation steps before opening the command-line.
 cmdline.__prepare = function ()
 	---|fS
@@ -68,7 +79,7 @@ cmdline.__prepare = function ()
 	-- But, we can change an already open window's
 	-- configuration. That's why we open a hidden
 	-- window first.
-	if not cmdline.window[tab] or vim.api.nvim_win_is_valid(cmdline.window[tab]) == false then
+	if not cmdline.window[tab] or not vim.api.nvim_win_is_valid(cmdline.window[tab]) then
 		cmdline.window[tab] = vim.api.nvim_open_win(cmdline.buffer, false, {
 			relative = "editor",
 
@@ -85,7 +96,6 @@ cmdline.__prepare = function ()
 		});
 
 		vim.api.nvim_win_set_var(cmdline.window[tab], "ui_window", true);
-		vim.wo[cmdline.window[tab]].sidescrolloff = math.floor(vim.o.columns * 0.5) or 36;
 	end
 
 	---|fE
@@ -97,6 +107,8 @@ end
 ---@return ui.cmdline.line_stat
 cmdline.__lines = function ()
 	---|fS
+
+	cmdline.decorations = {};
 
 	-- Process the lines of the command-line.
 	local current_lines, current_exts = utils.process_content(
@@ -114,13 +126,10 @@ cmdline.__lines = function ()
 	---@type ui.cmdline.style__static
 	cmdline.style = spec.get_cmdline_style(cmdline.state, current_lines);
 
-	--- Add an extra space at the end.
-	--- This is to prevent the cursor from not being
-	--- visible at the end of the command-line.
-	---
-	--- Must be done after getting the style.
+	local icon_w = utils.virt_len(cmdline.style.icon);
+
 	for l, line in ipairs(current_lines) do
-		current_lines[l] = line .. "  ";
+		current_lines[l] = string.rep(" ", icon_w) .. line .. " ";
 	end
 
 	---@type ui.cmdline.lines, ui.cmdline.decorations
@@ -157,23 +166,25 @@ cmdline.__lines = function ()
 	output_lines = vim.list_extend(output_lines, current_lines);
 	output_exts = vim.list_extend(output_exts, current_exts);
 
-	return output_lines, output_exts, { #title_lines, #context_lines, #current_lines };
+	return output_lines, output_exts, {
+		context_size = #context_lines,
+		cmdline_size = #current_lines
+	};
 
 	---|fE
 end
 
 --- Sets the cursor.
-cmdline.__cursor = function ()
+---@param lines string[]
+cmdline.__cursor = function (lines)
 	---|fS
-
-	local lines, _ = cmdline.__lines();
 
 	---@type integer Byte position of the cursor.
 	local pos = cmdline.get_state("pos", 0);
 	local line = lines[#lines] or "";
 
-	---@type integer Byte size of the character under the cursor.
-	local to = #vim.fn.strcharpart(string.sub(line, pos, #line), 0, 1);
+	local icon_w = utils.virt_len(cmdline.style.icon);
+	pos = icon_w + pos;
 
 	---@type integer
 	local tab = vim.api.nvim_get_current_tabpage();
@@ -193,34 +204,68 @@ cmdline.__cursor = function ()
 
 	-- Clear previous cursor.
 	vim.api.nvim_buf_clear_namespace(cmdline.buffer, cmdline.cursor_ns, 0, -1);
+	local offset_len = 0;
 
-	if cmdline.style.offset and pos >= cmdline.style.offset then
+	if cmdline.style.offset and (pos - icon_w) >= cmdline.style.offset then
+		offset_len = #vim.fn.strcharpart(line, 0, cmdline.style.offset);
+
 		-- If `offset` exists and the cursor position is >= to the offset
 		-- we hide the leading part of the command-line(till `offset` characters).
 		log.assert(
 			"ui/cmdline.lua → text_conceal",
 			pcall(
-				vim.api.nvim_buf_set_extmark,
+				vim.api.nvim_buf_set_text,
 
-				cmdline.buffer, cmdline.cursor_ns,
-				#lines - 1, 0,
+				cmdline.buffer,
+
+				#lines - 1, icon_w,
+				#lines - 1, icon_w + offset_len,
 
 				{
-					end_col = #vim.fn.strcharpart(line, 0, cmdline.style.offset),
-					conceal = ""
+					""
 				}
 			)
 		);
 	end
 
+	---|fE
+end
+
+--- Draws special characters under cursor.
+--- BUG, this is a separate function from
+--- `__cursor` as changing text breaks it.
+cmdline.__special = function ()
+	---|fS
+
+	---@type integer Byte position of the cursor.
+	local pos = cmdline.get_state("pos", 0);
+	local lines = vim.api.nvim_buf_get_lines(cmdline.buffer, 0, -1, false);
+	local line = lines[#lines] or "";
+
+	local icon_w = utils.virt_len(cmdline.style.icon);
+	pos = icon_w + pos;
+
+	-- Clear previous cursor.
+	vim.api.nvim_buf_clear_namespace(cmdline.buffer, cmdline.cursor_ns, 0, -1);
+	local offset_len = 0;
+
+	if cmdline.style.offset and (pos - icon_w) >= cmdline.style.offset then
+		offset_len = #vim.fn.strcharpart(line, 0, cmdline.style.offset);
+	end
+
+	pos = pos - offset_len;
+
+	---@type integer Byte size of the character under the cursor.
+	local to = #vim.fn.strcharpart(string.sub(line, pos, #line), 0, 1);
+
 	local char = cmdline.get_state("c", "");
 	local shift = cmdline.get_state("shift", false);
 
-	-- Add a fake Cursor.
 	if char ~= "" then
 		log.assert(
 			"ui/cmdline.lua → fake_cursor_char",
-			pcall(vim.api.nvim_buf_set_extmark,
+			pcall(
+				vim.api.nvim_buf_set_extmark,
 
 				cmdline.buffer,
 				cmdline.cursor_ns,
@@ -229,7 +274,7 @@ cmdline.__cursor = function ()
 				pos,
 
 				{
-					end_col = pos + to,
+					end_col = math.min(pos + to, #line),
 					virt_text_pos = shift == true and "inline" or "overlay",
 
 					virt_text = {
@@ -242,23 +287,6 @@ cmdline.__cursor = function ()
 		cmdline.set_state({
 			c = ""
 		});
-	else
-		log.assert(
-			"ui/cmdline.lua → fake_cursor",
-			pcall(vim.api.nvim_buf_set_extmark,
-
-				cmdline.buffer,
-				cmdline.cursor_ns,
-
-				#lines - 1,
-				pos,
-
-				{
-					end_col = pos + to,
-					hl_group = cmdline.style.cursor or "Cursor"
-				}
-			)
-		);
 	end
 
 	---|fE
@@ -273,15 +301,19 @@ cmdline.__render = function ()
 		pcall(cmdline.__prepare)
 	);
 
-	local lines, extmarks, stat = cmdline.__lines();
+	local lines, extmarks, _ = cmdline.__lines();
+
 	local H = #lines;
+	vim.g.__ui_cmd_height = H;
 
 	local win_config = {
+		---|fS
+
 		relative = "editor",
 		style = "minimal",
 		zindex = 300,
 
-		row = vim.o.lines - (cmdline.__statualine_visible and 1 or 1) - (vim.o.cmdheight + H),
+		row = vim.o.lines - (vim.o.cmdheight + H + 1),
 		col = 0,
 
 		border = "none",
@@ -291,13 +323,11 @@ cmdline.__render = function ()
 
 		hide = false,
 		focusable = false
+
+		---|fE
 	};
 
-	-- Export the cmdline height.
-	vim.g.__ui_cmd_height = H;
-
-	--- The actual drawing part.
-	local function callback ()
+	local function render_callback ()
 		---|fS
 
 		-- Clear the buffer of old decorations.
@@ -309,6 +339,8 @@ cmdline.__render = function ()
 
 		-- Add all the highlight groups.
 		for l, line in ipairs(extmarks) do
+			---|fS
+
 			for _, ext in ipairs(line) do
 				if ext == "" then
 					goto continue;
@@ -321,38 +353,6 @@ cmdline.__render = function ()
 
 			    ::continue::
 			end
-		end
-
-		if cmdline.style.icon then
-			---|fS
-
-			for l, _ in ipairs(lines) do
-				if l == #lines then
-					--- TODO, maybe we should add spaces
-					--- before the text instead of adding
-					--- an extra extmark.
-					vim.api.nvim_buf_set_extmark(cmdline.buffer, cmdline.namespace, l - 1, 0, {
-						virt_text_win_col = 0,
-						virt_text = cmdline.style.icon
-					});
-					vim.api.nvim_buf_set_extmark(cmdline.buffer, cmdline.namespace, l - 1, 0, {
-						virt_text_pos = "inline",
-						virt_text = cmdline.style.icon
-					});
-				elseif l > stat[1] then
-					-- We shouldn't add padding to the title.
-
-					---@type integer Number of columns the icon takes.
-					local size = utils.virt_len(cmdline.style.icon);
-
-					vim.api.nvim_buf_set_extmark(cmdline.buffer, cmdline.namespace, l - 1, 0, {
-						virt_text_pos = "inline",
-						virt_text = {
-							{ string.rep(" ", size) },
-						}
-					});
-				end
-			end
 
 			---|fE
 		end
@@ -360,17 +360,36 @@ cmdline.__render = function ()
 		---@type integer
 		local tab = vim.api.nvim_get_current_tabpage();
 
+		vim.api.nvim_buf_set_extmark(cmdline.buffer, cmdline.namespace, #lines - 1, 0, {
+			virt_text_pos = "overlay",
+			virt_text = cmdline.style.icon
+		})
+
 		log.assert(
 			"ui/cmdline.lua → window",
 			pcall(vim.api.nvim_win_set_config, cmdline.window[tab], win_config)
 		);
 
-		cmdline.__cursor();
+		local winhl = cmdline.style.winhl or "";
 
-		vim.wo[cmdline.window[tab]].winhl = cmdline.style.winhl or "";
+		-- Disable search highlighting.
+		if type(winhl) ~= "string" then
+			winhl = "Search:None,CurSearch:None";
+		elseif winhl == "" then
+			winhl = "Search:None,CurSearch:None";
+		else
+			winhl = winhl .. ",Search:None,CurSearch:None";
+		end
+
+		vim.wo[cmdline.window[tab]].winhl = winhl;
+
+		vim.wo[cmdline.window[tab]].sidescrolloff = math.floor(vim.o.columns * 0.5) or 36;
+		vim.wo[cmdline.window[tab]].scrolloff = 0;
 
 		vim.wo[cmdline.window[tab]].conceallevel = 3;
 		vim.wo[cmdline.window[tab]].concealcursor = "nvic";
+
+		cmdline.__cursor(lines);
 
 		if package.loaded["ui.message"] then
 			log.assert(
@@ -384,19 +403,25 @@ cmdline.__render = function ()
 			);
 		end
 
-		vim.api.nvim__redraw({ flush = true, win = cmdline.window[tab] });
+		vim.api.nvim__redraw({
+			flush = true,
+			cursor = true,
+
+			win = cmdline.window[tab]
+		});
 
 		---|fE
 	end
 
-	if string.match(lines[#lines], "^[%S]*s/") then
+	if vim.list_contains({ "/", "?" }, cmdline.state.firstc) or string.match(lines[#lines], "^%s*[%S]*s/") then
 		-- When we do `:s/`(aka substitute) Neovim will
 		-- schedule the screen updates *after* the preview.
 		--
 		-- So, we update the screen immediately.
-		callback();
+		-- Same when searching.
+		render_callback();
 	else
-		vim.schedule(callback);
+		vim.schedule(render_callback);
 	end
 
 	---|fE
@@ -423,6 +448,12 @@ cmdline.cmdline_show = function (content, pos, firstc, prompt, indent, level, hl
 		hl_id = hl_id,
 	});
 
+	if vim.deep_equal(cmdline.old_state, cmdline.state) then
+		return;
+	else
+		cmdline.old_state = vim.deepcopy(cmdline.state);
+	end
+
 	-- This is used to communicate between
 	-- the cmdline & message module when
 	-- confirmation prompts are shown.
@@ -442,13 +473,7 @@ cmdline.cmdline_pos = function (pos, level)
 		level = level
 	});
 
-	vim.schedule(function ()
-		---@type integer
-		local tab = vim.api.nvim_get_current_tabpage();
-
-		cmdline.__cursor();
-		vim.api.nvim__redraw({ flush = true, win = cmdline.window[tab] })
-	end);
+	cmdline.__render();
 
 	---|fE
 end
@@ -467,8 +492,8 @@ cmdline.cmdline_special_char = function (c, shift, level)
 
 	-- Special characters should be rendered
 	-- immediately.
-	cmdline.__cursor();
-	vim.api.nvim__redraw({ flush = true, win = cmdline.window[tab] })
+	cmdline.__special();
+	vim.api.nvim__redraw({ flush = true, cursor = true, win = cmdline.window[tab] })
 
 	---|fE
 end
@@ -505,6 +530,7 @@ cmdline.cmdline_hide = function ()
 		-- mode change. So, we force it here.
 		vim.api.nvim__redraw({
 			flush = true,
+			cursor = true,
 			statusline = true
 		});
 	end);
