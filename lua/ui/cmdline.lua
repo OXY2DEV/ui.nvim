@@ -506,6 +506,7 @@ cmdline.cmdline_hide = function ()
 
 	-- Reset exported height.
 	vim.g.__ui_cmd_height = 0;
+	cmdline.old_state = {}; ---@diagnostic disable-line
 
 	vim.schedule(function ()
 		-- We can't open/close windows.
