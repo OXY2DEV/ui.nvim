@@ -414,12 +414,11 @@ cmdline.__render = function ()
 		---|fE
 	end
 
-	if vim.list_contains({ "/", "?" }, cmdline.state.firstc) or string.match(lines[#lines], "^%s*[%S]*s/") then
+	if string.match(lines[#lines], "^%s*[%S]*s/") then
 		-- When we do `:s/`(aka substitute) Neovim will
 		-- schedule the screen updates *after* the preview.
 		--
 		-- So, we update the screen immediately.
-		-- Same when searching.
 		render_callback();
 	else
 		vim.schedule(render_callback);
