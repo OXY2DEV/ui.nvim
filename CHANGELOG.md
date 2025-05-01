@@ -1,5 +1,26 @@
 # Changelog
 
+## [1.1.0](https://github.com/OXY2DEV/ui.nvim/compare/v1.0.1...v1.1.0) (2025-05-01)
+
+
+### Features
+
+* add settings cmdline.row_offset and message.history_preference ([ba88497](https://github.com/OXY2DEV/ui.nvim/commit/ba88497d17afac5353cd363267e69063eff02530))
+* **cmdline:** add row_offset setting ([a415d81](https://github.com/OXY2DEV/ui.nvim/commit/a415d81f5841e570a8aff6cec3ff049b3b210578))
+* **config:** Added new config for `undo` & `redo` ([544f604](https://github.com/OXY2DEV/ui.nvim/commit/544f604861c1c8aad53f69d84bb979b5b36b66bb))
+* **history:** always show history at the bottom ([cf6f768](https://github.com/OXY2DEV/ui.nvim/commit/cf6f7689904293496c29e8ab48aff57dbcd3ffcb))
+* **history:** always show history at the bottom ([9bcbe55](https://github.com/OXY2DEV/ui.nvim/commit/9bcbe55c74f10cf856588bd614c8d24f3f5f43c3))
+* less flickering when searching in cmdline ([ab32f61](https://github.com/OXY2DEV/ui.nvim/commit/ab32f61ed46fd5d29cf145050e5a4f6811bbbc09))
+* less flickering when searching in cmdline ([8133081](https://github.com/OXY2DEV/ui.nvim/commit/81330810d6eac79e50020d71f58d6203515034ec))
+* **message:** add history_preference setting ([c238f5a](https://github.com/OXY2DEV/ui.nvim/commit/c238f5a270615bd0f4adb7c1d8e776018e909125))
+
+
+### Bug Fixes
+
+* **messages:** `Showcmd` messages no longer update statuscolumn ([d005f52](https://github.com/OXY2DEV/ui.nvim/commit/d005f52878a6e66eb5b27591d562bcabae2ed521))
+* **messages:** Fixed issue with the message partially not being shown ([20631c1](https://github.com/OXY2DEV/ui.nvim/commit/20631c131a387280167a086a0f3b8bf9d9d0a189))
+* Reduced option set occurences ([24c88e4](https://github.com/OXY2DEV/ui.nvim/commit/24c88e46e6d9172cb8152afa1fe2296ab34056ea))
+
 ## [1.0.1](https://github.com/OXY2DEV/ui.nvim/compare/v1.0.0...v1.0.1) (2025-04-30)
 
 
