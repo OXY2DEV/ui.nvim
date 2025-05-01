@@ -31,6 +31,8 @@ Used by the command-line. It has the following structure,
   ---@type ui.config.cmdline
   cmdline = {
       enable = true,
+      row_offset = 1,
+
       styles = {
           default = {}
       }
@@ -43,6 +45,22 @@ enable ~
   • Default: `true`
 
 Whether to use the custom command-line.
+
+row_offset ~
+
+  • Type: `integer`
+  • Default: `1`
+
+Number of rows the command-line should be from the bottom of the screen.
+
+▌ 💡 Tip
+▌ This can be set to `0` to mimic Vim's command-line when `cmdheight=0`.
+
+Command-line window position is calculated with the following formula.
+>txt
+  row = total_lines - (cmdheight + estimated_window_height + row_offset)
+<
+This also affects where the message window is shown!
 
 styles ~
 
@@ -154,6 +172,7 @@ Used by the messages. It has the following structure,
   ---@type ui.config.message
   message = {
       enable = true,
+      history_preference = "vim",
   
       history_winconfig = {},
       message_winconfig = {},
@@ -193,6 +212,24 @@ enable ~
   • Default: `true`
 
 Whether to use custom messages.
+
+history_preference ~
+
+  • Type: `"vim" | "internal"`
+  • Default: `"vim"`
+
+Default history source preference for the message history. It has the
+following supported values,
+
+	• `"vim"`, use the history provided by Neovim.
+	• `"internal"`, use the plugin's internal message history.
+
+Some messages aren't shown in the history by Neovim, in those cases you might
+want to use the plugin's own history source which contains most
+messages(excluding `list` & `confirm` messages).
+
+▌ 💡 Tip
+▌ You can press `t` while inside the history window to toggle the source!
 
 history_winconfig ~
 

@@ -39,6 +39,7 @@
 ---@class ui.config.cmdline__static Configuration for the command-line.
 ---
 ---@field enable? boolean Should this module be enabled?
+---@field row_offset? integer Row offset for the command-line.
 ---@field styles? table<string, ui.cmdline.style__static> Styles for the cmdline
 
 
