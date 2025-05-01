@@ -637,6 +637,8 @@ spec.default = {
 			},
 
 			__spell = {
+				---|fS
+
 				condition = function (_, lines)
 					return string.match(lines[1], "Word (.+) added to .-%.add$") ~= nil;
 				end,
@@ -649,6 +651,108 @@ spec.default = {
 						{ "▍  ", "UIMessageOk" }
 					},
 				}
+
+				---|fE
+			},
+
+			__lua_error = {
+				---|fS
+
+				condition = function (_, lines)
+					for _, line in ipairs(lines) do
+						if string.match(line, ".-Error.-:%d+: ?.-$") then
+							return true;
+						end
+					end
+
+					return false;
+				end,
+
+				modifier = function (_, lines)
+					if vim.g.__ui_history then
+						return {};
+					end
+
+					local path, line, actual_error = "", "", "";
+					local exec, code;
+
+					for _, _line in ipairs(lines) do
+						if string.match(_line, "Error executing (.+):%d") then
+							exec = string.match(_line, "Error executing (.+):%d");
+
+							if string.match(exec, "lua (.+)$") then
+								exec = "lua " .. utils.path(
+									string.match(exec, "lua (.+)$")
+								);
+							end
+						end
+
+						if string.match(_line, ".-:%d+: ?.-$") then
+							path, line, actual_error = string.match(_line, "(.-):(%d+): ?(.-)$");
+
+							if string.match(path, "%[.-%]$") then
+								path = string.match(path, "%[.-%]$");
+							else
+								path = utils.path(
+									string.match(path, "%S+$")
+								);
+							end
+
+							code = string.match(_line, "^E(%d%d+)")
+							break;
+						end
+					end
+
+					if actual_error == "" then
+						return {};
+					end
+
+					return {
+						lines = {
+							actual_error,
+							string.format("From: %s", path),
+							string.format("Line: %s", line),
+							(code or exec) and "" or nil,
+							code and string.format("Code: %s", code) or nil,
+							exec and string.format("Exec: %s", exec) or nil,
+							-- text
+						},
+						extmarks = {
+							{
+								{ 0, #actual_error, "DiagnosticError" },
+							},
+							{
+								{ 0, 5, "Comment" },
+								{ 6, 6 + #path, "DiagnosticHint" },
+							},
+							{
+								{ 0, 5, "Comment" },
+								{ 6, 6 + #line, "DiagnosticHint" },
+							},
+							(code or exec) and {} or nil,
+							code and {
+								{ 0, 5, "Comment" },
+								{ 6, 6 + #code, "DiagnosticError" },
+							} or nil,
+							exec and {
+								{ 0, 5, "Comment" },
+								{ 6, 6 + #exec, "DiagnosticError" },
+							} or nil,
+						}
+					};
+				end,
+
+				decorations = {
+					icon = {
+						{ "▍ ", "UIMessageErrorSign" }
+					},
+					padding = {
+						{ "▍  ", "UIMessageErrorSign" }
+					},
+					line_hl_group = "UIMessageError",
+				}
+
+				---|fE
 			},
 
 			option = {
@@ -773,106 +877,6 @@ spec.default = {
 				---|fE
 			},
 
-			__lua_error = {
-				---|fS
-
-				condition = function (_, lines)
-					for _, line in ipairs(lines) do
-						if string.match(line, ".-Error.-:%d+: ?.-$") then
-							return true;
-						end
-					end
-
-					return false;
-				end,
-
-				modifier = function (_, lines)
-					if vim.g.__ui_history then
-						return {};
-					end
-
-					local path, line, actual_error = "", "", "";
-					local exec, code;
-
-					for _, _line in ipairs(lines) do
-						if string.match(_line, "Error executing (.+):%d") then
-							exec = string.match(_line, "Error executing (.+):%d");
-
-							if string.match(exec, "lua (.+)$") then
-								exec = "lua " .. utils.path(
-									string.match(exec, "lua (.+)$")
-								);
-							end
-						end
-
-						if string.match(_line, ".-:%d+: ?.-$") then
-							path, line, actual_error = string.match(_line, "(.-):(%d+): ?(.-)$");
-
-							if string.match(path, "%[.-%]$") then
-								path = string.match(path, "%[.-%]$");
-							else
-								path = utils.path(
-									string.match(path, "%S+$")
-								);
-							end
-
-							code = string.match(_line, "^E(%d%d+)")
-							break;
-						end
-					end
-
-					if actual_error == "" then
-						return {};
-					end
-
-					return {
-						lines = {
-							actual_error,
-							string.format("From: %s", path),
-							string.format("Line: %s", line),
-							(code or exec) and "" or nil,
-							code and string.format("Code: %s", code) or nil,
-							exec and string.format("Exec: %s", exec) or nil,
-							-- text
-						},
-						extmarks = {
-							{
-								{ 0, #actual_error, "DiagnosticError" },
-							},
-							{
-								{ 0, 5, "Comment" },
-								{ 6, 6 + #path, "DiagnosticHint" },
-							},
-							{
-								{ 0, 5, "Comment" },
-								{ 6, 6 + #line, "DiagnosticHint" },
-							},
-							(code or exec) and {} or nil,
-							code and {
-								{ 0, 5, "Comment" },
-								{ 6, 6 + #code, "DiagnosticError" },
-							} or nil,
-							exec and {
-								{ 0, 5, "Comment" },
-								{ 6, 6 + #exec, "DiagnosticError" },
-							} or nil,
-						}
-					};
-				end,
-
-				decorations = {
-					icon = {
-						{ "▍ ", "UIMessageErrorSign" }
-					},
-					padding = {
-						{ "▍  ", "UIMessageErrorSign" }
-					},
-					line_hl_group = "UIMessageError",
-				}
-
-				---|fE
-			},
-
 			error_msg = {
 				---|fS
 
@@ -992,6 +996,7 @@ spec.default = {
 				---|fE
 			},
 
+
 			write = {
 				---|fS
 
@@ -1038,7 +1043,34 @@ spec.default = {
 				}
 
 				---|fE
-			}
+			},
+
+			undo_redo = {
+				---|fS
+
+				condition = function (_, lines)
+					if lines[1] == "Already at oldest change" then
+						return true;
+					elseif lines[1] == "Already at newest change" then
+						return true;
+					end
+
+					return string.match(lines[1], "%d+ more line; %w+ #%d+") ~= nil or  string.match(lines[1], "%d+ line less; %w+ #%d+") ~= nil;
+				end,
+
+				decorations = {
+					icon = {
+						{ "󰫇 ", "DiagnosticInfo" }
+					},
+					padding = {
+						{ "  ", "DiagnosticInfo" }
+					},
+
+					line_hl_group = "@comment"
+				}
+
+				---|fE
+			},
 		},
 
 		is_list = function (kind, content)
