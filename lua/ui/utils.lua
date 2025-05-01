@@ -468,4 +468,39 @@ utils.path = function (path)
 	---|fE
 end
 
+--- Sets buffer, window & global options.
+---@param mode "b" | "w" | ""
+---@param src integer
+---@param name string
+---@param value any
+utils.set = function (mode, src, name, value)
+	---|fS "fix: Sets given option, if it isn't set"
+	--- `pcall()` is used for invalid buffer,
+	--- window & option name errors.
+
+	pcall(function ()
+		if mode == "w" then
+			local old = vim.wo[src][name]
+
+			if old ~= value then
+				vim.wo[src][name] = value;
+			end
+		elseif mode == "b" then
+			local old = vim.bo[src][name]
+
+			if old ~= value then
+				vim.bo[src][name] = value;
+			end
+		else
+			local old = vim.o[src][name]
+
+			if old ~= value then
+				vim.o[src][name] = value;
+			end
+		end
+	end);
+
+	---|fE
+end
+
 return utils;

@@ -136,8 +136,8 @@ message.__prepare = function ()
 		message.msg_window[tab] = vim.api.nvim_open_win(message.msg_buffer, false, win_config);
 		vim.api.nvim_win_set_var(message.msg_window[tab], "ui_window", true);
 
-		vim.wo[message.msg_window[tab]].numberwidth = 1;
-		vim.wo[message.msg_window[tab]].statuscolumn = "%!v:lua.__ui_statuscolumn()";
+		utils.set("w", message.msg_window[tab], "numberwidth", 1);
+		utils.set("w", message.msg_window[tab], "statuscolumn", "%!v:lua.__ui_statuscolumn()");
 	end
 
 	----------
@@ -172,8 +172,8 @@ message.__prepare = function ()
 		message.history_window[tab] = vim.api.nvim_open_win(message.history_buffer, false, win_config);
 		vim.api.nvim_win_set_var(message.history_window[tab], "ui_window", true);
 
-		vim.wo[message.history_window[tab]].numberwidth = 1;
-		vim.wo[message.history_window[tab]].statuscolumn = "%!v:lua.__ui_statuscolumn()";
+		utils.set("w", message.history_window[tab], "numberwidth", 1);
+		utils.set("w", message.history_window[tab], "statuscolumn", "%!v:lua.__ui_statuscolumn()");
 	end
 
 	----------
@@ -186,7 +186,7 @@ message.__prepare = function ()
 		message.show_window[tab] = vim.api.nvim_open_win(message.show_buffer, false, win_config);
 		vim.api.nvim_win_set_var(message.show_window[tab], "ui_window", true);
 
-		vim.wo[message.show_window[tab]].sidescrolloff = 0;
+		utils.set("w", message.show_window[tab], "sidescrolloff", 0);
 	end
 
 	---|fE
@@ -452,11 +452,11 @@ message.__confirm = function (obj)
 			vim.api.nvim_win_set_var(message.confirm_window[tab], "ui_window", true);
 		end
 
-		vim.wo[message.confirm_window[tab]].wrap = true;
-		vim.wo[message.confirm_window[tab]].linebreak = true;
+		utils.set("w", message.confirm_window[tab], "wrap", true);
+		utils.set("w", message.confirm_window[tab], "linebreak", true);
 
 		if config.winhl then
-			vim.wo[message.confirm_window[tab]].winhl = config.winhl;
+			utils.set("w", message.confirm_window[tab], "winhl", config.winhl);
 		end
 
 		--- Auto hide on next key press.
@@ -575,11 +575,11 @@ message.__list = function (obj)
 
 		vim.api.nvim_set_current_win(message.list_window[tab]);
 
-		vim.wo[message.list_window[tab]].wrap = true;
-		vim.wo[message.list_window[tab]].linebreak = true;
+		utils.set("w", message.list_window[tab], "wrap", true);
+		utils.set("w", message.list_window[tab], "linebreak", true);
 
 		if config.winhl then
-			vim.wo[message.list_window[tab]].winhl = config.winhl;
+			utils.set("w", message.list_window[tab], "winhl", config.winhl);
 		end
 	end);
 
@@ -702,11 +702,11 @@ message.__render = function ()
 		vim.api.nvim_win_set_var(message.msg_window[tab], "ui_window", true);
 	end
 
-	vim.wo[message.msg_window[tab]].statuscolumn = "%!v:lua.__ui_statuscolumn()";
-	vim.wo[message.msg_window[tab]].winhl = "Normal:Normal";
+	utils.set("w", message.msg_window[tab], "winhl", "Normal:Normal");
+	utils.set("w", message.msg_window[tab], "statuscolumn", "%!v:lua.__ui_statuscolumn()");
 
-	vim.wo[message.msg_window[tab]].wrap = true;
-	vim.wo[message.msg_window[tab]].linebreak = true;
+	utils.set("w", message.msg_window[tab], "wrap", true);
+	utils.set("w", message.msg_window[tab], "linebreak", true);
 
 	---|fE
 end
@@ -879,10 +879,10 @@ message.__history = function (entries)
 
 	vim.api.nvim_set_current_win(message.history_window[tab]);
 
-	vim.wo[message.history_window[tab]].statuscolumn = "%!v:lua.__ui_statuscolumn()";
+	utils.set("w", message.history_window[tab], "statuscolumn", "%!v:lua.__ui_statuscolumn()");
 
-	vim.wo[message.history_window[tab]].wrap = true;
-	vim.wo[message.history_window[tab]].linebreak = true;
+	utils.set("w", message.history_window[tab], "wrap", true);
+	utils.set("w", message.history_window[tab], "linebreak", true);
 
 	vim.api.nvim__redraw({
 		flush = true,
@@ -969,7 +969,7 @@ message.__showcmd = function (content)
 		message.show_window[tab] = vim.api.nvim_open_win(message.show_buffer, false, window_config);
 		vim.api.nvim_win_set_var(message.show_window[tab], "ui_window", true);
 
-		vim.wo[message.show_window[tab]].sidescrolloff = 0;
+		utils.set("w", message.show_window[tab], "sidescrolloff", 0);
 	end
 
 	pcall(vim.api.nvim_win_set_cursor, message.show_window[tab], { 1, math.floor(#text[1] / 2) })

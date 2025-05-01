@@ -66,8 +66,8 @@ popup.__prepare = function ()
 
 		vim.api.nvim_win_set_var(popup.window[tab], "ui_window", true);
 
-		vim.wo[popup.window[tab]].wrap = false;
-		vim.wo[popup.window[tab]].sidescrolloff = math.floor(vim.o.columns * 0.5) or 36;
+		utils.set("w", popup.window[tab], "wrap", false);
+		utils.set("w", popup.window[tab], "sidescrolloff", math.floor(vim.o.columns * 0.5) or 36);
 	end
 
 	--- Create command-line buffer.
@@ -99,8 +99,8 @@ popup.__prepare = function ()
 
 		vim.api.nvim_win_set_var(popup.info_window[tab], "ui_window", true);
 
-		vim.wo[popup.info_window[tab]].wrap = true;
-		vim.wo[popup.info_window[tab]].linebreak = true;
+		utils.set("w", popup.info_window[tab], "wrap", true);
+		utils.set("w", popup.info_window[tab], "linebreak", true);
 	end
 
 	---|fE

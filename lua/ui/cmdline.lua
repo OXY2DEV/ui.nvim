@@ -334,7 +334,8 @@ cmdline.__render = function ()
 		vim.api.nvim_buf_clear_namespace(cmdline.buffer, cmdline.namespace, 0, -1);
 
 		-- Set new content(with filetype).
-		vim.bo[cmdline.buffer].ft = cmdline.style.filetype or "vim";
+		utils.set("b", cmdline.buffer, "ft", cmdline.style.filetype or "vim");
+
 		vim.api.nvim_buf_set_lines(cmdline.buffer, 0, -1, false, lines);
 
 		-- Add all the highlight groups.
@@ -381,13 +382,13 @@ cmdline.__render = function ()
 			winhl = winhl .. ",Search:None,CurSearch:None";
 		end
 
-		vim.wo[cmdline.window[tab]].winhl = winhl;
+		utils.set("w", cmdline.window[tab], "winhl", winhl);
 
-		vim.wo[cmdline.window[tab]].sidescrolloff = math.floor(vim.o.columns * 0.5) or 36;
-		vim.wo[cmdline.window[tab]].scrolloff = 0;
+		utils.set("w", cmdline.window[tab], "sidescrolloff", math.floor(vim.o.columns * 0.5) or 36);
+		utils.set("w", cmdline.window[tab], "scrolloff", 0);
 
-		vim.wo[cmdline.window[tab]].conceallevel = 3;
-		vim.wo[cmdline.window[tab]].concealcursor = "nvic";
+		utils.set("w", cmdline.window[tab], "conceallevel", 3);
+		utils.set("w", cmdline.window[tab], "concealcursor", "nvic");
 
 		cmdline.__cursor(lines);
 
