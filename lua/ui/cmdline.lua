@@ -313,7 +313,7 @@ cmdline.__render = function ()
 		style = "minimal",
 		zindex = 300,
 
-		row = vim.o.lines - (vim.o.cmdheight + H + 1),
+		row = vim.o.lines - (vim.o.cmdheight + H + spec.config.cmdline.row_offset),
 		col = 0,
 
 		border = "none",

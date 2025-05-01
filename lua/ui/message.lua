@@ -6,9 +6,6 @@ local log = require("ui.log");
 local spec = require("ui.spec");
 local utils = require("ui.utils");
 
----@type "vim" | "ui" Message history source preference.
-vim.g.__ui_history_pref = "vim";
-
 ------------------------------------------------------------------------------
 
 ---@type integer Namespace for decorations in messages.
@@ -601,6 +598,14 @@ message.__hide = function ()
 	---|fE
 end
 
+message.__get_cmdline_offset = function ()
+	local cmdline_offset = 0
+	if vim.g.__ui_cmd_height and vim.g.__ui_cmd_height > 0 then
+		cmdline_offset = vim.g.__ui_cmd_height + spec.config.cmdline.row_offset - 1
+	end
+	return cmdline_offset
+end
+
 --- Renders visible messages.
 message.__render = function ()
 	---|fS
@@ -683,7 +688,7 @@ message.__render = function ()
 	local window_config = vim.tbl_extend("keep", spec.config.message.message_winconfig or {}, {
 		relative = "editor",
 
-		row = vim.o.lines - (vim.o.cmdheight + (vim.g.__ui_cmd_height or 0) + 1) - utils.wrapped_height(lines, W),
+		row = vim.o.lines - (vim.o.cmdheight + message.__get_cmdline_offset() + 1) - utils.wrapped_height(lines, W),
 		col = vim.o.columns,
 
 		width = W + decor_size,
@@ -716,7 +721,8 @@ end
 message.__history = function (entries)
 	---|fS
 
-	vim.g.__ui_history_pref = vim.g.__ui_history_pref or "vim";
+	---@type "vim" | "ui" Message history source preference.
+	vim.g.__ui_history_pref = vim.g.__ui_history_pref or spec.config.message.history_preference;
 	vim.g.__ui_history = true;
 
 	message.__prepare();
@@ -909,7 +915,7 @@ message.__showcmd = function (content)
 	local window_config = vim.tbl_extend("keep", spec.config.message.showcmd_winconfig or {}, {
 		relative = "editor",
 
-		row = vim.o.lines - (vim.o.cmdheight + (vim.g.__ui_cmd_height or 0) + 2) ,
+		row = vim.o.lines - (vim.o.cmdheight + message.__get_cmdline_offset() + 2) ,
 		col = 0,
 
 		width = 10,

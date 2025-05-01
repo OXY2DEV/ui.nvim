@@ -207,6 +207,8 @@ spec.default = {
 
 		enable = true,
 
+		row_offset = 1,
+
 		styles = {
 			default = {
 				---|fS
@@ -449,6 +451,8 @@ spec.default = {
 		---|fS
 
 		enable = true,
+
+		history_preference = "vim",
 
 		message_winconfig = {},
 		confirm_winconfig = {},
