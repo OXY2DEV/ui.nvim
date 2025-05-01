@@ -1055,7 +1055,7 @@ spec.default = {
 						return true;
 					end
 
-					return string.match(lines[1], "%d+ more line; %w+ #%d+") ~= nil or  string.match(lines[1], "%d+ line less; %w+ #%d+") ~= nil;
+					return string.match(lines[1], "%d+ .-; %w+ #%d+") ~= nil or  string.match(lines[1], "%d+ line less; %w+ #%d+") ~= nil;
 				end,
 
 				decorations = {
