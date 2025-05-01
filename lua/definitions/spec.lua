@@ -15,7 +15,7 @@
 ---@field winconfig? table | fun(state: ui.popupmenu.state, position?: "top_left" | "top_right" | "bottom_left" | "bottom_right"): table Window configuration for the pop-up menu.
 ---@field max_height? integer Maximum height of the completion menu.
 ---
----@field styles table<string, ui.popupmenu.style> Styles for the completion items.
+---@field styles? table<string, ui.popupmenu.style> Styles for the completion items.
 
 
 ---@class ui.config.popupmenu__static Static configuration for the completion popup menu.
@@ -52,8 +52,8 @@
 ---@field history_winconfig? table Window configuration for the history window.
 ---@field showcmd_winconfig? table Window configuration for the showcmd window.
 ---
----@field is_list fun(kind: ui.message.kind, content: ui.message.fragment[]): boolean Is `msg` a list-type message?
----@field ignore fun(kind: ui.message.kind, content: ui.message.fragment[]): boolean Should this message be ignored?
+---@field is_list? fun(kind: ui.message.kind, content: ui.message.fragment[]): boolean Is `msg` a list-type message?
+---@field ignore? fun(kind: ui.message.kind, content: ui.message.fragment[]): boolean Should this message be ignored?
 ---
 ---@field showcmd? ui.message.showcmd Showcmd options.
 ---@field msg_styles? table<string, ui.message.style> Message styles.
