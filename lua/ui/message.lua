@@ -878,6 +878,7 @@ message.__history = function (entries)
 
 	local window_config = vim.tbl_extend("force", {
 		split = "below",
+		win = -1, -- creates top-level split
 		height = 10,
 
 		hide = false
