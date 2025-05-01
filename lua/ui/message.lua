@@ -599,11 +599,11 @@ message.__hide = function ()
 end
 
 message.__get_cmdline_offset = function ()
-  local cmdline_offset = 0
-  if vim.g.__ui_cmd_height and vim.g.__ui_cmd_height > 0 then
-    cmdline_offset = vim.g.__ui_cmd_height + spec.config.cmdline.row_offset - 1
-  end
-  return cmdline_offset
+	local cmdline_offset = 0
+	if vim.g.__ui_cmd_height and vim.g.__ui_cmd_height > 0 then
+		cmdline_offset = vim.g.__ui_cmd_height + spec.config.cmdline.row_offset - 1
+	end
+	return cmdline_offset
 end
 
 --- Renders visible messages.
@@ -721,7 +721,7 @@ end
 message.__history = function (entries)
 	---|fS
 
-  ---@type "vim" | "ui" Message history source preference.
+	---@type "vim" | "ui" Message history source preference.
 	vim.g.__ui_history_pref = vim.g.__ui_history_pref or spec.config.message.history_preference;
 	vim.g.__ui_history = true;
 
