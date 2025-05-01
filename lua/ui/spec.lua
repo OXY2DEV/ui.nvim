@@ -207,6 +207,8 @@ spec.default = {
 
 		enable = true,
 
+		row_offset = 1,
+
 		styles = {
 			default = {
 				---|fS
