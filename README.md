@@ -75,10 +75,10 @@ You can check the [wiki](https://github.com/OXY2DEV/ui.nvim/wiki) for the explan
 
 ## 🤦‍♂️ Known issues
 
-- Pum menu giving incorrect position & size in completion events.
+- Pum menu giving incorrect position & size in completion events(This is a missing feature of Neovim).
   Breaks: `mini.completion`
 
-- Going into `command mode` after a write causes duplicate message with wrong kind.
+- In certain `redraw` events, the write message is shown for some reason(pretty sure this is an already reported bug).
   Breaks: `nvim-0.11`
 
 ## 📝 Requirements
@@ -282,6 +282,69 @@ require("ui").setup({
 >[!TIP]
 > You can call the `setup()` as many times as you want!
 
+------
+
+The various configurations tables are given below. You can find them in `spec.default` [here](https://github.com/OXY2DEV/ui.nvim/blob/main/lua/ui/spec.lua).
+
+### ✨ Command-line
+
+Command-line styles can be found in `spec.default.cmdline.styles`. These are,
+
+- `__keymap`, used for showing keys & actions in confirmation messages.
+- `search_up`, used for `/`.
+- `search_down`, used for `?`.
+- `set`, used for `:set`.
+- `shell`, used for `:!`.
+- `substitute`, used for `:s/`, `:%s/`, `:1,2s/` etc.
+- `lua_eval`, used for `:=`.
+- `lua`, used for `:lua`.
+- `prompt`, used when a prompt is shown.
+
+### ✨ Message
+
+Message styles can be found in `spec.default.message.msg_styles`. These are,
+
+- `__swap`, Used for the swapfile exists error.
+- `__spell`, Used when adding new entries to the spell file(e.g. `zg`).
+- `__lua_error`, Used for error messages in Lua.
+- `option`, Used for the output of `:set <option>?`, this sometimes picks up normal messages too.
+- `search`, Used for showing searched word,
+- `error_msg`, Used for regular error messages(fallback for `__lua_error`).
+- `highlight_link`, Used for output of `:hi <group>` that uses `link`.
+- `highlight_group`, Used for output of `:hi <group>`.
+- `write`, Used for the message shown when writing to a file.
+- `undo_redo`, Used for `undo` & `redo` messages.
+
+#### Confirm messages
+
+Confirm message styles can be found in `spec.default.message.confirm_styles`. These are,
+
+- `swap_alert`, Used when showing the `swapfile exists` error.
+- `write_confirm`, Used when writing a read-only file.
+
+#### List messages
+
+List message styles can be found in `spec.default.message.list_styles`. These are,
+
+- `ls`, Used for the buffer list.
+- `hi`, Used for the output of `:hi`.
+
+### ✨ Pop-up menu
+
+Pop-up menu item styles can be found in `spec.default.popupmenu.styles`. These are,
+
+- `buffer_variable`, Used for buffer local variables(`b:*`).
+- `global_variable`, Used for global variables(`g:*`).
+- `local_variable`, Used by `l:*`, `a:*` & `s:*`.
+- `tabpage_variable`, Used for tabpage local variables(`t:*`).
+- `vim_variable`, Used for Vim variables(`v:`).
+- `window_variable`, Used for window local variables(`w:`).
+- `class`, Used for items whose kind is `m`.
+- `function`, Self-explanatory.
+- `macro`, Used for items whose kind is `d`.
+- `type_definition`, Used for items whose kind is `t`.
+- `variable`, Used for items whose kind is `v`.
+
 ## 💻 Commands
 
 You can run `:UI` to toggle the custom UI. It has the following sub-commands,
@@ -327,4 +390,5 @@ By default this plugin comes with the following highlight groups,
 - `UIHistoryDesc`
 - `UIMenuSelect`
 - `UIMenuKeymap`
+
 
