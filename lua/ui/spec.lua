@@ -452,6 +452,8 @@ spec.default = {
 
 		enable = true,
 
+    history_preference = "vim",
+
 		message_winconfig = {},
 		confirm_winconfig = {},
 		list_winconfig = {},

@@ -6,9 +6,6 @@ local log = require("ui.log");
 local spec = require("ui.spec");
 local utils = require("ui.utils");
 
----@type "vim" | "ui" Message history source preference.
-vim.g.__ui_history_pref = "vim";
-
 ------------------------------------------------------------------------------
 
 ---@type integer Namespace for decorations in messages.
@@ -724,7 +721,8 @@ end
 message.__history = function (entries)
 	---|fS
 
-	vim.g.__ui_history_pref = vim.g.__ui_history_pref or "vim";
+  ---@type "vim" | "ui" Message history source preference.
+	vim.g.__ui_history_pref = vim.g.__ui_history_pref or spec.config.message.history_preference;
 	vim.g.__ui_history = true;
 
 	message.__prepare();

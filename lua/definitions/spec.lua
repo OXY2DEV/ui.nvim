@@ -45,6 +45,7 @@
 ---@class ui.config.message
 ---
 ---@field enable? boolean Should this module be enabled?
+---@field history_preference? "vim" | "ui" History preference for :messages
 ---
 ---@field message_winconfig? table Window configuration for the message window.
 ---@field list_winconfig? table Window configuration for the list message window.
