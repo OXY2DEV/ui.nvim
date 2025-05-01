@@ -713,6 +713,13 @@ message.__render = function ()
 	utils.set("w", message.msg_window[tab], "wrap", true);
 	utils.set("w", message.msg_window[tab], "linebreak", true);
 
+	vim.api.nvim__redraw({
+		flush = true,
+		statuscolumn = true,
+
+		win = message.msg_window[tab]
+	});
+
 	---|fE
 end
 
