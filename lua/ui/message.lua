@@ -975,16 +975,22 @@ message.__showcmd = function (content)
 		message.show_window[tab] = vim.api.nvim_open_win(message.show_buffer, false, window_config);
 		vim.api.nvim_win_set_var(message.show_window[tab], "ui_window", true);
 
-		utils.set("w", message.show_window[tab], "sidescrolloff", 0);
+		--- Always horizontally center the cursor.
+		--- We can't dynamically set this without bombing users with
+		--- `OptionSet` events.
+		utils.set("w", message.show_window[tab], "sidescrolloff", 999);
 	end
 
-	pcall(vim.api.nvim_win_set_cursor, message.show_window[tab], { 1, math.floor(#text[1] / 2) })
+	-- Use display width instead of byte length as there are
+	-- multi-byte characters.
+	-- If all else fails, `pcall()` should save us.
+	pcall(vim.api.nvim_win_set_cursor, message.show_window[tab], {
+		1, math.floor(window_config.width / 2)
+	});
 
 	vim.api.nvim__redraw({
 		flush = true,
-
-		win = message.show_window[tab],
-		statuscolumn = true,
+		win = message.show_window[tab]
 	});
 
 	---|fE
