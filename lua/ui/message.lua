@@ -620,6 +620,15 @@ message.__render = function ()
 
 	message.__prepare();
 
+	---@type integer
+	local last_decor_size = 0;
+
+	for _, entry in ipairs(message.decorations) do
+		if entry.icon then
+			last_decor_size = math.max(last_decor_size, utils.virt_len(entry.icon));
+		end
+	end
+
 	local lines, exts = {}, {};
 	message.decorations = {};
 
@@ -715,7 +724,10 @@ message.__render = function ()
 
 	vim.api.nvim__redraw({
 		flush = true,
-		statuscolumn = true,
+		-- BUG, Visual artifacts are shown if the statuscolumn
+		-- is updated repeatedly.
+		-- Solution: Update when the decoration size changes.
+		statuscolumn = last_decor_size ~= decor_size,
 
 		win = message.msg_window[tab]
 	});
