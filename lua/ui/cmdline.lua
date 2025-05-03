@@ -186,28 +186,15 @@ cmdline.__cursor = function (lines)
 	local icon_w = utils.virt_len(cmdline.style.icon);
 	pos = icon_w + pos;
 
-	---@type integer
-	local tab = vim.api.nvim_get_current_tabpage();
-
-	log.assert(
-		"ui/cmdline.lua → nvim_win_set_cursor",
-		pcall(
-			vim.api.nvim_win_set_cursor,
-
-			cmdline.window[tab],
-			{
-				vim.api.nvim_buf_line_count(cmdline.buffer), -- This is 1-indexed.
-				pos
-			}
-		)
-	);
-
 	-- Clear previous cursor.
 	vim.api.nvim_buf_clear_namespace(cmdline.buffer, cmdline.cursor_ns, 0, -1);
 	local offset_len = 0;
 
+	-- Note, Hiding the concealed region after updating the cursor
+	-- position results in the cursor becoming out of sync.
 	if cmdline.style.offset and (pos - icon_w) >= cmdline.style.offset then
 		offset_len = #vim.fn.strcharpart(line, 0, cmdline.style.offset);
+		pos = pos - offset_len;
 
 		-- If `offset` exists and the cursor position is >= to the offset
 		-- we hide the leading part of the command-line(till `offset` characters).
@@ -227,6 +214,22 @@ cmdline.__cursor = function (lines)
 			)
 		);
 	end
+
+	---@type integer
+	local tab = vim.api.nvim_get_current_tabpage();
+
+	log.assert(
+		"ui/cmdline.lua → nvim_win_set_cursor",
+		pcall(
+			vim.api.nvim_win_set_cursor,
+
+			cmdline.window[tab],
+			{
+				vim.api.nvim_buf_line_count(cmdline.buffer), -- This is 1-indexed.
+				pos
+			}
+		)
+	);
 
 	---|fE
 end
