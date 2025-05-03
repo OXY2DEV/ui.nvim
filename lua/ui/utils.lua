@@ -265,7 +265,7 @@ utils.max_len = function (lines)
 	local W = 1;
 
 	for _, line in ipairs(lines) do
-		W = math.max(vim.fn.strdisplaywidth(line), W);
+		W = math.max(vim.fn.strchars(line), W);
 	end
 
 	return W;
@@ -311,7 +311,23 @@ utils.wrapped_height = function (lines, width)
 	---|fS
 
 	width = width or vim.o.columns;
-	return #utils.text_wrap(lines, width);
+	local height = 0;
+
+	for _, line in ipairs(lines) do
+		local len = vim.fn.strchars(line);
+
+		if len <= width then
+			height = height + 1;
+		else
+			height = height + math.floor(vim.fn.strchars(line) / width);
+
+			if vim.fn.strchars(line) % width ~= 0 then
+				height = height + 1;
+			end
+		end
+	end
+
+	return height;
 
 	---|fE
 end
