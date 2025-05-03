@@ -1,9 +1,6 @@
 local utils = {};
 -- local log = require("ui.log")
 
----@type integer Buffer for wrapping text.
-utils.wrap_buffer = vim.api.nvim_create_buf(false, true);
-
 --- Wraps text by width.
 ---@param lines string[]
 ---@param width integer
@@ -11,17 +8,58 @@ utils.wrap_buffer = vim.api.nvim_create_buf(false, true);
 utils.text_wrap = function(lines, width)
 	---|fS
 
-	if not utils.wrap_buffer or not vim.api.nvim_buf_is_valid(utils.wrap_buffer) then
-		utils.wrap_buffer = vim.api.nvim_create_buf(false, true);
+	local wrapped = {};
+
+	local function wrap_line (line)
+		local _line = line;
+		local tokens = {};
+
+		while string.match(_line, "%s+") or string.match(_line, "^%S+") do
+			if string.match(_line, "^%s+") then
+				table.insert(tokens, string.match(_line, "^%s+"));
+				_line = string.gsub(_line, "^%s+", "");
+			else
+				table.insert(tokens, string.match(_line, "^%S+"));
+				_line = string.gsub(_line, "^%S+", "");
+			end
+		end
+
+		local output = {};
+
+		for _, token in ipairs(tokens) do
+			local last = output[#output];
+
+			if #token >= width then
+				local times = math.max(vim.fn.strchars(token) / width);
+
+				for _t = 0, times - 1, 1 do
+					table.insert(output, vim.fn.strcharpart(token, _t * width, (_t + 1) * width));
+				end
+
+				-- Non-whitespace token larger then width.
+				-- divided into lines.
+			elseif not last then
+				table.insert(output, token);
+
+				-- No last line. Create new line.
+			elseif (#last + #token) >= width then
+				table.insert(output, token);
+
+				-- Non-whitespace token that would result
+				-- in a new line.
+			elseif #last + #token <= width then
+				output[#output] = last .. token;
+			end
+		end
+
+		return output;
 	end
 
-	vim.api.nvim_buf_set_lines(utils.wrap_buffer, 0, -1, false, lines);
-	vim.bo[utils.wrap_buffer].textwidth = width or vim.o.columns;
-	vim.api.nvim_buf_call(utils.wrap_buffer, function ()
-		vim.api.nvim_command("%normal gqq");
-	end);
+	for _, line in ipairs(lines) do
+		vim.list_extend(wrapped, wrap_line(line));
+	end
 
-	return vim.api.nvim_buf_get_lines(utils.wrap_buffer, 0, -1, false);
+	return wrapped;
 
 	---|fE
 end
