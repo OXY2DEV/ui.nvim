@@ -291,6 +291,7 @@ utils.confirm_keys = function (prompt, content)
 	elseif prompt then
 		-- You can hit `<CR>` to confirm the default
 		-- action.
+		-- You can hit `<ESC>` to cancel the action.
 		local keys = { "\r", "\27" };
 
 		for key in string.gmatch(prompt, "[%[%(](.)[%]%)]") do
@@ -314,7 +315,7 @@ utils.wrapped_height = function (lines, width)
 	local height = 0;
 
 	for _, line in ipairs(lines) do
-		local len = vim.fn.strchars(line);
+		local len = vim.fn.strdisplaywidth(line);
 
 		if len <= width then
 			height = height + 1;
