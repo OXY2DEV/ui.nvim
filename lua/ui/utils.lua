@@ -291,7 +291,7 @@ utils.confirm_keys = function (prompt, content)
 	elseif prompt then
 		-- You can hit `<CR>` to confirm the default
 		-- action.
-		local keys = { "\r" };
+		local keys = { "\r", "\27" };
 
 		for key in string.gmatch(prompt, "[%[%(](.)[%]%)]") do
 			table.insert(keys, string.lower(key));
