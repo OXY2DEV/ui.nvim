@@ -618,10 +618,14 @@ cmdline.setup = function ()
 		end
 	});
 
-	log.assert(
-		"ui/cmdline.lua",
-		pcall(cmdline.__prepare)
-	);
+	vim.api.nvim_create_autocmd("VimEnter", {
+		callback = function ()
+			log.assert(
+				"ui/cmdline.lua",
+				pcall(cmdline.__prepare)
+			);
+		end
+	});
 
 	---|fE
 end

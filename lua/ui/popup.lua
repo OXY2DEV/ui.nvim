@@ -501,7 +501,11 @@ popup.setup = function ()
 		end
 	});
 
-	popup.__prepare();
+	vim.api.nvim_create_autocmd("VimEnter", {
+		callback = function ()
+			popup.__prepare();
+		end
+	});
 
 	---|fE
 end
