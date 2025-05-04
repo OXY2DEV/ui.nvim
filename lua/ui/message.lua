@@ -1112,7 +1112,11 @@ end
 message.setup = function ()
 	---|fS
 
-	message.__prepare();
+	vim.api.nvim_create_autocmd("VimEnter", {
+		callback = function ()
+			message.__prepare();
+		end
+	});
 
 	vim.api.nvim_create_autocmd("VimResized", {
 		callback = function ()
