@@ -46,9 +46,10 @@
 ---@class ui.config.message
 ---
 ---@field enable? boolean Should this module be enabled?
----@field history_preference? "vim" | "ui" History preference for :messages
 ---
+---@field history_preference? "vim" | "ui" History preference for :messages
 ---@field max_lines? integer Maximum number of lines a normal message can have.
+---@field max_duration? integer Maximum number of milliseconds a message can be visible for.
 ---
 ---@field message_winconfig? table Window configuration for the message window.
 ---@field list_winconfig? table Window configuration for the list message window.

@@ -275,7 +275,7 @@ message.__add = function (kind, content)
 
 		---@type boolean, boolean?
 		local is_list, add_to_history = spec.is_list(kind, content);
-		local max_lines = spec.config.message.max_lines or 9999;
+		local max_lines = spec.config.message.max_lines or math.floor(vim.o.lines * 0.5);
 
 		if is_list == true or #lines > max_lines then
 			-- If a list message for some reason gets here then
@@ -306,7 +306,10 @@ message.__add = function (kind, content)
 
 		---@type ui.message.style__static
 		local style = spec.get_msg_style({ kind = kind, content = content }, lines, {}) or {};
-		local duration = style.duration or 600;
+		local duration = math.min(
+			style.duration or 5000,
+			spec.config.message.max_duration or 5000
+		);
 
 		-- Store the message in history & visible
 		-- message table.
@@ -357,7 +360,7 @@ message.__replace = function (kind, content)
 
 		---@type boolean, boolean?
 		local is_list, add_to_history = spec.is_list(kind, content);
-		local max_lines = spec.config.message.max_lines or 9999;
+		local max_lines = spec.config.message.max_lines or math.floor(vim.o.lines * 0.5);
 
 		if is_list == true or #lines > max_lines then
 			-- If a list message for some reason gets here then
@@ -415,7 +418,10 @@ message.__replace = function (kind, content)
 
 		---@type ui.message.style__static
 		local style = spec.get_msg_style({ kind = kind, content = content }, lines, {}) or {};
-		local duration = style.duration or 600;
+		local duration = math.min(
+			style.duration or 5000,
+			spec.config.message.max_duration or 5000
+		);
 
 		last.timer:start(duration, 0, vim.schedule_wrap(function ()
 			message.__remove(keys[#keys]);
