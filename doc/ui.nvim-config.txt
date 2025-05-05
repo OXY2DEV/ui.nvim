@@ -172,7 +172,10 @@ Used by the messages. It has the following structure,
   ---@type ui.config.message
   message = {
       enable = true,
+
       history_preference = "vim",
+      max_lines = nil,
+      max_duration = 5000,
   
       history_winconfig = {},
       message_winconfig = {},
@@ -221,8 +224,8 @@ history_preference ~
 Default history source preference for the message history. It has the
 following supported values,
 
-	• `"vim"`, use the history provided by Neovim.
-	• `"internal"`, use the plugin's internal message history.
+  • `"vim"`, use the history provided by Neovim.
+  • `"internal"`, use the plugin's internal message history.
 
 Some messages aren't shown in the history by Neovim, in those cases you might
 want to use the plugin's own history source which contains most
@@ -230,6 +233,24 @@ messages(excluding `list` & `confirm` messages).
 
 ▌ 💡 Tip
 ▌ You can press `t` while inside the history window to toggle the source!
+
+max_lines ~
+
+    • Type: `integer`
+
+Maximum number of lines a message can have before being shown in the list
+window.
+
+When `nil`, any message longer then 1/2 of the total screen height is shown
+in the list window.
+
+max_duration ~
+
+    • Type: `integer`
+    • Default: `5000`
+
+Number of milliseconds a message can stay at most. Useful if you don't
+like long messages on the screen for too long.
 
 history_winconfig ~
 
