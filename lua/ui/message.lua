@@ -564,7 +564,7 @@ message.__list = function (obj)
 		});
 
 		---@type integer
-		local W = math.min(utils.max_len(lines), math.floor(vim.o.columns * 0.5));
+		local W = math.min(utils.max_len(lines), math.floor(vim.o.columns * 0.75));
 		---@type integer
 		local H = math.min(utils.wrapped_height(lines, W), vim.o.lines - 2);
 
@@ -584,7 +584,8 @@ message.__list = function (obj)
 			style = "minimal",
 
 			zindex = 90,
-			hide = false
+			hide = false,
+			focusable = true
 		}, spec.config.message.list_winconfig or {});
 
 		vim.api.nvim_buf_clear_namespace(message.list_buffer, message.namespace, 0, -1);
