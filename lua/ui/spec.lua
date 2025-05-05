@@ -1,6 +1,95 @@
 local spec = {};
 local utils = require("ui.utils");
 
+--- Checks if a message is a list message.
+---@param lines string[]
+---@return boolean
+spec.generic_list_msg = function (lines)
+	---|fS
+
+	local start_marker = "";
+
+	for _, line in ipairs(lines) do
+		if string.match(line, "%w") then
+			start_marker = line;
+			break;
+		end
+	end
+
+	local match_patterns = {
+		-- Output of `:ls`, `:ls!`, `:files`, `:buffers`
+		--   1 #a   "[No Name]"                    line 1
+		'%d+ [u%%#ah%-=RF%?%+x ]- "[^"]+" +line %d+',
+
+		-- Output of `:marks`
+		-- mark line  col file/text
+		"mark +line +col +file/text",
+
+		-- Output of `:jumps`
+		-- jump line  col file/text
+		"jump +line +col +file/text",
+
+		-- Output of `:changes`
+		-- change line  col text
+		"change +line +col +text",
+
+		-- Output of `:undolist`
+		-- number changes  when               saved
+		"number +changes +when +saved",
+
+		-- Output of `:reg`
+		-- Type Name Content
+		"Type +Name +Content",
+
+		-- Output of `:map` & `:ab`
+		-- n  &           * :&&<CR>
+		"[nvxsoilct] +%S+ +%* *.+",
+
+		-- Output of `:history`
+		-- n  &           * :&&<CR>
+		"# +cmd history",
+		"# +search history",
+		"# +expr history",
+		"# +input history",
+		"# +debug history",
+
+		-- Output of `:hi`
+		-- SpecialKey     xxx guifg=NvimDarkGrey4
+		"%S+ +xxx +.+",
+
+		-- Output of `:tags`
+		--  # TO tag         FROM line  in file/text
+		"# +TO +tag +FROM +line +in +file/text",
+
+		-- Output of `:clist` & `:llist`
+		--  1 main.c:17 col 20-23 warning: Result of integer division used in a floating point context; possible loss of precision↩
+		-- 1 main.c:12 col 9: int ROW, COL;↩
+		"%d+ .-:[%d-]+ col [%d-]+ %w+: .+",
+
+		-- Output of `:scriptnames`
+		-- 1: /path/to/script.vim
+		"%d+: .-%.vim$",
+		"%d+: .-%.lua$",
+
+		-- Output of `:command`
+		-- Name              Args Address Complete    Definition
+		"Name +Args +Address +Complete +Definition",
+
+		-- Output of `:au`
+		"%-%-%- Autocommands %-%-%-",
+	};
+
+	for _, pattern in ipairs(match_patterns) do
+		if string.match(start_marker, pattern) then
+			return true;
+		end
+	end
+
+	return false;
+
+	---|fE
+end
+
 ---@type ui.config
 spec.default = {
 	popupmenu = {
@@ -552,6 +641,8 @@ spec.default = {
 		},
 
 		msg_styles = {
+			---|fS
+
 			default = {
 				---|fS
 
@@ -1071,24 +1162,17 @@ spec.default = {
 
 				---|fE
 			},
+
+			---|fE
 		},
 
 		is_list = function (kind, content)
-			if kind ~= "list_cmd" then
-				return false;
-			end
-
-			local lines = utils.to_lines(content);
-			local merged = table.concat(lines, "\n");
-
-			---@type string[] Trimmed lines
-			local trimmed = vim.split(merged, "\n", { trimempty = true });
-
-			if string.match(trimmed[1] or "", "^%s*%d+.-line %d+$") then
+			if kind == "list_cmd" then
 				return true;
 			end
 
-			return #trimmed ~= 1;
+			local lines = utils.to_lines(content);
+			return spec.generic_list_msg(lines);
 		end,
 
 		list_styles = {
