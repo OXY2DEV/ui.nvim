@@ -77,6 +77,10 @@ spec.generic_list_msg = function (lines)
 
 		-- Output of `:au`
 		"%-%-%- Autocommands %-%-%-",
+
+		-- Output of `:grep`
+		-- This gets in the way for now.
+		-- "[^:+]:%d+:%d+:.-"
 	};
 
 	for _, pattern in ipairs(match_patterns) do
@@ -542,7 +546,7 @@ spec.default = {
 		enable = true,
 
 		history_preference = "vim",
-		max_lines = 10,
+		max_lines = nil,
 		max_duration = 5000,
 
 		message_winconfig = {},
@@ -1169,11 +1173,12 @@ spec.default = {
 		},
 
 		is_list = function (kind, content)
-			if kind == "list_cmd" then
+			local lines = utils.to_lines(content);
+
+			if kind == "list_cmd" and #lines > 1 then
 				return true, false;
 			end
 
-			local lines = utils.to_lines(content);
 			return spec.generic_list_msg(lines), false;
 		end,
 
