@@ -543,6 +543,7 @@ spec.default = {
 
 		history_preference = "vim",
 		max_lines = 10,
+		max_duration = 5000,
 
 		message_winconfig = {},
 		confirm_winconfig = {},
@@ -1173,13 +1174,7 @@ spec.default = {
 			end
 
 			local lines = utils.to_lines(content);
-			local is_list_msg = spec.generic_list_msg(lines);
-
-			if is_list_msg then
-				return true, false;
-			end
-
-			return #lines > (spec.config.message.max_lines or 999), true;
+			return spec.generic_list_msg(lines), false;
 		end,
 
 		list_styles = {

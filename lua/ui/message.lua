@@ -271,10 +271,13 @@ message.__add = function (kind, content)
 			return;
 		end
 
+		local lines = utils.to_lines(content);
+
 		---@type boolean, boolean?
 		local is_list, add_to_history = spec.is_list(kind, content);
+		local max_lines = spec.config.message.max_lines or 9999;
 
-		if is_list == true then
+		if is_list == true or #lines > max_lines then
 			-- If a list message for some reason gets here then
 			-- we redirect it.
 			log.assert(
@@ -285,7 +288,7 @@ message.__add = function (kind, content)
 				})
 			);
 
-			if add_to_history then
+			if add_to_history or #lines > max_lines then
 				-- Long message that aren't actually
 				-- list message should be added to history.
 				message.history[message.id] = {
@@ -300,7 +303,6 @@ message.__add = function (kind, content)
 		end
 
 		local current_id = message.id;
-		local lines = utils.to_lines(content);
 
 		---@type ui.message.style__static
 		local style = spec.get_msg_style({ kind = kind, content = content }, lines, {}) or {};
@@ -351,10 +353,13 @@ message.__replace = function (kind, content)
 		---@type integer[]
 		local keys = vim.tbl_keys(message.visible);
 
+		local lines = utils.to_lines(content);
+
 		---@type boolean, boolean?
 		local is_list, add_to_history = spec.is_list(kind, content);
+		local max_lines = spec.config.message.max_lines or 9999;
 
-		if is_list == true then
+		if is_list == true or #lines > max_lines then
 			-- If a list message for some reason gets here then
 			-- we redirect it.
 			log.assert(
@@ -365,7 +370,7 @@ message.__replace = function (kind, content)
 				})
 			);
 
-			if add_to_history then
+			if add_to_history or #lines > max_lines then
 				-- Long message that aren't actually
 				-- list message should be added to history.
 				local last = message.visible[keys[#keys]];
@@ -407,8 +412,6 @@ message.__replace = function (kind, content)
 		last.content = content;
 
 		last.timer:stop();
-
-		local lines = utils.to_lines(content);
 
 		---@type ui.message.style__static
 		local style = spec.get_msg_style({ kind = kind, content = content }, lines, {}) or {};
