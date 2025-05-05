@@ -32,6 +32,13 @@ vim.api.nvim_create_autocmd("ColorScheme", {
 	end
 })
 
+local sub_commands = {
+	"enable", "disable", "toggle",
+	"clear",
+
+	"log"
+};
+
 vim.api.nvim_create_user_command("UI", function (data)
 	---@type string[]
 	local args = data.fargs or {};
@@ -46,11 +53,11 @@ end, {
 		local tokens = vim.split(before, " ", { trimempty = true });
 
 		if #tokens == 1 then
-			return { "enable", "disable", "toggle", "log" };
+			return sub_commands;
 		elseif #tokens == 2 and string.match(before, "%S$") then
 			local completions = {};
 
-			for _, cmd in ipairs({ "enable", "disable", "toggle", "log" }) do
+			for _, cmd in ipairs(sub_commands) do
 				if string.match(cmd, tokens[2]) then
 					table.insert(completions, cmd);
 				end

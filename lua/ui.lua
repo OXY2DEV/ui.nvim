@@ -129,6 +129,17 @@ ui.actions = {
 
 	log = function ()
 		require("ui.log").export(nil, true);
+	end,
+
+	clear = function ()
+		local message = require("ui.message");
+
+		for k, v in pairs(message.visible) do
+			v.timer:stop();
+			message.__remove(k);
+		end
+
+		message.__render();
 	end
 };
 

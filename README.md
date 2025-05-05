@@ -358,6 +358,9 @@ You can run `:UI` to toggle the custom UI. It has the following sub-commands,
 - `toggle`
   Toggles custom UI.
 
+- `clear`
+  Clears all visible messages.
+
 ## 🎨 Highlight groups
 
 By default this plugin comes with the following highlight groups,
