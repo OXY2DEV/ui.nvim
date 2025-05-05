@@ -542,6 +542,7 @@ spec.default = {
 		enable = true,
 
 		history_preference = "vim",
+		max_lines = 10,
 
 		message_winconfig = {},
 		confirm_winconfig = {},
@@ -1168,11 +1169,17 @@ spec.default = {
 
 		is_list = function (kind, content)
 			if kind == "list_cmd" then
-				return true;
+				return true, false;
 			end
 
 			local lines = utils.to_lines(content);
-			return spec.generic_list_msg(lines);
+			local is_list_msg = spec.generic_list_msg(lines);
+
+			if is_list_msg then
+				return true, false;
+			end
+
+			return #lines > (spec.config.message.max_lines or 999), true;
 		end,
 
 		list_styles = {
@@ -1633,15 +1640,21 @@ end
 ---@param kind ui.message.kind
 ---@param content ui.message.fragment[]
 ---@return boolean
+---@return boolean
 spec.is_list = function (kind, content)
 	---|fS
 
 	if not spec.config.message.is_list then
-		return false;
+		return false, false;
 	end
 
-	local can_cond, cond = pcall(spec.config.message.is_list, kind, content);
-	return can_cond and cond;
+	local ran_cond, cond, save = pcall(spec.config.message.is_list, kind, content);
+
+	if ran_cond then
+		return cond, save;
+	else
+		return false, false;
+	end
 
 	---|fE
 end

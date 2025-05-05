@@ -271,16 +271,31 @@ message.__add = function (kind, content)
 			return;
 		end
 
-		if spec.is_list(kind, content) == true then
-			-- If the message is a list message,
-			-- pass it to the list renderer.
+		---@type boolean, boolean?
+		local is_list, add_to_history = spec.is_list(kind, content);
+
+		if is_list == true then
+			-- If a list message for some reason gets here then
+			-- we redirect it.
 			log.assert(
-				"ui/message.lua → add_list",
+				"ui/message.lua → replace_list",
 				pcall(message.__list, {
 					kind = kind,
 					content = content
 				})
 			);
+
+			if add_to_history then
+				-- Long message that aren't actually
+				-- list message should be added to history.
+				message.history[message.id] = {
+					kind = kind,
+					content = content
+				};
+
+				message.id = message.id + 1;
+			end
+
 			return;
 		end
 
@@ -333,7 +348,13 @@ message.__replace = function (kind, content)
 			return;
 		end
 
-		if spec.is_list(kind, content) == true then
+		---@type integer[]
+		local keys = vim.tbl_keys(message.visible);
+
+		---@type boolean, boolean?
+		local is_list, add_to_history = spec.is_list(kind, content);
+
+		if is_list == true then
 			-- If a list message for some reason gets here then
 			-- we redirect it.
 			log.assert(
@@ -343,11 +364,29 @@ message.__replace = function (kind, content)
 					content = content
 				})
 			);
+
+			if add_to_history then
+				-- Long message that aren't actually
+				-- list message should be added to history.
+				local last = message.visible[keys[#keys]];
+
+				if last then
+					message.history[last] = {
+						kind = kind,
+						content = content
+					};
+				else
+					message.history[message.id] = {
+						kind = kind,
+						content = content
+					};
+
+					message.id = message.id + 1;
+				end
+			end
+
 			return;
 		end
-
-		---@type integer
-		local keys = vim.tbl_keys(message.visible);
 
 		if #keys == 0 then
 			-- No visible message available.
