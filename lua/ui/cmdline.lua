@@ -386,7 +386,7 @@ cmdline.__render = function ()
 
 		cmdline.__cursor(lines);
 
-		if package.loaded["ui.message"] then
+		if spec.config.message.enable and package.loaded["ui.message"] then
 			log.assert(
 				"ui/cmdline.lua → message_refresh",
 				pcall(package.loaded["ui.message"].__render)
@@ -509,7 +509,7 @@ cmdline.cmdline_hide = function ()
 
 		--- Re-render messages to update the window
 		--- position.
-		if package.loaded["ui.message"] then
+		if spec.config.message.enable and package.loaded["ui.message"] then
 			log.assert(
 				"ui/cmdline.lua",
 				pcall(package.loaded["ui.message"].__render)

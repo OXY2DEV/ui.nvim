@@ -661,7 +661,6 @@ message.__hide = function ()
 	if #keys ~= 0 then return; end
 
 	pcall(vim.api.nvim_win_set_config, message.msg_window, { hide = true });
-	message.msg_window = nil;
 
 	---|fE
 end
