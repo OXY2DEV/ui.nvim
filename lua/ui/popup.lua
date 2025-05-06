@@ -22,11 +22,11 @@ popup.state = {
 ---@type integer Namespace for the decorations in the command-line.
 popup.namespace = vim.api.nvim_create_namespace("ui.popup");
 
----@type integer, integer[] Popup buffer & window.
-popup.buffer, popup.window = nil, {};
+---@type integer, integer Popup buffer & window.
+popup.buffer, popup.window = nil, nil;
 
----@type integer, integer[] Information buffer & window.
-popup.info_buffer, popup.info_window = nil, {}
+---@type integer, integer Information buffer & window.
+popup.info_buffer, popup.info_window = nil, nil;
 
 ------------------------------------------------------------------------------
 
@@ -48,8 +48,8 @@ popup.__prepare = function ()
 	-- But, we can change an already open window's
 	-- configuration. That's why we open a hidden
 	-- window first.
-	if not popup.window[tab] or vim.api.nvim_win_is_valid(popup.window[tab]) == false then
-		popup.window[tab] = vim.api.nvim_open_win(popup.buffer, false, {
+	if not popup.window or vim.api.nvim_win_is_valid(popup.window) == false then
+		popup.window = vim.api.nvim_open_win(popup.buffer, false, {
 			relative = "editor",
 
 			row = 0,
@@ -64,10 +64,10 @@ popup.__prepare = function ()
 			focusable = false
 		});
 
-		vim.api.nvim_win_set_var(popup.window[tab], "ui_window", true);
+		vim.api.nvim_win_set_var(popup.window, "ui_window", true);
 
-		utils.set("w", popup.window[tab], "wrap", false);
-		utils.set("w", popup.window[tab], "sidescrolloff", math.floor(vim.o.columns * 0.5) or 36);
+		utils.set("w", popup.window, "wrap", false);
+		utils.set("w", popup.window, "sidescrolloff", math.floor(vim.o.columns * 0.5) or 36);
 	end
 
 	--- Create command-line buffer.
@@ -81,8 +81,8 @@ popup.__prepare = function ()
 	-- But, we can change an already open window's
 	-- configuration. That's why we open a hidden
 	-- window first.
-	if not popup.info_window[tab] or vim.api.nvim_win_is_valid(popup.info_window[tab]) == false then
-		popup.info_window[tab] = vim.api.nvim_open_win(popup.info_buffer, false, {
+	if not popup.info_window or vim.api.nvim_win_is_valid(popup.info_window) == false then
+		popup.info_window = vim.api.nvim_open_win(popup.info_buffer, false, {
 			relative = "editor",
 
 			row = 0,
@@ -97,10 +97,10 @@ popup.__prepare = function ()
 			focusable = false
 		});
 
-		vim.api.nvim_win_set_var(popup.info_window[tab], "ui_window", true);
+		vim.api.nvim_win_set_var(popup.info_window, "ui_window", true);
 
-		utils.set("w", popup.info_window[tab], "wrap", true);
-		utils.set("w", popup.info_window[tab], "linebreak", true);
+		utils.set("w", popup.info_window, "wrap", true);
+		utils.set("w", popup.info_window, "linebreak", true);
 	end
 
 	---|fE
@@ -110,24 +110,11 @@ end
 popup.__hide = function ()
 	---|fS
 
-	local tab = vim.api.nvim_get_current_tabpage();
-	local win_config = {
-		relative = "editor",
+	pcall(vim.api.nvim_win_close, popup.window, true);
+	pcall(vim.api.nvim_win_close, popup.info_window, true);
 
-		row = 0,
-		col = 0,
-
-		width = 1,
-		height = 1,
-
-		style = "minimal",
-
-		hide = true,
-		focusable = false
-	};
-
-	pcall(vim.api.nvim_win_set_config, popup.window[tab], win_config);
-	pcall(vim.api.nvim_win_set_config, popup.info_window[tab], win_config);
+	popup.window = nil;
+	popup.info_window = nil;
 
 	---|fE
 end
@@ -162,7 +149,7 @@ popup.__info = function (item)
 		focusable = false
 	};
 
-	pcall(vim.api.nvim_win_set_config, popup.info_window[tab], win_config);
+	pcall(vim.api.nvim_win_set_config, popup.info_window, win_config);
 
 	---|fE
 end
@@ -274,8 +261,8 @@ popup.__strip_renderer = function ()
 		focusable = false
 	}, utils.eval(spec.config.popupmenu.winconfig, popup.state) or {});
 
-	pcall(vim.api.nvim_win_set_config, popup.window[tab], win_config);
-	pcall(vim.api.nvim_win_set_cursor, popup.window[tab], { 1, X });
+	pcall(vim.api.nvim_win_set_config, popup.window, win_config);
+	pcall(vim.api.nvim_win_set_cursor, popup.window, { 1, X });
 
 	---|fE
 end
@@ -390,8 +377,8 @@ popup.__completion_renderer = function ()
 
 	win_config = vim.tbl_extend("force", win_config, utils.eval(spec.config.popupmenu.winconfig, popup.state, position) or {});
 
-	pcall(vim.api.nvim_win_set_config, popup.window[tab], win_config);
-	pcall(vim.api.nvim_win_set_cursor, popup.window[tab], { popup.state.selected + 1, 0 });
+	pcall(vim.api.nvim_win_set_config, popup.window, win_config);
+	pcall(vim.api.nvim_win_set_cursor, popup.window, { popup.state.selected + 1, 0 });
 
 	---|fE
 end
@@ -487,25 +474,6 @@ popup.handle = function (event, ...)
 
 	log.level_dec();
 	log.print(vim.inspect({ ... }), "ui/popup.lua", "debug");
-
-	---|fE
-end
-
---- Sets up the popup module.
-popup.setup = function ()
-	---|fS
-
-	vim.api.nvim_create_autocmd("TabEnter", {
-		callback = function ()
-			popup.__prepare();
-		end
-	});
-
-	vim.api.nvim_create_autocmd("VimEnter", {
-		callback = function ()
-			popup.__prepare();
-		end
-	});
 
 	---|fE
 end
