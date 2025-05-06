@@ -986,6 +986,7 @@ message.__showcmd = function (content)
 
 	content = content or vim.g.__ui_showcmd or {};
 
+	message.__prepare();
 	vim.g.__ui_showcmd = content;
 
 	local window_config = vim.tbl_extend("keep", spec.config.message.showcmd_winconfig or {}, {
