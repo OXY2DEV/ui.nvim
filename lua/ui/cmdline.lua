@@ -602,6 +602,15 @@ cmdline.setup = function ()
 		end
 	});
 
+	vim.api.nvim_create_autocmd("VimResized", {
+		callback = function ()
+			log.assert(
+				"ui/cmdline.lua",
+				pcall(cmdline.__render)
+			);
+		end
+	});
+
 	vim.api.nvim_create_autocmd({
 		"VimEnter",
 		"TabEnter"
