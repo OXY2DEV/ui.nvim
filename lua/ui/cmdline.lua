@@ -607,7 +607,7 @@ cmdline.setup = function ()
 		callback = function ()
 			-- Only redraw if the cmdline
 			-- window is visible.
-			if vim.g.__ui_cmd_height > 0 then
+			if vim.g.__ui_cmd_height and vim.g.__ui_cmd_height > 0 then
 				log.assert(
 					"ui/cmdline.lua",
 					pcall(cmdline.__render)
