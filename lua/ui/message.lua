@@ -14,8 +14,8 @@ message.namespace = vim.api.nvim_create_namespace("ui.message")
 ---@type integer, integer[] Buffer & window for messages.
 message.msg_buffer, message.msg_window = nil, {};
 
----@type integer, integer[] Buffer & window for showing larger messages.
-message.list_buffer, message.list_window = nil, {};
+---@type integer, integer Buffer & window for showing larger messages.
+message.list_buffer, message.list_window = nil, nil;
 
 ---@type integer, integer[] Buffer & window for confirmation messages.
 message.confirm_buffer, message.confirm_window = nil, {};
@@ -141,11 +141,6 @@ message.__prepare = function ()
 
 	if not message.list_buffer or vim.api.nvim_buf_is_valid(message.list_buffer) == false then
 		message.list_buffer = vim.api.nvim_create_buf(false, true);
-	end
-
-	if not message.list_window[tab] or vim.api.nvim_win_is_valid(message.list_window[tab]) == false then
-		message.list_window[tab] = vim.api.nvim_open_win(message.list_buffer, false, win_config);
-		vim.api.nvim_win_set_var(message.list_window[tab], "ui_window", true);
 	end
 
 	----------
@@ -528,11 +523,10 @@ message.__list = function (obj)
 	--- All logic must be run outside of
 	--- fast event.
 	vim.schedule(function ()
+		message.__prepare();
 		vim.g.__ui_list_msg = obj;
 
 		local lines, exts = utils.process_content(obj.content);
-
-		message.__prepare();
 
 		---@type ui.message.list__static
 		local config = spec.get_listmsg_style(obj, lines, exts);
@@ -542,34 +536,25 @@ message.__list = function (obj)
 			exts = config.modifier.extmarks or exts;
 		end
 
+		---|fS "feat: Keymap(s)"
+
 		vim.api.nvim_buf_set_keymap(message.list_buffer, "n", "q", "", {
 			callback = function ()
-				---@type integer
-				local tab = vim.api.nvim_get_current_tabpage();
-
 				vim.api.nvim_set_current_win(
 					utils.last_win()
 				);
-				vim.api.nvim_win_set_config(message.list_window[tab], {
-					relative = "editor",
-
-					row = 0, col = 0,
-					width = 1, height = 1,
-
-					hide = true
-				});
+				pcall(vim.api.nvim_win_close, message.list_window, true);
 
 				vim.g.__ui_list_msg = nil;
 			end
 		});
 
+		---|fE
+
 		---@type integer
 		local W = math.min(utils.max_len(lines), math.floor(vim.o.columns * 0.75));
 		---@type integer
 		local H = math.min(utils.wrapped_height(lines, W), vim.o.lines - 2);
-
-		---@type integer
-		local tab = vim.api.nvim_get_current_tabpage();
 
 		local window_config = vim.tbl_extend("force", {
 			relative = "editor",
@@ -587,6 +572,23 @@ message.__list = function (obj)
 			hide = false,
 			focusable = true
 		}, spec.config.message.list_winconfig or {});
+
+		if message.list_window and vim.api.nvim_win_is_valid(message.list_window) then
+			vim.api.nvim_win_set_config(message.list_window, window_config);
+		else
+			message.list_window = vim.api.nvim_open_win(message.list_buffer, false, window_config);
+			vim.api.nvim_win_set_var(message.list_window, "ui_window", true);
+
+			vim.api.nvim_create_autocmd("WinClosed", {
+				pattern = tostring(message.list_window),
+				callback = function ()
+					message.list_window = nil;
+					vim.g.__ui_list_msg = nil;
+				end
+			})
+		end
+
+		---|fS
 
 		vim.api.nvim_buf_clear_namespace(message.list_buffer, message.namespace, 0, -1);
 		vim.api.nvim_buf_set_lines(message.list_buffer, 0, -1, false, lines);
@@ -612,22 +614,60 @@ message.__list = function (obj)
 			end
 		end
 
-		if message.list_window[tab] and vim.api.nvim_win_is_valid(message.list_window[tab]) then
-			vim.api.nvim_win_set_config(message.list_window[tab], window_config);
-		else
-			message.list_window[tab] = vim.api.nvim_open_win(message.list_buffer, false, window_config);
-			vim.api.nvim_win_set_var(message.list_window[tab], "ui_window", true);
-		end
+		---|fE
 
-		vim.api.nvim_set_current_win(message.list_window[tab]);
-
-		utils.set("w", message.list_window[tab], "wrap", true);
-		utils.set("w", message.list_window[tab], "linebreak", true);
+		vim.api.nvim_set_current_win(message.list_window);
 
 		if config.winhl then
-			utils.set("w", message.list_window[tab], "winhl", config.winhl);
+			utils.set("w", message.list_window, "winhl", config.winhl);
 		end
 	end);
+
+	---|fE
+end
+
+message.__list_resize = function ()
+	---|fS
+
+	if not vim.g.__ui_list_msg then
+		return;
+	elseif not message.list_window or not vim.api.nvim_win_is_valid(message.list_window) then
+		return;
+	end
+
+	local lines, exts = utils.process_content(vim.g.__ui_list_msg.content);
+
+	---@type ui.message.list__static
+	local config = spec.get_listmsg_style(vim.g.__ui_list_msg, lines, exts);
+
+	if config.modifier then
+		lines = config.modifier.lines or lines;
+		exts = config.modifier.extmarks or exts;
+	end
+
+	---@type integer
+	local W = math.min(utils.max_len(lines), math.floor(vim.o.columns * 0.75));
+	---@type integer
+	local H = math.min(utils.wrapped_height(lines, W), vim.o.lines - 2);
+
+	local window_config = vim.tbl_extend("force", {
+		relative = "editor",
+
+		row = config.row or math.ceil((vim.o.lines - H) / 2),
+		col = config.col or math.ceil((vim.o.columns - W) / 2),
+
+		width = config.width or W,
+		height = config.height or H,
+
+		border = config.border or "none",
+		style = "minimal",
+
+		zindex = 90,
+		hide = false,
+		focusable = true
+	}, spec.config.message.list_winconfig or {});
+
+	vim.api.nvim_win_set_config(message.list_window, window_config);
 
 	---|fE
 end
@@ -1167,15 +1207,6 @@ message.setup = function ()
 		end
 	});
 
-	vim.api.nvim_create_autocmd("WinClosed", {
-		callback = function ()
-			local tab = vim.api.nvim_get_current_tabpage()
-			if message.list_window[tab] == vim.api.nvim_get_current_win() then
-				message.list_window[tab] = nil;
-				vim.g.__ui_list_msg = nil;
-			end
-		end
-	})
 
 	vim.api.nvim_create_autocmd("VimResized", {
 		callback = function ()
@@ -1185,11 +1216,7 @@ message.setup = function ()
 				message.__confirm(vim.g.__ui_confirm_msg);
 			end
 
-			if vim.g.__ui_list_msg then
-				--- If a list message window is active,
-				--- redraw it.
-				message.__list(vim.g.__ui_list_msg);
-			end
+			message.__list_resize();
 
 			if vim.g.__ui_showcmd then
 				message.__showcmd(vim.g.__ui_showcmd);
