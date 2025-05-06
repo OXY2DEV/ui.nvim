@@ -496,6 +496,7 @@ cmdline.cmdline_hide = function ()
 	utils.confirm_keys();
 
 	-- Reset exported height.
+	-- Also reset state.
 	vim.g.__ui_cmd_height = 0;
 	cmdline.old_state = {}; ---@diagnostic disable-line
 
@@ -604,10 +605,14 @@ cmdline.setup = function ()
 
 	vim.api.nvim_create_autocmd("VimResized", {
 		callback = function ()
-			log.assert(
-				"ui/cmdline.lua",
-				pcall(cmdline.__render)
-			);
+			-- Only redraw if the cmdline
+			-- window is visible.
+			if vim.g.__ui_cmd_height > 0 then
+				log.assert(
+					"ui/cmdline.lua",
+					pcall(cmdline.__render)
+				);
+			end
 		end
 	});
 
