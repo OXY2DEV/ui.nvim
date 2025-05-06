@@ -11,8 +11,8 @@ local utils = require("ui.utils");
 ---@type integer Namespace for decorations in messages.
 message.namespace = vim.api.nvim_create_namespace("ui.message")
 
----@type integer, integer[] Buffer & window for messages.
-message.msg_buffer, message.msg_window = nil, {};
+---@type integer, integer Buffer & window for messages.
+message.msg_buffer, message.msg_window = nil, nil;
 
 ---@type integer, integer Buffer & window for showing larger messages.
 message.list_buffer, message.list_window = nil, nil;
@@ -23,8 +23,8 @@ message.confirm_buffer, message.confirm_window = nil, nil;
 ---@type integer, integer Buffer & window for message history.
 message.history_buffer, message.history_window = nil, nil;
 
----@type integer, integer[] Buffer & window for showmode.
-message.show_buffer, message.show_window = nil, {};
+---@type integer, integer Buffer & window for showmode.
+message.show_buffer, message.show_window = nil, nil;
 
 ------------------------------------------------------------------------------
 
@@ -46,10 +46,10 @@ message.history_decorations = {};
 ---@return string
 message.statuscolumn = function ()
 	---|fS
-	local tab = vim.api.nvim_get_current_tabpage();
+
 	local win = vim.g.statusline_winid;
 
-	if win ~= message.msg_window[tab] and win ~= message.history_window then
+	if win ~= message.msg_window and win ~= message.history_window then
 		-- Wrong window.
 		return "";
 	elseif not message.decorations and not message.history_decorations then
@@ -109,9 +109,6 @@ vim.api.nvim_create_autocmd("UIEnter", {
 message.__prepare = function ()
 	---|fS
 
-	---@type integer Current tab ID.
-	local tab = vim.api.nvim_get_current_tabpage();
-
 	local win_config = {
 		relative = "editor",
 
@@ -129,12 +126,12 @@ message.__prepare = function ()
 		message.msg_buffer = vim.api.nvim_create_buf(false, true);
 	end
 
-	if not message.msg_window[tab] or vim.api.nvim_win_is_valid(message.msg_window[tab]) == false then
-		message.msg_window[tab] = vim.api.nvim_open_win(message.msg_buffer, false, win_config);
-		vim.api.nvim_win_set_var(message.msg_window[tab], "ui_window", true);
+	if not message.msg_window or vim.api.nvim_win_is_valid(message.msg_window) == false then
+		message.msg_window = vim.api.nvim_open_win(message.msg_buffer, false, win_config);
+		vim.api.nvim_win_set_var(message.msg_window, "ui_window", true);
 
-		utils.set("w", message.msg_window[tab], "numberwidth", 1);
-		utils.set("w", message.msg_window[tab], "statuscolumn", "%!v:lua.__ui_statuscolumn()");
+		utils.set("w", message.msg_window, "numberwidth", 1);
+		utils.set("w", message.msg_window, "statuscolumn", "%!v:lua.__ui_statuscolumn()");
 	end
 
 	----------
@@ -161,11 +158,11 @@ message.__prepare = function ()
 		message.show_buffer = vim.api.nvim_create_buf(false, true);
 	end
 
-	if not message.show_window[tab] or vim.api.nvim_win_is_valid(message.show_window[tab]) == false then
-		message.show_window[tab] = vim.api.nvim_open_win(message.show_buffer, false, win_config);
-		vim.api.nvim_win_set_var(message.show_window[tab], "ui_window", true);
+	if not message.show_window or vim.api.nvim_win_is_valid(message.show_window) == false then
+		message.show_window = vim.api.nvim_open_win(message.show_buffer, false, win_config);
+		vim.api.nvim_win_set_var(message.show_window, "ui_window", true);
 
-		utils.set("w", message.show_window[tab], "sidescrolloff", 0);
+		utils.set("w", message.show_window, "sidescrolloff", 0);
 	end
 
 	---|fE
@@ -663,10 +660,8 @@ message.__hide = function ()
 	local keys = vim.tbl_keys(message.visible);
 	if #keys ~= 0 then return; end
 
-	---@type integer
-	local tab = vim.api.nvim_get_current_tabpage();
-
-	pcall(vim.api.nvim_win_set_config, message.msg_window[tab], { hide = true });
+	pcall(vim.api.nvim_win_set_config, message.msg_window, { hide = true });
+	message.msg_window = nil;
 
 	---|fE
 end
@@ -770,9 +765,6 @@ message.__render = function ()
 
 	local W = math.min(math.floor(vim.o.columns * 0.5), utils.max_len(lines));
 
-	---@type integer
-	local tab = vim.api.nvim_get_current_tabpage();
-
 	local window_config = vim.tbl_extend("keep", spec.config.message.message_winconfig or {}, {
 		relative = "editor",
 
@@ -788,18 +780,18 @@ message.__render = function ()
 		hide = false
 	});
 
-	if message.msg_window[tab] and vim.api.nvim_win_is_valid(message.msg_window[tab]) then
-		vim.api.nvim_win_set_config(message.msg_window[tab], window_config);
+	if message.msg_window and vim.api.nvim_win_is_valid(message.msg_window) then
+		vim.api.nvim_win_set_config(message.msg_window, window_config);
 	else
-		message.msg_window[tab] = vim.api.nvim_open_win(message.msg_buffer, false, window_config);
-		vim.api.nvim_win_set_var(message.msg_window[tab], "ui_window", true);
+		message.msg_window = vim.api.nvim_open_win(message.msg_buffer, false, window_config);
+		vim.api.nvim_win_set_var(message.msg_window, "ui_window", true);
 	end
 
-	utils.set("w", message.msg_window[tab], "winhl", "Normal:Normal");
-	utils.set("w", message.msg_window[tab], "statuscolumn", "%!v:lua.__ui_statuscolumn()");
+	utils.set("w", message.msg_window, "winhl", "Normal:Normal");
+	utils.set("w", message.msg_window, "statuscolumn", "%!v:lua.__ui_statuscolumn()");
 
-	utils.set("w", message.msg_window[tab], "wrap", true);
-	utils.set("w", message.msg_window[tab], "linebreak", true);
+	utils.set("w", message.msg_window, "wrap", true);
+	utils.set("w", message.msg_window, "linebreak", true);
 
 	vim.api.nvim__redraw({
 		flush = true,
@@ -808,7 +800,7 @@ message.__render = function ()
 		-- Solution: Update when the decoration size changes.
 		statuscolumn = last_decor_size ~= decor_size,
 
-		win = message.msg_window[tab]
+		win = message.msg_window
 	});
 
 	---|fE
@@ -994,8 +986,6 @@ message.__showcmd = function (content)
 
 	content = content or vim.g.__ui_showcmd or {};
 
-	---@type integer
-	local tab = vim.api.nvim_get_current_tabpage();
 	vim.g.__ui_showcmd = content;
 
 	local window_config = vim.tbl_extend("keep", spec.config.message.showcmd_winconfig or {}, {
@@ -1020,7 +1010,7 @@ message.__showcmd = function (content)
 		vim.g.__ui_showcmd = {};
 		window_config.hide = true;
 
-		pcall(vim.api.nvim_win_set_config, message.show_window[tab], window_config);
+		pcall(vim.api.nvim_win_set_config, message.show_window, window_config);
 		return;
 	elseif spec.config.message.showcmd.modifier then
 		local modifier = utils.eval(spec.config.message.showcmd.modifier, content, text, extmarks);
@@ -1055,28 +1045,28 @@ message.__showcmd = function (content)
 		end
 	end
 
-	if message.show_window[tab] and vim.api.nvim_win_is_valid(message.show_window[tab]) then
-		vim.api.nvim_win_set_config(message.show_window[tab], window_config);
+	if message.show_window and vim.api.nvim_win_is_valid(message.show_window) then
+		vim.api.nvim_win_set_config(message.show_window, window_config);
 	else
-		message.show_window[tab] = vim.api.nvim_open_win(message.show_buffer, false, window_config);
-		vim.api.nvim_win_set_var(message.show_window[tab], "ui_window", true);
+		message.show_window = vim.api.nvim_open_win(message.show_buffer, false, window_config);
+		vim.api.nvim_win_set_var(message.show_window, "ui_window", true);
 
 		--- Always horizontally center the cursor.
 		--- We can't dynamically set this without bombing users with
 		--- `OptionSet` events.
-		utils.set("w", message.show_window[tab], "sidescrolloff", 999);
+		utils.set("w", message.show_window, "sidescrolloff", 999);
 	end
 
 	-- Use display width instead of byte length as there are
 	-- multi-byte characters.
 	-- If all else fails, `pcall()` should save us.
-	pcall(vim.api.nvim_win_set_cursor, message.show_window[tab], {
+	pcall(vim.api.nvim_win_set_cursor, message.show_window, {
 		1, math.floor(window_config.width / 2)
 	});
 
 	vim.api.nvim__redraw({
 		flush = true,
-		win = message.show_window[tab]
+		win = message.show_window
 	});
 
 	---|fE
@@ -1178,12 +1168,6 @@ end
 message.setup = function ()
 	---|fS
 
-	vim.api.nvim_create_autocmd("VimEnter", {
-		callback = function ()
-			message.__prepare();
-		end
-	});
-
 	vim.api.nvim_create_autocmd("VimResized", {
 		callback = function ()
 			message.__list_resize();
@@ -1196,14 +1180,21 @@ message.setup = function ()
 		end
 	});
 
-	vim.api.nvim_create_autocmd("TabEnter", {
+	vim.api.nvim_create_autocmd("TabLeave", {
 		callback = function ()
-			if vim.g.__ui_confirm_msg then
-				--- If a confirmation window is active,
-				--- redraw it.
-				message.__confirm(vim.g.__ui_confirm_msg);
-			end
+			pcall(vim.api.nvim_win_close, message.msg_window, true);
+			pcall(vim.api.nvim_win_close, message.show_window, true);
 
+			message.msg_window = nil;
+			message.show_window = nil;
+		end
+	});
+
+	vim.api.nvim_create_autocmd({
+		"VimEnter",
+		"TabEnter"
+	}, {
+		callback = function ()
 			message.__render();
 		end
 	});
