@@ -17,8 +17,8 @@ message.msg_buffer, message.msg_window = nil, {};
 ---@type integer, integer Buffer & window for showing larger messages.
 message.list_buffer, message.list_window = nil, nil;
 
----@type integer, integer[] Buffer & window for confirmation messages.
-message.confirm_buffer, message.confirm_window = nil, {};
+---@type integer, integer Buffer & window for confirmation messages.
+message.confirm_buffer, message.confirm_window = nil, nil;
 
 ---@type integer, integer[] Buffer & window for message history.
 message.history_buffer, message.history_window = nil, {};
@@ -147,11 +147,6 @@ message.__prepare = function ()
 
 	if not message.confirm_buffer or vim.api.nvim_buf_is_valid(message.confirm_buffer) == false then
 		message.confirm_buffer = vim.api.nvim_create_buf(false, true);
-	end
-
-	if not message.confirm_window[tab] or vim.api.nvim_win_is_valid(message.confirm_window[tab]) == false then
-		message.confirm_window[tab] = vim.api.nvim_open_win(message.confirm_buffer, false, win_config);
-		vim.api.nvim_win_set_var(message.confirm_window[tab], "ui_window", true);
 	end
 
 	----------
@@ -454,9 +449,6 @@ message.__confirm = function (obj)
 			exts = config.modifier.extmarks or exts;
 		end
 
-		---@type integer
-		local tab = vim.api.nvim_get_current_tabpage();
-
 		local window_config = vim.tbl_extend("force", {
 			relative = "editor",
 
@@ -473,6 +465,13 @@ message.__confirm = function (obj)
 			hide = false
 		}, spec.config.message.confirm_winconfig or {});
 
+		if message.confirm_window and vim.api.nvim_win_is_valid(message.confirm_window) then
+			vim.api.nvim_win_set_config(message.confirm_window, window_config);
+		else
+			message.confirm_window = vim.api.nvim_open_win(message.confirm_buffer, false, window_config);
+			vim.api.nvim_win_set_var(message.confirm_window, "ui_window", true);
+		end
+
 		vim.api.nvim_buf_clear_namespace(message.confirm_buffer, message.namespace, 0, -1);
 		vim.api.nvim_buf_set_lines(message.confirm_buffer, 0, -1, false, lines);
 
@@ -485,18 +484,12 @@ message.__confirm = function (obj)
 			end
 		end
 
-		if message.confirm_window[tab] and vim.api.nvim_win_is_valid(message.confirm_window[tab]) then
-			vim.api.nvim_win_set_config(message.confirm_window[tab], window_config);
-		else
-			message.confirm_window[tab] = vim.api.nvim_open_win(message.confirm_buffer, false, window_config);
-			vim.api.nvim_win_set_var(message.confirm_window[tab], "ui_window", true);
-		end
 
-		utils.set("w", message.confirm_window[tab], "wrap", true);
-		utils.set("w", message.confirm_window[tab], "linebreak", true);
+		utils.set("w", message.confirm_window, "wrap", true);
+		utils.set("w", message.confirm_window, "linebreak", true);
 
 		if config.winhl then
-			utils.set("w", message.confirm_window[tab], "winhl", config.winhl);
+			utils.set("w", message.confirm_window, "winhl", config.winhl);
 		end
 
 		--- Auto hide on next key press.
@@ -505,7 +498,7 @@ message.__confirm = function (obj)
 				return;
 			end
 
-			pcall(vim.api.nvim_win_set_config, message.confirm_window[tab], { hide = true });
+			pcall(vim.api.nvim_win_close, message.confirm_window, true);
 			vim.on_key(nil, message.namespace);
 
 			vim.g.__ui_confirm_msg = nil;
@@ -1210,12 +1203,6 @@ message.setup = function ()
 
 	vim.api.nvim_create_autocmd("VimResized", {
 		callback = function ()
-			if vim.g.__ui_confirm_msg then
-				--- If a confirmation window is active,
-				--- redraw it.
-				message.__confirm(vim.g.__ui_confirm_msg);
-			end
-
 			message.__list_resize();
 
 			if vim.g.__ui_showcmd then
