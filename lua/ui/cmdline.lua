@@ -14,8 +14,8 @@ cmdline.namespace = vim.api.nvim_create_namespace("ui.cmdline");
 ---@type integer Namespace for the cursor in command-line.
 cmdline.cursor_ns = vim.api.nvim_create_namespace("ui.cmdline.cursor");
 
----@type integer, integer[] Cmdline buffer & window.
-cmdline.buffer, cmdline.window = nil, {};
+---@type integer, integer Cmdline buffer & window.
+cmdline.buffer, cmdline.window = nil, nil;
 
 ------------------------------------------------------------------------------
 
@@ -45,7 +45,7 @@ cmdline.old_state = {
 	shift = false
 };
 
---- Gets cmdline state.
+--- Gets command-line state.
 ---@param key string
 ---@param fallback any
 ---@return any
@@ -53,7 +53,7 @@ cmdline.get_state = function (key, fallback)
 	return cmdline.state[key] or fallback;
 end
 
---- Updates cmdline state.
+--- Updates command-line state.
 ---@param state table<string, any>
 cmdline.set_state = function (state)
 	cmdline.state = vim.tbl_extend("force", cmdline.state, state);
@@ -70,17 +70,14 @@ cmdline.__prepare = function ()
 		cmdline.buffer = vim.api.nvim_create_buf(false, true);
 	end
 
-	---@type integer
-	local tab = vim.api.nvim_get_current_tabpage();
-
 	-- Open a hidden window.
 	-- We can't open new windows while processing
 	-- UI events.
 	-- But, we can change an already open window's
 	-- configuration. That's why we open a hidden
 	-- window first.
-	if not cmdline.window[tab] or not vim.api.nvim_win_is_valid(cmdline.window[tab]) then
-		cmdline.window[tab] = vim.api.nvim_open_win(cmdline.buffer, false, {
+	if not cmdline.window or not vim.api.nvim_win_is_valid(cmdline.window) then
+		cmdline.window = vim.api.nvim_open_win(cmdline.buffer, false, {
 			relative = "editor",
 
 			row = 0,
@@ -95,7 +92,7 @@ cmdline.__prepare = function ()
 			focusable = false
 		});
 
-		vim.api.nvim_win_set_var(cmdline.window[tab], "ui_window", true);
+		vim.api.nvim_win_set_var(cmdline.window, "ui_window", true);
 	end
 
 	---|fE
@@ -215,15 +212,12 @@ cmdline.__cursor = function (lines)
 		);
 	end
 
-	---@type integer
-	local tab = vim.api.nvim_get_current_tabpage();
-
 	log.assert(
 		"ui/cmdline.lua → nvim_win_set_cursor",
 		pcall(
 			vim.api.nvim_win_set_cursor,
 
-			cmdline.window[tab],
+			cmdline.window,
 			{
 				vim.api.nvim_buf_line_count(cmdline.buffer), -- This is 1-indexed.
 				pos
@@ -361,9 +355,6 @@ cmdline.__render = function ()
 			---|fE
 		end
 
-		---@type integer
-		local tab = vim.api.nvim_get_current_tabpage();
-
 		vim.api.nvim_buf_set_extmark(cmdline.buffer, cmdline.namespace, #lines - 1, 0, {
 			virt_text_pos = "overlay",
 			virt_text = cmdline.style.icon
@@ -371,7 +362,7 @@ cmdline.__render = function ()
 
 		log.assert(
 			"ui/cmdline.lua → window",
-			pcall(vim.api.nvim_win_set_config, cmdline.window[tab], win_config)
+			pcall(vim.api.nvim_win_set_config, cmdline.window, win_config)
 		);
 
 		local winhl = cmdline.style.winhl or "";
@@ -385,13 +376,13 @@ cmdline.__render = function ()
 			winhl = winhl .. ",Search:None,CurSearch:None";
 		end
 
-		utils.set("w", cmdline.window[tab], "winhl", winhl);
+		utils.set("w", cmdline.window, "winhl", winhl);
 
-		utils.set("w", cmdline.window[tab], "sidescrolloff", math.floor(vim.o.columns * 0.5) or 36);
-		utils.set("w", cmdline.window[tab], "scrolloff", 0);
+		utils.set("w", cmdline.window, "sidescrolloff", math.floor(vim.o.columns * 0.5) or 36);
+		utils.set("w", cmdline.window, "scrolloff", 0);
 
-		utils.set("w", cmdline.window[tab], "conceallevel", 3);
-		utils.set("w", cmdline.window[tab], "concealcursor", "nvic");
+		utils.set("w", cmdline.window, "conceallevel", 3);
+		utils.set("w", cmdline.window, "concealcursor", "nvic");
 
 		cmdline.__cursor(lines);
 
@@ -411,7 +402,7 @@ cmdline.__render = function ()
 			flush = true,
 			cursor = true,
 
-			win = cmdline.window[tab]
+			win = cmdline.window
 		});
 
 		---|fE
@@ -490,18 +481,15 @@ cmdline.cmdline_special_char = function (c, shift, level)
 		level = level
 	});
 
-	---@type integer
-	local tab = vim.api.nvim_get_current_tabpage();
-
 	-- Special characters should be rendered
 	-- immediately.
 	cmdline.__special();
-	vim.api.nvim__redraw({ flush = true, cursor = true, win = cmdline.window[tab] })
+	vim.api.nvim__redraw({ flush = true, cursor = true, win = cmdline.window })
 
 	---|fE
 end
 
---- Exited cmdline.
+--- Exited command-line.
 cmdline.cmdline_hide = function ()
 	---|fS
 
@@ -514,12 +502,10 @@ cmdline.cmdline_hide = function ()
 	vim.schedule(function ()
 		-- We can't open/close windows.
 		-- But, we can hide them here.
-		for _, win in pairs(cmdline.window) do
-			log.assert(
-				"ui/cmdline.lua",
-				pcall(vim.api.nvim_win_set_config, win, { hide = true })
-			);
-		end
+		log.assert(
+			"ui/cmdline.lua",
+			pcall(vim.api.nvim_win_set_config, cmdline.window, { hide = true })
+		);
 
 		--- Re-render messages to update the window
 		--- position.
@@ -605,20 +591,21 @@ cmdline.handle = function (event, ...)
 	---|fE
 end
 
---- Sets up the cmdline module.
+--- Sets up the command-line module.
 cmdline.setup = function ()
 	---|fS
 
-	vim.api.nvim_create_autocmd("TabEnter", {
+	vim.api.nvim_create_autocmd("TabLeave", {
 		callback = function ()
-			log.assert(
-				"ui/cmdline.lua",
-				pcall(cmdline.__prepare)
-			);
+			pcall(vim.api.nvim_win_close, cmdline.window, true);
+			cmdline.window = nil;
 		end
 	});
 
-	vim.api.nvim_create_autocmd("VimEnter", {
+	vim.api.nvim_create_autocmd({
+		"VimEnter",
+		"TabEnter"
+	}, {
 		callback = function ()
 			log.assert(
 				"ui/cmdline.lua",
