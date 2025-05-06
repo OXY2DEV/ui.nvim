@@ -1167,6 +1167,16 @@ message.setup = function ()
 		end
 	});
 
+	vim.api.nvim_create_autocmd("WinClosed", {
+		callback = function ()
+			local tab = vim.api.nvim_get_current_tabpage()
+			if message.list_window[tab] == vim.api.nvim_get_current_win() then
+				message.list_window[tab] = nil;
+				vim.g.__ui_list_msg = nil;
+			end
+		end
+	})
+
 	vim.api.nvim_create_autocmd("VimResized", {
 		callback = function ()
 			if vim.g.__ui_confirm_msg then
