@@ -676,10 +676,14 @@ spec.default = {
 						}
 					};
 
-					if msg.content and #msg.content == 1 then
-						local content = msg.content[1];
-						local hl = utils.attr_to_hl(content[3]);
+					if not msg.content then
+						return config;
+					end
 
+					local content = msg.content[1];
+					local hl = utils.attr_to_hl(content[3]);
+
+					if #msg.content == 1 then
 						if hl == "WarningMsg" then
 							config.icon = {
 								{ "▍ ", "UIMessageWarnSign" }
@@ -705,6 +709,10 @@ spec.default = {
 							};
 							config.line_hl_group = "UIMessageInfo";
 						end
+					elseif string.match(content[2] or "", " .+ %w+%.nvim ") then
+						-- Error message format used by my plugins & blink.cmp
+						-- e plugin.nvim : Some message. 
+						return {};
 					end
 
 					return config;
