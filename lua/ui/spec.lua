@@ -83,10 +83,52 @@ spec.generic_list_msg = function (lines)
 		-- "[^:+]:%d+:%d+:.-"
 	};
 
-	for _, pattern in ipairs(match_patterns) do
-		if string.match(start_marker, pattern) then
+	local additional_condition = {
+		[9] = function (_lines)
+			if #_lines <= 2 then
+				return false;
+			end
+
 			return true;
 		end
+	};
+
+	for p, pattern in ipairs(match_patterns) do
+		if string.match(start_marker, pattern) then
+			if additional_condition[p] then
+				local ran_cond, cond = pcall(additional_condition[p], lines);
+
+				if ran_cond and cond then
+					return true;
+				end
+			else
+				return true;
+			end
+		end
+	end
+
+	return false;
+
+	---|fE
+end
+
+--- Checks if a message is a list message is valid.
+---@param lines string[]
+---@return boolean
+spec.ignore_list = function (lines)
+	---|fS
+
+	local _lines = utils.trim_lines(lines);
+
+	if string.match(_lines[1] or "", "%S+ +xxx +.+") and #_lines == 1 then
+		-- Ignore output of `:hi <group>`
+		return true;
+	elseif string.match(_lines[1] or "", "^no%w+$") and #_lines == 1 then
+		-- Ignore output of `set no<option>?`
+		return true;
+	elseif string.match(_lines[1] or "", "^.-=.-$") and #_lines == 1 then
+		-- Ignore output of `set <option>?`
+		return true;
 	end
 
 	return false;
@@ -1183,8 +1225,14 @@ spec.default = {
 		is_list = function (kind, content)
 			local lines = utils.to_lines(content);
 
-			if kind == "list_cmd" and #lines > 1 then
-				return true, false;
+			if kind == "list_cmd" then
+				if spec.ignore_list(lines) == true then
+					-- Ignore certain messages that
+					-- look like lists but aren't in reality.
+					return false, true;
+				else
+					return true, false;
+				end
 			end
 
 			return spec.generic_list_msg(lines), false;

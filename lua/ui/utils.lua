@@ -542,4 +542,37 @@ utils.set = function (mode, src, name, value)
 	---|fE
 end
 
+--- Trims leading & trailing empty lines.
+---@param lines string[]
+---@return string[]
+utils.trim_lines = function (lines)
+	---|fS
+
+	local start, stop = 1, #lines;
+
+	for l = 1, #lines, 1 do
+		if string.match(lines[l] or "", "%S") then
+			start = l;
+			break;
+		end
+	end
+
+	for l = #lines, 1, -1 do
+		if string.match(lines[l] or "", "%S") then
+			stop = l;
+			break;
+		end
+	end
+
+	local trimmed = {};
+
+	for l = start, stop, 1 do
+		table.insert(trimmed, lines[l]);
+	end
+
+	return trimmed;
+
+	---|fE
+end
+
 return utils;
