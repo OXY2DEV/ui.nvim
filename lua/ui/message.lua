@@ -62,15 +62,17 @@ message.statuscolumn = function ()
 
 	for _, entry in ipairs(win == message.history_window and (message.history_decorations or {}) or (message.decorations or {})) do
 		if lnum >= entry.from and lnum <= entry.to then
+			log.print(entry)
+
 			if lnum == entry.from and vim.v.virtnum == 0 then
 				return utils.to_statuscolumn(entry.icon);
 			elseif lnum == entry.to and vim.v.virtnum == 0 then
 				return utils.to_statuscolumn(
-					entry.tail or entry.padding or utils.strip_text(entry.icon)
+					entry.tail or entry.padding or entry.icon
 				);
 			else
 				return utils.to_statuscolumn(
-					entry.padding or utils.strip_text(entry.icon)
+					entry.padding or entry.icon
 				);
 			end
 

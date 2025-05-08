@@ -82,7 +82,7 @@ utils.virt_len = function (virt_text)
 end
 
 --- Virtual text → statuscolumn text.
----@param virt_text [ string, string? ][]
+---@param virt_text? [ string, string? ][]
 ---@return string
 utils.to_statuscolumn = function (virt_text)
 	---|fS
