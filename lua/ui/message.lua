@@ -463,6 +463,7 @@ message.__confirm = function (obj)
 			vim.api.nvim_win_set_var(message.confirm_window, "ui_window", true);
 		end
 
+		vim.api.nvim_win_set_cursor(message.confirm_window, { 1, 0 });
 		vim.api.nvim_buf_clear_namespace(message.confirm_buffer, message.namespace, 0, -1);
 		vim.api.nvim_buf_set_lines(message.confirm_buffer, 0, -1, false, lines);
 
@@ -477,14 +478,67 @@ message.__confirm = function (obj)
 
 		utils.set("w", message.confirm_window, "wrap", true);
 		utils.set("w", message.confirm_window, "linebreak", true);
+		utils.set("w", message.confirm_window, "cursorline", true);
 
 		if config.winhl then
 			utils.set("w", message.confirm_window, "winhl", config.winhl);
 		end
 
+		---|fS "feat: Allow moving in the confirm window."
+
+		---@type string[] Various movement keys
+		local movememt_keys = {
+			vim.api.nvim_replace_termcodes("<left>", true, true, true),
+			vim.api.nvim_replace_termcodes("<right>", true, true, true),
+
+			vim.api.nvim_replace_termcodes("<down>", true, true, true),
+			vim.api.nvim_replace_termcodes("<up>", true, true, true),
+
+			vim.api.nvim_replace_termcodes("h", true, true, true),
+			vim.api.nvim_replace_termcodes("l", true, true, true),
+
+			vim.api.nvim_replace_termcodes("j", true, true, true),
+			vim.api.nvim_replace_termcodes("k", true, true, true),
+		};
+
+		---  Handles cursor movements.
+		---@param key string
+		local function handle_movement (key)
+			---|fS
+
+			local pos = vim.api.nvim_win_get_cursor(message.confirm_window);
+			local X, Y = pos[2], pos[1];
+
+			if key == movememt_keys[1] or key == movememt_keys[5] then
+				X = math.max(0, X - 1);
+			elseif key == movememt_keys[2] or key == movememt_keys[6] then
+				X = math.min(string.len(lines[Y] or ""), X + 1);
+			elseif key == movememt_keys[3] or key == movememt_keys[7] then
+				Y = math.min(#lines, Y + 1);
+			else
+				Y = math.max(1, Y - 1);
+			end
+
+			pcall(vim.api.nvim_win_set_cursor, message.confirm_window, { Y, X });
+
+			---|fE
+		end
+
+		---|fE
+
 		--- Auto hide on next key press.
 		vim.on_key(function (key)
 			if vim.list_contains(vim.g.__confirm_keys or {}, string.lower(key)) == false then
+				if vim.list_contains(movememt_keys, key) then
+					-- If the key is a movement key then
+					-- we try to do the movement and
+					-- redraw the entire screen.
+					-- `nvim__redraw()` doesn't work
+					-- here.
+					pcall(handle_movement, key);
+					pcall(vim.cmd, "mode"); ---@diagnostic disable-line
+				end
+
 				return;
 			end
 
