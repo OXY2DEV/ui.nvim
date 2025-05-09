@@ -145,6 +145,7 @@
 ---| "verbose"
 ---| "wildlist"
 ---| "wmsg"
+---| "not_list_cmd" Rejected `list_cmd` messages.
 
 
 ---@class ui.message.fragment A fragment of a message.

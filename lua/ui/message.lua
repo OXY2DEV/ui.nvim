@@ -281,6 +281,11 @@ message.__add = function (kind, content)
 			end
 
 			return;
+		elseif kind == "list_cmd" then
+			-- If the message isn't considered a list command,
+			-- we should change it's kind even if Neovim tells
+			-- us otherwise.
+			kind = "not_list_cmd";
 		end
 
 		local current_id = message.id;
