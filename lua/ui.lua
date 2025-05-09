@@ -84,7 +84,7 @@ ui.attach = function ()
 		ext_messages = spec.config.message.enable == true,
 
 		ext_popupmenu = spec.config.popupmenu.enable == true,
-	}, function (event, ...)
+	}, function (event, ...) ---@diagnostic disable-line
 		log.print("Event: " .. event, "ui.lua", "log");
 		log.level_inc();
 

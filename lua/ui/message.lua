@@ -178,7 +178,7 @@ end
 message.timer = function (callback, duration, interval)
 	---|fS
 
-	local timer = vim.uv.new_timer();
+	local timer = vim.uv.new_timer(); ---@diagnostic disable-line
 
 	if interval then
 		timer:start(0, duration, vim.schedule_wrap(callback));
