@@ -1,5 +1,39 @@
 # Changelog
 
+## [1.2.0](https://github.com/OXY2DEV/ui.nvim/compare/v1.1.0...v1.2.0) (2025-05-09)
+
+
+### Features
+
+* Added message clear sub-command ([97def7f](https://github.com/OXY2DEV/ui.nvim/commit/97def7f2ab4ace1c50c0365ae89124bd7e3635ed)), closes [#19](https://github.com/OXY2DEV/ui.nvim/issues/19)
+* **config:** Removed decorations for plugin error messages ([4d9606e](https://github.com/OXY2DEV/ui.nvim/commit/4d9606ec637618ec529cf7bf3354ee6a0c496cd7))
+* **messages:** Added `max_lines` for messages ([b2ab66c](https://github.com/OXY2DEV/ui.nvim/commit/b2ab66ce5167bd93cf2ac12d29f8ff64e9a9ae32)), closes [#19](https://github.com/OXY2DEV/ui.nvim/issues/19)
+* **messages:** Allow basic movements in the confirm window ([e5c786c](https://github.com/OXY2DEV/ui.nvim/commit/e5c786c0b6adad4bc69de31cbd7a17cefb518e4a)), closes [#24](https://github.com/OXY2DEV/ui.nvim/issues/24)
+
+
+### Bug Fixes
+
+* Certain `list_cmd` message's kind is now overwritten ([8177a44](https://github.com/OXY2DEV/ui.nvim/commit/8177a4498c4cdcd8303cc8e4e0ffc4d95631fe06)), closes [#23](https://github.com/OXY2DEV/ui.nvim/issues/23)
+* **cmdline:** Fixed a bug witb cmdline showing up on VimResized after closing ([4414078](https://github.com/OXY2DEV/ui.nvim/commit/4414078aaf88b8b2bd69fdf6d5e62bb2d14d81ca)), closes [#22](https://github.com/OXY2DEV/ui.nvim/issues/22)
+* **cmdline:** Fixed a bug with cmdline being 0 in VimResized causing error ([70f0a65](https://github.com/OXY2DEV/ui.nvim/commit/70f0a65794356a12994acbf37a8ca1f86de2cb4a)), closes [#22](https://github.com/OXY2DEV/ui.nvim/issues/22)
+* **cmdline:** Fixed a bug with cmdline cursor going out of sync when using `offsst` ([90c9d3c](https://github.com/OXY2DEV/ui.nvim/commit/90c9d3c4645d2dcce2dd517b4e3836168cda2d6b))
+* **cmdline:** Fixed resize issues of thw cmdline ([cc8687b](https://github.com/OXY2DEV/ui.nvim/commit/cc8687bd8f83882542990aab945b34557e16f43d))
+* **confirm:** Added support for `<ESC>` for confirm messages ([3c0c211](https://github.com/OXY2DEV/ui.nvim/commit/3c0c2113fd88bf43811541d7b0fc808912e34853))
+* Fixed a critical big causing too many windows to open ([6dd61f3](https://github.com/OXY2DEV/ui.nvim/commit/6dd61f30691aebfab551a8622cf2ab8aef7f2240))
+* **message:** list message reappears on resize ([c09c27f](https://github.com/OXY2DEV/ui.nvim/commit/c09c27f0cae47d485d651732bd3bceae354a7c40))
+* **message:** list message reappears on resize ([c59d330](https://github.com/OXY2DEV/ui.nvim/commit/c59d330c76219128d6e5bba71f3f23bf1043b5af))
+* **messages:** Certain single lined list messages no longer get send to the list window ([9e177b7](https://github.com/OXY2DEV/ui.nvim/commit/9e177b75cb95ff7fffb23683ed08a43909f13af7))
+* **messages:** Confirm messages no longer create hidden windows ([5d3aa75](https://github.com/OXY2DEV/ui.nvim/commit/5d3aa75d0a5285f183230fc5e9136870ee10cd59)), closes [#21](https://github.com/OXY2DEV/ui.nvim/issues/21)
+* **messages:** Fixed a bug with decorations not appearing on multi-line messages ([63f3f2c](https://github.com/OXY2DEV/ui.nvim/commit/63f3f2c643ef826ccb63da8e58c010fbcc32a2c3))
+* **messages:** Fixed an issue with __showcmd() failing at start ([5077755](https://github.com/OXY2DEV/ui.nvim/commit/5077755701e86be0b9796629e60ff6ca03bc245e))
+* **messages:** Fixed an issue with list message window being too narrow ([9b7d1f1](https://github.com/OXY2DEV/ui.nvim/commit/9b7d1f121e0a06a3ae9fb235490fdb339bb24a52))
+* **messages:** Fixed an issue with list message window not being focusable ([9b7d1f1](https://github.com/OXY2DEV/ui.nvim/commit/9b7d1f121e0a06a3ae9fb235490fdb339bb24a52))
+* **messages:** List messages no longer create hidden window ([7cafea9](https://github.com/OXY2DEV/ui.nvim/commit/7cafea940f7b43d25285f05bf289d25b847c8431)), closes [#21](https://github.com/OXY2DEV/ui.nvim/issues/21)
+* **messages:** Message history no longer creates hidden window ([26ccc6d](https://github.com/OXY2DEV/ui.nvim/commit/26ccc6dcdd03a92b4d95300ade2663bbbc135a45)), closes [#21](https://github.com/OXY2DEV/ui.nvim/issues/21)
+* **messages:** Reduced the number of hidden windows created by the message module ([2573240](https://github.com/OXY2DEV/ui.nvim/commit/2573240bf306b5114094a80b863a1767391c7ef0)), closes [#21](https://github.com/OXY2DEV/ui.nvim/issues/21) [#20](https://github.com/OXY2DEV/ui.nvim/issues/20)
+* open windows from nvim command (-o/-O/-p) ([73bd228](https://github.com/OXY2DEV/ui.nvim/commit/73bd228729a1c88de47db57be9d3a769c609ce16))
+* open windows from nvim command (-o/-O/-p) ([de53358](https://github.com/OXY2DEV/ui.nvim/commit/de53358653ec0a44ac9b25d650f13d7fd99531a8))
+
 ## [1.1.0](https://github.com/OXY2DEV/ui.nvim/compare/v1.0.1...v1.1.0) (2025-05-01)
 
 
