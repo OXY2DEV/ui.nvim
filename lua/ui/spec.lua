@@ -129,6 +129,9 @@ spec.ignore_list = function (lines)
 	elseif string.match(_lines[1] or "", "^.-=.-$") and #_lines == 1 then
 		-- Ignore output of `set <option>?`
 		return true;
+	elseif #_lines == 1 then
+		-- List messages can't actually be 1 liners.
+		return true;
 	end
 
 	return false;
