@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.2.1](https://github.com/OXY2DEV/ui.nvim/compare/v1.2.0...v1.2.1) (2025-05-10)
+
+
+### Bug Fixes
+
+* **messages:** Single lined list messages are no longer treated like lists ([be7f288](https://github.com/OXY2DEV/ui.nvim/commit/be7f288bf41573d4a4ae1b60689e23360d16419b)), closes [#26](https://github.com/OXY2DEV/ui.nvim/issues/26)
+
 ## [1.2.0](https://github.com/OXY2DEV/ui.nvim/compare/v1.1.0...v1.2.0) (2025-05-09)
 
 
