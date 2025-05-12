@@ -190,14 +190,14 @@ hl.groups = {
 			{
 				group_name = "UICmdlineDefault",
 				value = {
-					bg = string.format("#%x%x%x", hl.oklab_to_rgb(RL, RA, RB)),
+					bg = string.format("#%02x%02x%02x", hl.oklab_to_rgb(RL, RA, RB)),
 				}
 			},
 			{
 				group_name = "UICmdlineDefaultIcon",
 				value = {
-					fg = string.format("#%x%x%x", hl.oklab_to_rgb(ML, MA, MB)),
-					bg = string.format("#%x%x%x", hl.oklab_to_rgb(RL, RA, RB)),
+					fg = string.format("#%02x%02x%02x", hl.oklab_to_rgb(ML, MA, MB)),
+					bg = string.format("#%02x%02x%02x", hl.oklab_to_rgb(RL, RA, RB)),
 				}
 			},
 		};
@@ -228,21 +228,21 @@ hl.groups = {
 			{
 				group_name = "UICmdlineLua",
 				value = {
-					bg = string.format("#%x%x%x", hl.oklab_to_rgb(RL, RA, RB)),
+					bg = string.format("#%02x%02x%02x", hl.oklab_to_rgb(RL, RA, RB)),
 				}
 			},
 			{
 				group_name = "UICmdlineLuaIcon",
 				value = {
-					fg = string.format("#%x%x%x", hl.oklab_to_rgb(ML, MA, MB)),
-					bg = string.format("#%x%x%x", hl.oklab_to_rgb(RL, RA, RB)),
+					fg = string.format("#%02x%02x%02x", hl.oklab_to_rgb(ML, MA, MB)),
+					bg = string.format("#%02x%02x%02x", hl.oklab_to_rgb(RL, RA, RB)),
 				}
 			},
 
 			-- {
 			-- 	group_name = "UIMessageOk",
 			-- 	value = {
-			-- 		bg = string.format("#%x%x%x", hl.oklab_to_rgb(RL, RA, RB)),
+			-- 		bg = string.format("#%02x%02x%02x", hl.oklab_to_rgb(RL, RA, RB)),
 			-- 	}
 			-- },
 		};
@@ -273,14 +273,14 @@ hl.groups = {
 			{
 				group_name = "UICmdlineEval",
 				value = {
-					bg = string.format("#%x%x%x", hl.oklab_to_rgb(RL, RA, RB)),
+					bg = string.format("#%02x%02x%02x", hl.oklab_to_rgb(RL, RA, RB)),
 				}
 			},
 			{
 				group_name = "UICmdlineEvalIcon",
 				value = {
-					fg = string.format("#%x%x%x", hl.oklab_to_rgb(ML, MA, MB)),
-					bg = string.format("#%x%x%x", hl.oklab_to_rgb(RL, RA, RB)),
+					fg = string.format("#%02x%02x%02x", hl.oklab_to_rgb(ML, MA, MB)),
+					bg = string.format("#%02x%02x%02x", hl.oklab_to_rgb(RL, RA, RB)),
 				}
 			},
 		};
@@ -311,14 +311,14 @@ hl.groups = {
 			{
 				group_name = "UICmdlineSearchUp",
 				value = {
-					bg = string.format("#%x%x%x", hl.oklab_to_rgb(RL, RA, RB)),
+					bg = string.format("#%02x%02x%02x", hl.oklab_to_rgb(RL, RA, RB)),
 				}
 			},
 			{
 				group_name = "UICmdlineSearchUpIcon",
 				value = {
-					fg = string.format("#%x%x%x", hl.oklab_to_rgb(ML, MA, MB)),
-					bg = string.format("#%x%x%x", hl.oklab_to_rgb(RL, RA, RB)),
+					fg = string.format("#%02x%02x%02x", hl.oklab_to_rgb(ML, MA, MB)),
+					bg = string.format("#%02x%02x%02x", hl.oklab_to_rgb(RL, RA, RB)),
 				}
 			},
 		};
@@ -349,14 +349,14 @@ hl.groups = {
 			{
 				group_name = "UICmdlineSearchDown",
 				value = {
-					bg = string.format("#%x%x%x", hl.oklab_to_rgb(RL, RA, RB)),
+					bg = string.format("#%02x%02x%02x", hl.oklab_to_rgb(RL, RA, RB)),
 				}
 			},
 			{
 				group_name = "UICmdlineSearchDownIcon",
 				value = {
-					fg = string.format("#%x%x%x", hl.oklab_to_rgb(ML, MA, MB)),
-					bg = string.format("#%x%x%x", hl.oklab_to_rgb(RL, RA, RB)),
+					fg = string.format("#%02x%02x%02x", hl.oklab_to_rgb(ML, MA, MB)),
+					bg = string.format("#%02x%02x%02x", hl.oklab_to_rgb(RL, RA, RB)),
 				}
 			},
 		};
@@ -387,14 +387,14 @@ hl.groups = {
 			{
 				group_name = "UICmdlineSubstitute",
 				value = {
-					bg = string.format("#%x%x%x", hl.oklab_to_rgb(RL, RA, RB)),
+					bg = string.format("#%02x%02x%02x", hl.oklab_to_rgb(RL, RA, RB)),
 				}
 			},
 			{
 				group_name = "UICmdlineSubstituteIcon",
 				value = {
-					fg = string.format("#%x%x%x", hl.oklab_to_rgb(ML, MA, MB)),
-					bg = string.format("#%x%x%x", hl.oklab_to_rgb(RL, RA, RB)),
+					fg = string.format("#%02x%02x%02x", hl.oklab_to_rgb(ML, MA, MB)),
+					bg = string.format("#%02x%02x%02x", hl.oklab_to_rgb(RL, RA, RB)),
 				}
 			},
 		};
@@ -417,7 +417,7 @@ hl.groups = {
 			{
 				group_name = "UIMessageDefault",
 				value = {
-					fg = string.format("#%x%x%x", hl.oklab_to_rgb(ML, MA, MB)),
+					fg = string.format("#%02x%02x%02x", hl.oklab_to_rgb(ML, MA, MB)),
 				}
 			}
 		};
@@ -439,7 +439,7 @@ hl.groups = {
 			{
 				group_name = "UIMessageOk",
 				value = {
-					fg = string.format("#%x%x%x", hl.oklab_to_rgb(ML, MA, MB)),
+					fg = string.format("#%02x%02x%02x", hl.oklab_to_rgb(ML, MA, MB)),
 				}
 			}
 		};
@@ -473,14 +473,14 @@ hl.groups = {
 			{
 				group_name = "UIMessageInfoSign",
 				value = {
-					bg = string.format("#%x%x%x", hl.oklab_to_rgb(RL, RA, RB)),
-					fg = string.format("#%x%x%x", hl.oklab_to_rgb(ML, MA, MB)),
+					bg = string.format("#%02x%02x%02x", hl.oklab_to_rgb(RL, RA, RB)),
+					fg = string.format("#%02x%02x%02x", hl.oklab_to_rgb(ML, MA, MB)),
 				}
 			},
 			{
 				group_name = "UIMessageInfo",
 				value = {
-					bg = string.format("#%x%x%x", hl.oklab_to_rgb(RL, RA, RB)),
+					bg = string.format("#%02x%02x%02x", hl.oklab_to_rgb(RL, RA, RB)),
 				}
 			}
 		};
@@ -502,7 +502,7 @@ hl.groups = {
 			{
 				group_name = "UIMessageHint",
 				value = {
-					fg = string.format("#%x%x%x", hl.oklab_to_rgb(ML, MA, MB)),
+					fg = string.format("#%02x%02x%02x", hl.oklab_to_rgb(ML, MA, MB)),
 				}
 			}
 		};
@@ -536,14 +536,14 @@ hl.groups = {
 			{
 				group_name = "UIMessageWarnSign",
 				value = {
-					bg = string.format("#%x%x%x", hl.oklab_to_rgb(RL, RA, RB)),
-					fg = string.format("#%x%x%x", hl.oklab_to_rgb(ML, MA, MB)),
+					bg = string.format("#%02x%02x%02x", hl.oklab_to_rgb(RL, RA, RB)),
+					fg = string.format("#%02x%02x%02x", hl.oklab_to_rgb(ML, MA, MB)),
 				}
 			},
 			{
 				group_name = "UIMessageWarn",
 				value = {
-					bg = string.format("#%x%x%x", hl.oklab_to_rgb(RL, RA, RB)),
+					bg = string.format("#%02x%02x%02x", hl.oklab_to_rgb(RL, RA, RB)),
 				}
 			}
 		};
@@ -577,14 +577,14 @@ hl.groups = {
 			{
 				group_name = "UIMessageErrorSign",
 				value = {
-					bg = string.format("#%x%x%x", hl.oklab_to_rgb(RL, RA, RB)),
-					fg = string.format("#%x%x%x", hl.oklab_to_rgb(ML, MA, MB)),
+					bg = string.format("#%02x%02x%02x", hl.oklab_to_rgb(RL, RA, RB)),
+					fg = string.format("#%02x%02x%02x", hl.oklab_to_rgb(ML, MA, MB)),
 				}
 			},
 			{
 				group_name = "UIMessageError",
 				value = {
-					bg = string.format("#%x%x%x", hl.oklab_to_rgb(RL, RA, RB)),
+					bg = string.format("#%02x%02x%02x", hl.oklab_to_rgb(RL, RA, RB)),
 				}
 			}
 		};
@@ -606,7 +606,7 @@ hl.groups = {
 			{
 				group_name = "UIMessagePalette",
 				value = {
-					fg = string.format("#%x%x%x", hl.oklab_to_rgb(ML, MA, MB)),
+					fg = string.format("#%02x%02x%02x", hl.oklab_to_rgb(ML, MA, MB)),
 				}
 			},
 		};
@@ -641,15 +641,15 @@ hl.groups = {
 			{
 				group_name = "UIHistoryKeymap",
 				value = {
-					bg = string.format("#%x%x%x", hl.oklab_to_rgb(ML, MA, MB)),
-					fg = string.format("#%x%x%x", hl.oklab_to_rgb(hl.visible_fg(ML))),
+					bg = string.format("#%02x%02x%02x", hl.oklab_to_rgb(ML, MA, MB)),
+					fg = string.format("#%02x%02x%02x", hl.oklab_to_rgb(hl.visible_fg(ML))),
 				}
 			},
 			{
 				group_name = "UIHistoryDesc",
 				value = {
-					bg = string.format("#%x%x%x", hl.oklab_to_rgb(RL, RA, RB)),
-					fg = string.format("#%x%x%x", hl.oklab_to_rgb(hl.visible_fg(RL))),
+					bg = string.format("#%02x%02x%02x", hl.oklab_to_rgb(RL, RA, RB)),
+					fg = string.format("#%02x%02x%02x", hl.oklab_to_rgb(hl.visible_fg(RL))),
 				}
 			}
 		};
@@ -684,7 +684,7 @@ hl.groups = {
 			{
 				group_name = "UIMenuSelect",
 				value = {
-					bg = string.format("#%x%x%x", hl.oklab_to_rgb(RL, RA, RB)),
+					bg = string.format("#%02x%02x%02x", hl.oklab_to_rgb(RL, RA, RB)),
 				}
 			}
 		};
@@ -706,8 +706,8 @@ hl.groups = {
 			{
 				group_name = "UIMenuKeymap",
 				value = {
-					bg = string.format("#%x%x%x", hl.oklab_to_rgb(ML, MA, MB)),
-					fg = string.format("#%x%x%x", hl.oklab_to_rgb(hl.visible_fg(ML))),
+					bg = string.format("#%02x%02x%02x", hl.oklab_to_rgb(ML, MA, MB)),
+					fg = string.format("#%02x%02x%02x", hl.oklab_to_rgb(hl.visible_fg(ML))),
 
 					bold = true
 				}
