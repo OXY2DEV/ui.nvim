@@ -858,9 +858,7 @@ message.__render = function ()
 		-- BUG, Visual artifacts are shown if the statuscolumn
 		-- is updated repeatedly.
 		-- Solution: Update when the decoration size changes.
-		-- However, this doesn't seem to happen anymore(at least
-		-- for me).
-		-- statuscolumn = last_decor_size ~= decor_size,
+		statuscolumn = last_decor_size ~= decor_size,
 
 		win = message.msg_window
 	});
