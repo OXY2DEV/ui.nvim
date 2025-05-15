@@ -483,7 +483,7 @@ message.__confirm = function (obj)
 
 		utils.set("w", message.confirm_window, "wrap", true);
 		utils.set("w", message.confirm_window, "linebreak", true);
-		utils.set("w", message.confirm_window, "cursorline", true);
+		utils.set("w", message.confirm_window, "cursorline", #lines > 1);
 
 		if config.winhl then
 			utils.set("w", message.confirm_window, "winhl", config.winhl);
