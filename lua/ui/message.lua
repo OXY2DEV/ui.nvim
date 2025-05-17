@@ -628,7 +628,7 @@ message.__list = function (obj)
 			border = config.border or "none",
 			style = "minimal",
 
-			zindex = 90,
+			zindex = 50,
 			hide = false,
 			focusable = true
 		}, spec.config.message.list_winconfig or {});
@@ -649,6 +649,8 @@ message.__list = function (obj)
 		end
 
 		---|fS
+
+		vim.bo[message.list_buffer].modifiable = true;
 
 		vim.api.nvim_buf_clear_namespace(message.list_buffer, message.namespace, 0, -1);
 		vim.api.nvim_buf_set_lines(message.list_buffer, 0, -1, false, lines);
@@ -673,6 +675,8 @@ message.__list = function (obj)
 				);
 			end
 		end
+
+		vim.bo[message.list_buffer].modifiable = false;
 
 		---|fE
 
