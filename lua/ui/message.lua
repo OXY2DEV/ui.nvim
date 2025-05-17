@@ -902,8 +902,11 @@ message.__history = function (entries)
 
 	---|fS "feat: Keymaps"
 
+	vim.api.nvim_buf_set_keymap(message.history_buffer, "n", "u", "<CMD>messages<CR>", {
+		desc = "[u]pdates message history.",
+	});
 	vim.api.nvim_buf_set_keymap(message.history_buffer, "n", "t", "", {
-		desc = "Toggles between `vim` and `ui.nvim`'s message history.",
+		desc = "[t]oggles between `vim` and `ui.nvim`'s message history.",
 		callback = function ()
 			vim.g.__ui_history_pref = vim.g.__ui_history_pref == "vim" and "ui" or "vim";
 			message.__history(entries);
@@ -911,7 +914,7 @@ message.__history = function (entries)
 	});
 
 	vim.api.nvim_buf_set_keymap(message.history_buffer, "n", "q", "", {
-		desc = "Quits message window.",
+		desc = "[q]uits message window.",
 		callback = function ()
 			---|fS
 
@@ -987,6 +990,8 @@ message.__history = function (entries)
 
 	---|fE
 
+	vim.bo[message.history_buffer].modifiable = true;
+
 	vim.api.nvim_buf_clear_namespace(message.history_buffer, message.namespace, 0, -1);
 	vim.api.nvim_buf_set_lines(message.history_buffer, 0, -1, false, lines);
 
@@ -996,6 +1001,9 @@ message.__history = function (entries)
 	vim.api.nvim_buf_set_extmark(message.history_buffer, message.namespace, 0, 0, {
 		virt_text_pos = "right_align",
 		virt_text = {
+			{ " u ", "UIHistoryKeymap" },
+			{ " Update ", "UIHistoryDesc" },
+			{ " " },
 			{ " t ", "UIHistoryKeymap" },
 			{ " Toggle source ", "UIHistoryDesc" },
 			{ " " },
@@ -1028,6 +1036,8 @@ message.__history = function (entries)
 		end
 	end
 
+	vim.bo[message.history_buffer].modifiable = false;
+
 	local window_config = vim.tbl_extend("force", {
 		split = "below",
 		win = -1, -- creates top-level split
@@ -1037,7 +1047,7 @@ message.__history = function (entries)
 	}, spec.config.message.history_winconfig or {});
 
 	if message.history_window and vim.api.nvim_win_is_valid(message.history_window) then
-		vim.api.nvim_win_set_config(message.history_window, window_config);
+		pcall(vim.api.nvim_win_set_config, message.history_window, window_config);
 	else
 		message.history_window = vim.api.nvim_open_win(message.history_buffer, true, window_config);
 		vim.api.nvim_win_set_var(message.history_window, "ui_window", true);
