@@ -1,5 +1,23 @@
 # Changelog
 
+## [1.3.0](https://github.com/OXY2DEV/ui.nvim/compare/v1.2.0...v1.3.0) (2025-05-17)
+
+
+### Features
+
+* **messages:** Added keymap to update message history ([7ce31ff](https://github.com/OXY2DEV/ui.nvim/commit/7ce31ffac197abf59bd170b7b6ad40deb824856a))
+* **messages:** Added option to disable `replace_last` ([b2afd5a](https://github.com/OXY2DEV/ui.nvim/commit/b2afd5ad6b2c7f9ce141cab2153bb5409f8495be)), closes [#28](https://github.com/OXY2DEV/ui.nvim/issues/28)
+
+
+### Bug Fixes
+
+* **hl:** Fixed a bug allowing highlight group's value(s) to be invalid hex code ([73c1e83](https://github.com/OXY2DEV/ui.nvim/commit/73c1e83c28954556c66131f9441dd31bd69b7a81))
+* **messages:** Confirm window only shows cursorline if there's multiple lines ([86d3755](https://github.com/OXY2DEV/ui.nvim/commit/86d3755037c7279e15c7328c01b8951139e932f4))
+* **messages:** History & list windows are no longer modifiable ([7ce31ff](https://github.com/OXY2DEV/ui.nvim/commit/7ce31ffac197abf59bd170b7b6ad40deb824856a))
+* **messages:** List window no longer gets shown on top of notification window ([8b6f1d2](https://github.com/OXY2DEV/ui.nvim/commit/8b6f1d227e9fa5f1c439f096c0f790ce48a55a5d))
+* **messages:** Message history now respects Neovim's history preferance ([f917b55](https://github.com/OXY2DEV/ui.nvim/commit/f917b554f478bad106872c8781e10dac5e5b3f97)), closes [#28](https://github.com/OXY2DEV/ui.nvim/issues/28)
+* **messages:** Single lined list messages are no longer treated like lists ([be7f288](https://github.com/OXY2DEV/ui.nvim/commit/be7f288bf41573d4a4ae1b60689e23360d16419b)), closes [#26](https://github.com/OXY2DEV/ui.nvim/issues/26)
+
 ## [1.2.0](https://github.com/OXY2DEV/ui.nvim/compare/v1.1.0...v1.2.0) (2025-05-09)
 
 
