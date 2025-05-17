@@ -1174,6 +1174,12 @@ end
 message.msg_show = function (kind, content, replace_last, add_to_history)
 	---|fS
 
+	local _replace_last = replace_last;
+
+	if spec.config.message.respect_replace_last == false then
+		_replace_last = false;
+	end
+
 	if kind == "confirm" then
 		-- Confirm messages need to be
 		-- handled first.
@@ -1188,14 +1194,14 @@ message.msg_show = function (kind, content, replace_last, add_to_history)
 	elseif message.ui_attached == false then
 		-- Cache messages if the UI hasn't been attached
 		-- to yet.
-		message.cache(kind, content, replace_last, add_to_history);
+		message.cache(kind, content, _replace_last, add_to_history);
 	elseif kind == "search_count" then
 		message.__replace(kind, content, add_to_history);
 	elseif kind == "return_prompt" then
 		--- Hit `<ESC>` on hit-enter prompts.
 		--- or else we get stuck.
 		vim.api.nvim_feedkeys(vim.api.nvim_replace_termcodes("<ESC>", true, false, true), "n", false);
-	elseif replace_last and vim.tbl_isempty(message.visible) == false then
+	elseif _replace_last and vim.tbl_isempty(message.visible) == false then
 		message.__replace(kind, content, add_to_history);
 	else
 		message.__add(kind, content, add_to_history)

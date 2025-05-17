@@ -193,6 +193,7 @@ require("ui").setup({
 
     message = {
         enable = true,
+        respect_replace_last = true,
 
         message_winconfig = {},
         list_winconfig = {},

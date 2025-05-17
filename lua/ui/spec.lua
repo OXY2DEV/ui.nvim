@@ -589,6 +589,7 @@ spec.default = {
 		---|fS
 
 		enable = true,
+		respect_replace_last = true,
 
 		history_preference = "vim",
 		max_lines = nil,

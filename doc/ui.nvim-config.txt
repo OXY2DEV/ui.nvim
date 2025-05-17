@@ -216,6 +216,17 @@ enable ~
 
 Whether to use custom messages.
 
+respect_replace_last ~
+
+  • Type: `boolean`
+  • Default: `true`
+
+When set to `false`, every, yes every, message will be be shown as
+individual message.
+
+▌ 📜 Note
+▌ This may cause performance issues if messages are spammed!
+
 history_preference ~
 
   • Type: `"vim" | "internal"`

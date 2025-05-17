@@ -46,6 +46,7 @@
 ---@class ui.config.message
 ---
 ---@field enable? boolean Should this module be enabled?
+---@field respect_replace_last? boolean Should `replace_last` be respected?
 ---
 ---@field history_preference? "vim" | "ui" History preference for :messages
 ---@field max_lines? integer Maximum number of lines a normal message can have.
