@@ -62,8 +62,6 @@ message.statuscolumn = function ()
 
 	for _, entry in ipairs(win == message.history_window and (message.history_decorations or {}) or (message.decorations or {})) do
 		if lnum >= entry.from and lnum <= entry.to then
-			log.print(entry)
-
 			if lnum == entry.from and vim.v.virtnum == 0 then
 				return utils.to_statuscolumn(entry.icon);
 			elseif lnum == entry.to and vim.v.virtnum == 0 then
@@ -94,6 +92,35 @@ _G.__ui_statuscolumn = message.statuscolumn;
 message.ui_attached = false;
 ---@type ui.message.entry[] List of messages to echo after UIEnter.
 message.ui_echo = {};
+
+--- Caches given message.
+---@param kind ui.message.kind
+---@param content ui.message.fragment[]
+---@param replace_last boolean
+---@param add_to_history boolean
+message.cache = function (kind, content, replace_last, add_to_history)
+	---|fS
+
+	if #message.ui_echo > 0 and replace_last == true then
+		message.ui_echo[#message.ui_echo] = {
+			kind = kind,
+			content = content,
+			replace_last = replace_last,
+
+			add_to_history = add_to_history
+		};
+	else
+		table.insert(message.ui_echo, {
+			kind = kind,
+			content = content,
+			replace_last = replace_last,
+
+			add_to_history = add_to_history
+		});
+	end
+
+	---|fE
+end
 
 vim.api.nvim_create_autocmd("UIEnter", {
 	callback = function ()
@@ -1134,6 +1161,9 @@ message.msg_show = function (kind, content, replace_last, add_to_history)
 	---|fS
 
 	if kind == "confirm" then
+		-- Confirm messages need to be
+		-- handled first.
+
 		log.assert(
 			"ui/message.lua → __confirm",
 			pcall(message.__confirm, {
@@ -1141,6 +1171,10 @@ message.msg_show = function (kind, content, replace_last, add_to_history)
 				content = content,
 			})
 		);
+	elseif message.ui_attached == false then
+		-- Cache messages if the UI hasn't been attached
+		-- to yet.
+		message.cache(kind, content, replace_last, add_to_history);
 	elseif kind == "search_count" then
 		message.__replace(kind, content, add_to_history);
 	elseif kind == "return_prompt" then
