@@ -57,7 +57,7 @@
 ---@field history_winconfig? table Window configuration for the history window.
 ---@field showcmd_winconfig? table Window configuration for the showcmd window.
 ---
----@field is_list? fun(kind: ui.message.kind, content: ui.message.fragment[]): (boolean, boolean) Is `msg` a list-type message?
+---@field is_list? fun(kind: ui.message.kind, content: ui.message.fragment[], add_to_history: boolean): (boolean, boolean) Is `msg` a list-type message?
 ---@field ignore? fun(kind: ui.message.kind, content: ui.message.fragment[]): boolean Should this message be ignored?
 ---
 ---@field showcmd? ui.message.showcmd Showcmd options.

@@ -160,6 +160,8 @@
 ---@field kind ui.message.kind
 ---@field content ui.message.fragment[]
 ---
+---@field add_to_history? boolean Should this message be added to the history?
+---
 ---@field timer? table Timer for message visibility, not available in history.
 
 

@@ -289,7 +289,7 @@ Configuration table for the `showcmd` message window. Has the same options as
 
 is_list ~
 
-  • Type: fun(kind: ui.message.kind, content: ui.messages.fragment[]: boolean
+  • Type: fun(kind: ui.message.kind, content: ui.messages.fragment[], add_to_history: boolean): boolean
 
 Function to determine whether a message should be treated like a list or not.
 
@@ -299,7 +299,7 @@ Function to determine whether a message should be treated like a list or not.
 
 ignore ~
 
-  • Type: fun(kind: ui.message.kind, content: ui.messages.fragment[]: boolean
+  • Type: fun(kind: ui.message.kind, content: ui.messages.fragment[]): boolean
 
 Function to determine whether a message should be ignored or not.
 

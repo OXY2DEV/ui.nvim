@@ -1225,7 +1225,7 @@ spec.default = {
 			---|fE
 		},
 
-		is_list = function (kind, content)
+		is_list = function (kind, content, add_to_history)
 			local lines = utils.to_lines(content);
 
 			if kind == "list_cmd" then
@@ -1234,7 +1234,7 @@ spec.default = {
 					-- look like lists but aren't in reality.
 					return false, true;
 				else
-					return true, false;
+					return true, add_to_history;
 				end
 			end
 
@@ -1698,16 +1698,17 @@ end
 --- Is `msg` a list type message?
 ---@param kind ui.message.kind
 ---@param content ui.message.fragment[]
+---@param history boolean
 ---@return boolean
 ---@return boolean
-spec.is_list = function (kind, content)
+spec.is_list = function (kind, content, history)
 	---|fS
 
 	if not spec.config.message.is_list then
 		return false, false;
 	end
 
-	local ran_cond, cond, save = pcall(spec.config.message.is_list, kind, content);
+	local ran_cond, cond, save = pcall(spec.config.message.is_list, kind, content, history);
 
 	if ran_cond then
 		return cond, save;

@@ -100,7 +100,7 @@ vim.api.nvim_create_autocmd("UIEnter", {
 		message.ui_attached = true;
 
 		for _, item in ipairs(message.ui_echo) do
-			message.__add(item.kind, item.content);
+			message.__add(item.kind, item.content, item.add_to_history or true);
 		end
 	end
 });
@@ -213,20 +213,16 @@ end
 --- Adds a new message.
 ---@param kind ui.message.kind
 ---@param content ui.message.fragment[]
-message.__add = function (kind, content)
+---@param add_to_history boolean
+message.__add = function (kind, content, add_to_history)
 	---|fS
 
-	if message.ui_attached == false then
-		table.insert(message.ui_echo, {
-			kind = kind,
-			content = content
-		});
-		return;
-	elseif kind == "" and vim.tbl_isempty(message.visible) == false then
+	if kind == "" and vim.tbl_isempty(message.visible) == false then
+		---@type integer[] Message IDs.
 		local IDs = vim.tbl_keys(message.visible);
 		table.sort(IDs);
 
-		-- Last visible message.
+		--- Last visible message.
 		local last = message.visible[IDs[#IDs]];
 
 		if vim.deep_equal(last.content, content) then
@@ -237,7 +233,7 @@ message.__add = function (kind, content)
 			-- The second message has the wrong kind so
 			-- we use the original kind.
 
-			message.__replace(last.kind, content);
+			message.__replace(last.kind, content, false);
 			return;
 		end
 	end
@@ -255,31 +251,25 @@ message.__add = function (kind, content)
 		local lines = utils.to_lines(content);
 
 		---@type boolean, boolean?
-		local is_list, add_to_history = spec.is_list(kind, content);
+		local is_list, _add_to_history = spec.is_list(kind, content, add_to_history);
 		local max_lines = spec.config.message.max_lines or math.floor(vim.o.lines * 0.5);
 
 		if is_list == true or #lines > max_lines then
-			-- If a list message for some reason gets here then
-			-- we redirect it.
+			-- The message should be shown as a list.
+			-- It either,
+			--     1. Is a list message with inaccurate `kind`.
+			--     2. Is too long to show.
 			log.assert(
-				"ui/message.lua → replace_list",
+				"ui/message.lua → add_list",
 				pcall(message.__list, {
 					kind = kind,
-					content = content
+					content = content,
+
+					-- If the message is too long, it should be
+					-- added to history.
+					add_to_history = _add_to_history or #lines > max_lines
 				})
 			);
-
-			if add_to_history or #lines > max_lines then
-				-- Long message that aren't actually
-				-- list message should be added to history.
-				message.history[message.id] = {
-					kind = kind,
-					content = content
-				};
-
-				message.id = message.id + 1;
-			end
-
 			return;
 		elseif kind == "list_cmd" then
 			-- If the message isn't considered a list command,
@@ -288,10 +278,13 @@ message.__add = function (kind, content)
 			kind = "not_list_cmd";
 		end
 
+		---@type integer Current message's ID.
 		local current_id = message.id;
 
 		---@type ui.message.style__static
 		local style = spec.get_msg_style({ kind = kind, content = content }, lines, {}) or {};
+
+		---@type integer Message visibility duration.
 		local duration = math.min(
 			style.duration or 5000,
 			spec.config.message.max_duration or 5000
@@ -299,10 +292,15 @@ message.__add = function (kind, content)
 
 		-- Store the message in history & visible
 		-- message table.
-		message.history[message.id] = {
-			kind = kind,
-			content = content
-		};
+		if add_to_history then
+			message.history[message.id] = {
+				kind = kind,
+				content = content
+			};
+		end
+
+		-- The visible message has a `timer`
+		-- thta shows/hides the message.
 		message.visible[message.id] = vim.tbl_extend("force", {
 			kind = kind,
 			content = content
@@ -328,7 +326,8 @@ end
 --- Replaces the last visible message.
 ---@param kind ui.message.kind
 ---@param content ui.message.fragment[]
-message.__replace = function (kind, content)
+---@param add_to_history boolean
+message.__replace = function (kind, content, add_to_history)
 	---|fS
 
 	vim.schedule(function ()
@@ -345,62 +344,49 @@ message.__replace = function (kind, content)
 		local lines = utils.to_lines(content);
 
 		---@type boolean, boolean?
-		local is_list, add_to_history = spec.is_list(kind, content);
+		local is_list, _add_to_history = spec.is_list(kind, content, add_to_history);
 		local max_lines = spec.config.message.max_lines or math.floor(vim.o.lines * 0.5);
 
 		if is_list == true or #lines > max_lines then
-			-- If a list message for some reason gets here then
-			-- we redirect it.
 			log.assert(
 				"ui/message.lua → replace_list",
 				pcall(message.__list, {
 					kind = kind,
-					content = content
+					content = content,
+
+					-- If the message is too long, it should be
+					-- added to history.
+					add_to_history = _add_to_history or #lines > max_lines
 				})
 			);
-
-			if add_to_history or #lines > max_lines then
-				-- Long message that aren't actually
-				-- list message should be added to history.
-				local last = message.visible[keys[#keys]];
-
-				if last then
-					message.history[last] = {
-						kind = kind,
-						content = content
-					};
-				else
-					message.history[message.id] = {
-						kind = kind,
-						content = content
-					};
-
-					message.id = message.id + 1;
-				end
-			end
-
 			return;
+		elseif #keys == 0 or not message.visible[keys[#keys]] then
+			-- No last visible message available.
+			-- Add new message.
+			message.__add(kind, content, add_to_history);
+			return;
+		elseif add_to_history then
+			-- Certain replace type messages need
+			-- to be added to the history.
+			message.history[message.id] = {
+				kind = kind,
+				content = { {1, "hi", 178 }} or content
+			};
+			message.id = message.id + 1;
+		else
+			message.history[keys[#keys]] = {
+				kind = kind,
+				content = content
+			};
 		end
 
-		if #keys == 0 then
-			-- No visible message available.
-			message.__add(kind, content);
-			return;
-		end
-
+		--- Last visible message.
 		local last = message.visible[keys[#keys]];
 
-		if not last then
-			-- Current messages `kind` doesn't match
-			-- the previous messages `kind`.
-			message.__add(kind, content);
-			return;
-		end
+		last.timer:stop();
 
 		last.kind = kind;
 		last.content = content;
-
-		last.timer:stop();
 
 		---@type ui.message.style__static
 		local style = spec.get_msg_style({ kind = kind, content = content }, lines, {}) or {};
@@ -561,6 +547,11 @@ end
 ---@param obj ui.message.entry
 message.__list = function (obj)
 	---|fS
+
+	if obj.add_to_history then
+		message.history[message.id] = obj;
+		message.id = message.id + 1;
+	end
 
 	--- All logic must be run outside of
 	--- fast event.
@@ -1138,7 +1129,8 @@ end
 ---@param kind ui.message.kind
 ---@param content ui.message.fragment[]
 ---@param replace_last boolean
-message.msg_show = function (kind, content, replace_last)
+---@param add_to_history boolean
+message.msg_show = function (kind, content, replace_last, add_to_history)
 	---|fS
 
 	if kind == "confirm" then
@@ -1150,16 +1142,15 @@ message.msg_show = function (kind, content, replace_last)
 			})
 		);
 	elseif kind == "search_count" then
-		--- Do not handle search count as messages.
-		message.__replace(kind, content);
+		message.__replace(kind, content, add_to_history);
 	elseif kind == "return_prompt" then
 		--- Hit `<ESC>` on hit-enter prompts.
 		--- or else we get stuck.
 		vim.api.nvim_feedkeys(vim.api.nvim_replace_termcodes("<ESC>", true, false, true), "n", false);
 	elseif replace_last and vim.tbl_isempty(message.visible) == false then
-		message.__replace(kind, content);
+		message.__replace(kind, content, add_to_history);
 	else
-		message.__add(kind, content)
+		message.__add(kind, content, add_to_history)
 	end
 
 	---|fE
