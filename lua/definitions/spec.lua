@@ -46,6 +46,7 @@
 ---@class ui.config.message
 ---
 ---@field enable? boolean Should this module be enabled?
+---@field notify? boolean Override `vim.notify` with ui.nvim messages (no replace)?
 ---@field respect_replace_last? boolean Should `replace_last` be respected?
 ---
 ---@field history_preference? "vim" | "ui" History preference for :messages

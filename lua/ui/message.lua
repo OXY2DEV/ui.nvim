@@ -1274,6 +1274,28 @@ end
 message.setup = function ()
 	---|fS
 
+	if spec.config.message.notify == true then
+		function vim.notify(msg, level, opts)
+			if level == vim.log.levels.OFF then
+				return;
+			end
+
+			if opts and opts.title then
+				msg = string.format("%s\n%s", opts.title, msg)
+			end
+
+			local hl
+			if level == vim.log.levels.ERROR then
+				hl = 'ErrorMsg'
+			elseif level == vim.log.levels.WARN then
+				hl = 'WarningMsg'
+			else
+				hl = 'Normal'
+			end
+			message.msg_show("", { {0, msg, vim.fn.hlID(hl)} }, false, true);
+		end
+	end
+
 	vim.api.nvim_create_autocmd("VimResized", {
 		callback = function ()
 			message.__list_resize();
