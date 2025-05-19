@@ -1269,7 +1269,11 @@ message.on_attach = function ()
 
 			---@type ui.message.fragment[]
 			local chunks = {
-				{ 0, msg, level == vim.log.levels.WARN and vim.fn.hlID("WarningMsg") or 0 }
+				{
+					0,
+					msg,
+					level == vim.log.levels.WARN and vim.fn.hlID("WarningMsg") or (level == vim.log.levels.ERROR and vim.fn.hlID("ErrorMsg") or 0)
+				}
 			};
 
 			if type(opts.title) == "string" then
