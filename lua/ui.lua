@@ -104,7 +104,13 @@ ui.attach = function ()
 
 		log.level_dec();
 	end);
-	pcall(modules.cmdline.cmdline_hide);
+
+	-- BUG, when run from the cmdline, the cmdline
+	-- stays visible. So we manually hide the cmdline
+	-- window.
+	vim.schedule(function ()
+		pcall(modules.cmdline.cmdline_hide);
+	end);
 
 	---|fE
 end
