@@ -589,6 +589,7 @@ spec.default = {
 		---|fS
 
 		enable = true,
+		wrap_notify = true,
 		respect_replace_last = true,
 
 		history_preference = "vim",

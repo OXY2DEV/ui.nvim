@@ -66,12 +66,17 @@ ui.attach = function ()
 	log.level_inc();
 
 	for k, v in pairs(modules) do
-		log.print("Module setup: " .. k, "ui.lua", "log");
+		log.print("Module: " .. k, "ui.lua", "log");
 		log.level_inc();
 
 		log.assert(
-			"ui.lua",
+			"ui.lua → setup()",
 			pcall(v["setup"])
+		);
+
+		log.assert(
+			"ui.lua → on_attach()",
+			pcall(v["on_attach"])
 		);
 
 		log.level_dec();
@@ -99,20 +104,45 @@ ui.attach = function ()
 
 		log.level_dec();
 	end);
+	pcall(modules.cmdline.cmdline_hide);
 
 	---|fE
 end
 
 --- Detaches from UI listener.
 ui.detach = function ()
+	---|fS
+
 	ui.enabled = false;
 	vim.ui_detach(ui.namespace);
 
-	local message = package.loaded["ui.message"];
+	---@type table<string, table>
+	local modules = {
+		cmdline = require("ui.cmdline"),
+		linegrid = require("ui.linegrid"),
+		message = require("ui.message"),
+		popup = require("ui.popup"),
+	};
 
-	if message then
-		message.__showcmd({});
+	log.print("Detaching from modulez,", "ui.lua");
+	log.level_inc();
+
+	for k, v in pairs(modules) do
+		log.print("Module: " .. k, "ui.lua", "log");
+		log.level_inc();
+
+		log.assert(
+			"ui.lua → on_detach()",
+			pcall(v["on_detach"])
+		);
+
+		log.level_dec();
 	end
+
+	log.level_dec();
+	modules.message.__showcmd({});
+
+	---|fE
 end
 
 ui.actions = {

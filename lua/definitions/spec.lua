@@ -46,6 +46,7 @@
 ---@class ui.config.message
 ---
 ---@field enable? boolean Should this module be enabled?
+---@field wrap_notify? boolean Wrap `vim.notify()` & `vim.notify_once()`?
 ---@field respect_replace_last? boolean Should `replace_last` be respected?
 ---
 ---@field history_preference? "vim" | "ui" History preference for :messages

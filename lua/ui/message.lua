@@ -1252,6 +1252,76 @@ end
 
 ------------------------------------------------------------------------------
 
+message.on_attach = function ()
+	---|fS
+
+	if spec.config.message.wrap_notify then
+		_G.__vim_notify = vim.notify;
+		_G.__vim_notify_once = vim.notify_once;
+
+		---@diagnostic disable-next-line: duplicate-set-field
+		vim.notify = function (msg, level, opts)
+			---|fS "refactor: Custom vim.notify"
+
+			msg = tostring(msg);
+			level = level or vim.log.levels.INFO;
+			opts = opts or {};
+
+			---@type ui.message.fragment[]
+			local chunks = {
+				{ 0, msg, level == vim.log.levels.WARN and vim.fn.hlID("WarningMsg") or 0 }
+			};
+
+			if type(opts.title) == "string" then
+				table.insert(chunks, 1, {
+					0,
+					string.format(" %s ", opts.title),
+					vim.fn.hlID("UIMessageDefault")
+				});
+				table.insert(chunks, 2 ,{
+					0, ": ", vim.fn.hlID("@comment")
+				});
+			end
+
+			message.msg_show("", chunks, false, true)
+
+			---|fE
+		end
+
+		---@type string[]
+		local showed = {};
+
+		---@diagnostic disable-next-line: duplicate-set-field
+		vim.notify_once = function (msg, level, opts)
+			---|fS "refactor: Custom vim.notify_once"
+
+			if vim.list_contains(showed, msg) then
+				return;
+			else
+				table.insert(showed, msg);
+				vim.notify(msg, level, opts);
+			end
+
+			---|fE
+		end
+	end
+
+	---|fE
+end
+
+message.on_detach = function ()
+	---|fS
+
+	if spec.config.message.wrap_notify then
+		vim.notify = _G.__vim_notify;
+		vim.notify_once = _G.__vim_notify_once;
+	end
+
+	---|fE
+end
+
+------------------------------------------------------------------------------
+
 --- Handles message events.
 ---@param event string
 ---@param ... any

@@ -172,6 +172,8 @@ Used by the messages. It has the following structure,
   ---@type ui.config.message
   message = {
       enable = true,
+      wrap_notify = true,
+      respect_replace_last = true,
 
       history_preference = "vim",
       max_lines = nil,
@@ -215,6 +217,16 @@ enable ~
   • Default: `true`
 
 Whether to use custom messages.
+
+wrap_notify ~
+
+  • Type: `boolean`
+  • Default: `true`
+
+When `true`, `vim.notify` & `vim.notify_once` are replaced with the plugin's
+own message functions.
+
+▌ This is used to disable `replace_last` for these functions!
 
 respect_replace_last ~
 
