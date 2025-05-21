@@ -566,9 +566,11 @@ message.__confirm = function (obj)
 			vim.g.__ui_confirm_msg = nil;
 		end, message.namespace);
 
-		if package.loaded["ui.cmdline"] then
+		if package.loaded["ui.cmdline"] and vim.v.vim_did_enter ~= 1 then
 			-- The cmdline is initially hidden when Neovim starts.
 			-- So, we make the next `cmdline_show` fire a `:mode`.
+			--
+			-- We only need to call this for messages before `VimEnter`.
 			package.loaded["ui.cmdline"].__use_mode = true;
 			package.loaded["ui.cmdline"].__render();
 		end
