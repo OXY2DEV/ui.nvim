@@ -565,6 +565,13 @@ message.__confirm = function (obj)
 
 			vim.g.__ui_confirm_msg = nil;
 		end, message.namespace);
+
+		if package.loaded["ui.cmdline"] then
+			-- The cmdline is initially hidden when Neovim starts.
+			-- So, we make the next `cmdline_show` fire a `:mode`.
+			package.loaded["ui.cmdline"].__use_mode = true;
+			package.loaded["ui.cmdline"].__render();
+		end
 	end);
 
 	---|fE

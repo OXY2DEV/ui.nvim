@@ -17,6 +17,9 @@ cmdline.cursor_ns = vim.api.nvim_create_namespace("ui.cmdline.cursor");
 ---@type integer, integer Cmdline buffer & window.
 cmdline.buffer, cmdline.window = nil, nil;
 
+---@type boolean Should the next `__render()` redraw the entire screen?
+cmdline.__use_mode = false;
+
 ------------------------------------------------------------------------------
 
 ---@type ui.cmdline.style__static
@@ -404,6 +407,13 @@ cmdline.__render = function ()
 
 			win = cmdline.window
 		});
+
+		if cmdline.__use_mode then
+			-- In specific cases(e.g. confirm window on startup)
+			-- we need to call `:mode` to show the window.
+			pcall(vim.cmd, "mode"); ---@diagnostic disable-line
+			cmdline.__use_mode = false;
+		end
 
 		---|fE
 	end
