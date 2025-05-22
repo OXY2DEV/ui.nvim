@@ -159,6 +159,8 @@ message.__prepare = function ()
 		message.msg_window = vim.api.nvim_open_win(message.msg_buffer, false, win_config);
 		vim.api.nvim_win_set_var(message.msg_window, "ui_window", true);
 
+		utils.set("w", message.msg_window, "foldmethod", "manual");
+
 		utils.set("w", message.msg_window, "numberwidth", 1);
 		utils.set("w", message.msg_window, "statuscolumn", "%!v:lua.__ui_statuscolumn()");
 	end
@@ -191,6 +193,7 @@ message.__prepare = function ()
 		message.show_window = vim.api.nvim_open_win(message.show_buffer, false, win_config);
 		vim.api.nvim_win_set_var(message.show_window, "ui_window", true);
 
+		utils.set("w", message.show_window, "foldmethod", "manual");
 		utils.set("w", message.show_window, "sidescrolloff", 0);
 	end
 
@@ -494,6 +497,8 @@ message.__confirm = function (obj)
 			end
 		end
 
+		utils.set("w", message.confirm_window, "foldmethod", "manual");
+
 		utils.set("w", message.confirm_window, "wrap", true);
 		utils.set("w", message.confirm_window, "linebreak", true);
 		utils.set("w", message.confirm_window, "cursorline", #lines > 1);
@@ -690,6 +695,7 @@ message.__list = function (obj)
 		---|fE
 
 		vim.api.nvim_set_current_win(message.list_window);
+		utils.set("w", message.list_window, "foldmethod", "manual");
 
 		if config.winhl then
 			utils.set("w", message.list_window, "winhl", config.winhl);
