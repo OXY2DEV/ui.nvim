@@ -503,6 +503,20 @@ end
 cmdline.cmdline_hide = function ()
 	---|fS
 
+	---|fS "fix: Unset options to prevent inheritance"
+	--- Things such as `:copen` can inherit these options.
+	--- so we unset them
+
+	utils.set("w", cmdline.window, "winhl", "");
+
+	utils.set("w", cmdline.window, "sidescrolloff", 0);
+	utils.set("w", cmdline.window, "scrolloff", 0);
+
+	utils.set("w", cmdline.window, "conceallevel", 0);
+	utils.set("w", cmdline.window, "concealcursor", "");
+
+	---|fE
+
 	utils.confirm_keys();
 
 	-- Reset exported height.
@@ -510,7 +524,9 @@ cmdline.cmdline_hide = function ()
 	vim.g.__ui_cmd_height = 0;
 	cmdline.old_state = {}; ---@diagnostic disable-line
 
-	vim.schedule(function ()
+	local function close_callback ()
+		---|fS
+
 		-- We can't open/close windows.
 		-- But, we can hide them here.
 		log.assert(
@@ -534,7 +550,16 @@ cmdline.cmdline_hide = function ()
 			cursor = true,
 			statusline = true
 		});
-	end);
+
+		---|fE
+	end
+
+	if vim.in_fast_event() then
+		vim.schedule(close_callback);
+	else
+		close_callback();
+	end
+
 
 	---|fE
 end
