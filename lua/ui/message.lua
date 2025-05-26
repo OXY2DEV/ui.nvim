@@ -628,7 +628,7 @@ message.__list = function (obj)
 		---@type integer
 		local W = math.min(utils.max_len(lines), math.floor(vim.o.columns * 0.75));
 		---@type integer
-		local H = math.min(utils.wrapped_height(lines, W), vim.o.lines - 2);
+		local H = math.min(#lines, vim.o.lines - 2);
 
 		local window_config = vim.tbl_extend("force", {
 			relative = "editor",
@@ -696,6 +696,7 @@ message.__list = function (obj)
 
 		vim.api.nvim_set_current_win(message.list_window);
 		utils.set("w", message.list_window, "foldmethod", "manual");
+		utils.set("w", message.list_window, "wrap", false);
 
 		if config.winhl then
 			utils.set("w", message.list_window, "winhl", config.winhl);
@@ -727,7 +728,7 @@ message.__list_resize = function ()
 	---@type integer
 	local W = math.min(utils.max_len(lines), math.floor(vim.o.columns * 0.75));
 	---@type integer
-	local H = math.min(utils.wrapped_height(lines, W), vim.o.lines - 2);
+	local H = math.min(#lines, vim.o.lines - 2);
 
 	local window_config = vim.tbl_extend("force", {
 		relative = "editor",
