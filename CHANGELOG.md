@@ -1,5 +1,24 @@
 # Changelog
 
+## [1.4.0](https://github.com/OXY2DEV/ui.nvim/compare/v1.3.0...v1.4.0) (2025-05-27)
+
+
+### Features
+
+* **messages:** Added option to disable `replace_last` fir notify & notify_once ([cc9a233](https://github.com/OXY2DEV/ui.nvim/commit/cc9a233283feaae032df6cdf527bc919e2e8b2d6)), closes [#29](https://github.com/OXY2DEV/ui.nvim/issues/29)
+
+
+### Bug Fixes
+
+* **cmdline:** Cmdline is no longer scheduled outside of fast-event ([8feaebb](https://github.com/OXY2DEV/ui.nvim/commit/8feaebb564ccad60453c1e59d6c74dc8566400d1))
+* **cmdline:** Fixed a bug with cmfline not hiding after using `&`. ([7ae6202](https://github.com/OXY2DEV/ui.nvim/commit/7ae6202c299d190154ed73d672ec0ffa484c9ea6))
+* **core:** Fixed a bug with cmdline window not hiding after `:UI enable` ([22a4f5d](https://github.com/OXY2DEV/ui.nvim/commit/22a4f5d2f66e2b241438fc28dffa360dc8631e01))
+* **core:** Fixed a bug with confirm messages clearing the screen ([d4031a1](https://github.com/OXY2DEV/ui.nvim/commit/d4031a17dcd545e0f8a42447fb027a6417db3b6d))
+* **core:** Fixed a bug with the confirm window not showing the cmdline on Neovim start ([2002231](https://github.com/OXY2DEV/ui.nvim/commit/200223143342b6b3cdcbac256009faf7e342176e))
+* **messages:** `ERROR` level notify messages now get correct hl ([a7ccb44](https://github.com/OXY2DEV/ui.nvim/commit/a7ccb449ef1e2655f487bd3f58da51f97f2f6d25))
+* **messages:** Fixed a bug where message window gets folded due to `foldexpr` ([fcb6186](https://github.com/OXY2DEV/ui.nvim/commit/fcb61862e55e86917bfdacbd4344560e421a665c))
+* **messages:** List window no longer has incorrect height ([901196b](https://github.com/OXY2DEV/ui.nvim/commit/901196b9a4b0c3c7e633f1692afa599317df2b7b))
+
 ## [1.3.0](https://github.com/OXY2DEV/ui.nvim/compare/v1.2.0...v1.3.0) (2025-05-17)
 
 
