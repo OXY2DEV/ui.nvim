@@ -20,6 +20,8 @@ cmdline.buffer, cmdline.window = nil, nil;
 ---@type boolean Should the next `__render()` redraw the entire screen?
 cmdline.__use_mode = false;
 
+cmdline.visible = false;
+
 ------------------------------------------------------------------------------
 
 ---@type ui.cmdline.style__static
@@ -296,6 +298,10 @@ end
 cmdline.__render = function ()
 	---|fS
 
+	if not cmdline.visible then
+		return;
+	end
+
 	log.assert(
 		"ui/cmdline.lua → __prepare",
 		pcall(cmdline.__prepare)
@@ -329,6 +335,14 @@ cmdline.__render = function ()
 
 	local function render_callback ()
 		---|fS
+
+		if not cmdline.visible then
+			-- FIX, Using `&` causes this function
+			-- to fire after `cmdline_hide`(due to fast event).
+			-- So, we exit out if the cmdline shouldn't be
+			-- visible.
+			return;
+		end
 
 		-- Clear the buffer of old decorations.
 		vim.api.nvim_buf_clear_namespace(cmdline.buffer, cmdline.namespace, 0, -1);
@@ -442,6 +456,7 @@ end
 cmdline.cmdline_show = function (content, pos, firstc, prompt, indent, level, hl_id)
 	---|fS
 
+	cmdline.visible = true;
 	cmdline.set_state({
 		content = content,
 		pos = pos,
@@ -472,6 +487,7 @@ end
 cmdline.cmdline_pos = function (pos, level)
 	---|fS
 
+	cmdline.visible = true;
 	cmdline.set_state({
 		pos = pos,
 		level = level
@@ -485,6 +501,7 @@ end
 cmdline.cmdline_special_char = function (c, shift, level)
 	---|fS
 
+	cmdline.visible = true;
 	cmdline.set_state({
 		c = c,
 		shift = shift,
@@ -517,6 +534,7 @@ cmdline.cmdline_hide = function ()
 
 	---|fE
 
+	cmdline.visible = false;
 	utils.confirm_keys();
 
 	-- Reset exported height.
@@ -560,7 +578,6 @@ cmdline.cmdline_hide = function ()
 		close_callback();
 	end
 
-
 	---|fE
 end
 
@@ -568,6 +585,7 @@ end
 cmdline.cmdline_block_show = function (lines)
 	---|fS
 
+	cmdline.visible = true;
 	cmdline.set_state({
 		lines = lines,
 	});
@@ -584,6 +602,7 @@ cmdline.cmdline_block_append = function (line)
 	local old = cmdline.get_state("lines", {});
 	table.insert(old, line);
 
+	cmdline.visible = true;
 	cmdline.set_state({
 		lines = old,
 	});
@@ -596,6 +615,7 @@ end
 cmdline.cmdline_block_hide = function ()
 	---|fS
 
+	cmdline.visible = false;
 	cmdline.set_state({
 		lines = {},
 	});
