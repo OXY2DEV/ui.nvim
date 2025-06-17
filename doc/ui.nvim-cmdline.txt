@@ -1,4 +1,4 @@
-*ui.nvim-cmdline*                    Customizing Neovim's command-line using Lua
+*ui.nvim-cmdline*                  Customizing Neovim's command-line using Lua
 
 ▌ This file explains how the ui/cmdline.lua¹ file works.
 

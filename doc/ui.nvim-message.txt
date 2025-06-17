@@ -1,4 +1,4 @@
-*ui.nvim-messages*                       Customizing Neovim's messages using lua
+*ui.nvim-messages*                     Customizing Neovim's messages using lua
 
 ▌ This file explains how the ui/message.lua¹ file works.
 

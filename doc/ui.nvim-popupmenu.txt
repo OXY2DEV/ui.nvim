@@ -1,4 +1,4 @@
-*ui.nvim-popupmenu*                   Customizing Neovim's pop-up menu using lua
+*ui.nvim-popupmenu*                 Customizing Neovim's pop-up menu using lua
 
 ▌ This file explains how the ui/cmdline.lua¹ file works.
 

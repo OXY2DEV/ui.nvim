@@ -1,4 +1,4 @@
-*ui.nvim-config*                               Configuration options for `ui.nvim`
+*ui.nvim-config*                           Configuration options for `ui.nvim`
 
 This plugin can be configured via the `setup()` function. You can check the
 default configuration here¹.

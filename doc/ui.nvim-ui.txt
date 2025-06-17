@@ -1,4 +1,4 @@
-*ui.nvim-ui*                                     Modifying Neovim's UI using lua
+*ui.nvim-ui*                                   Modifying Neovim's UI using lua
 
 ▌ 📜 Note
 ▌ This is still considered experimental, so some behavior may change in the

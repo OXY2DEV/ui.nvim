@@ -1,4 +1,4 @@
-*ui.nvim*            A blueprint/template/guide for ricing Neovim's UI using Lua
+*ui.nvim*          A blueprint/template/guide for ricing Neovim's UI using Lua
 
 ------------------------------------------------------------------------------
 📚 Table of contents
