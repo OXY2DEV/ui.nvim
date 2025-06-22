@@ -730,6 +730,8 @@ spec.default = {
 					local content = msg.content[1];
 					local hl = utils.attr_to_hl(content[3]);
 
+					require("ui.log").print(vim.inspect(content[2]), "HERE")
+
 					if #msg.content == 1 then
 						if hl == "WarningMsg" then
 							config.icon = {
@@ -756,7 +758,7 @@ spec.default = {
 							};
 							config.line_hl_group = "UIMessageInfo";
 						end
-					elseif string.match(content[2] or "", " .+ %w+%.nvim ") then
+					elseif string.match(content[2] or "", " .+ %w+%.nvim ") or string.match(content[2] or "", " %w+%.%w+ ") then
 						-- Error message format used by my plugins & blink.cmp
 						-- e plugin.nvim : Some message. 
 						return {};
