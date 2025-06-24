@@ -342,31 +342,49 @@ utils.confirm_keys = function (prompt, content)
 	---|fE
 end
 
+---@type integer, integer Buffer & window used for checking wrapped line height.
+utils.__wrapped_buf, utils.__wrapped_win = nil, nil;
+
 --- Gets line number for wrapped text.
 ---@param lines string[]
 ---@param width? integer
 ---@return integer
-utils.wrapped_height = function (lines, width)
+utils.wrapped_height = function(lines, width)
 	---|fS
 
 	width = width or vim.o.columns;
-	local height = 0;
 
-	for _, line in ipairs(lines) do
-		local len = vim.fn.strdisplaywidth(line);
-
-		if len <= width then
-			height = height + 1;
-		else
-			height = height + math.floor(vim.fn.strchars(line) / width);
-
-			if vim.fn.strchars(line) % width ~= 0 then
-				height = height + 1;
-			end
-		end
+	if type(utils.__wrapped_buf) ~= "number" or vim.api.nvim_buf_is_valid(utils.__wrapped_buf) then
+		utils.__wrapped_buf = vim.api.nvim_create_buf(false, true);
 	end
 
-	return height;
+	local win_config = {
+		hide = true,
+		relative = "editor",
+
+		row = 5,
+		col = 5,
+
+		width = width,
+		height = 1,
+
+		style = "minimal",
+	};
+
+	if type(utils.__wrapped_win) ~= "number" or vim.api.nvim_win_is_valid(utils.__wrapped_win) then
+		utils.__wrapped_win = vim.api.nvim_open_win(utils.__wrapped_buf, false, win_config);
+	else
+		vim.api.nvim_win_set_config(utils.__wrapped_win, win_config);
+	end
+
+	vim.wo[utils.__wrapped_win].wrap = true;
+	vim.wo[utils.__wrapped_win].linebreak = true;
+	vim.wo[utils.__wrapped_win].breakindent = true;
+
+	vim.api.nvim_buf_set_lines(utils.__wrapped_buf, 0, -1, false, lines);
+
+	local text_height = vim.api.nvim_win_text_height(utils.__wrapped_win, { start_row = 0, end_row = -1 });
+	return text_height.all;
 
 	---|fE
 end

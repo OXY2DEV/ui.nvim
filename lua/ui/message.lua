@@ -862,15 +862,16 @@ message.__render = function ()
 	end
 
 	local W = math.min(math.floor(vim.o.columns * 0.5), utils.max_len(lines));
+	local H = utils.wrapped_height(lines, W);
 
 	local window_config = vim.tbl_extend("keep", spec.config.message.message_winconfig or {}, {
 		relative = "editor",
 
-		row = vim.o.lines - (vim.o.cmdheight + message.__get_cmdline_offset() + 1) - utils.wrapped_height(lines, W),
+		row = vim.o.lines - (vim.o.cmdheight + message.__get_cmdline_offset() + 1) - H,
 		col = vim.o.columns,
 
 		width = W + decor_size,
-		height = utils.wrapped_height(lines, W),
+		height = H,
 
 		border = "none",
 
@@ -890,6 +891,7 @@ message.__render = function ()
 
 	utils.set("w", message.msg_window, "wrap", true);
 	utils.set("w", message.msg_window, "linebreak", true);
+	utils.set("w", message.msg_window, "breakindent", true);
 
 	vim.api.nvim__redraw({
 		flush = true,
