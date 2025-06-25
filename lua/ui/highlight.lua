@@ -716,6 +716,76 @@ hl.groups = {
 
 		---|fE
 	end,
+
+
+	ls_hls = function ()
+		---|fS
+
+		---@type number, number, number Main color.
+		local buffer_L, buffer_A, buffer_B = hl.rgb_to_oklab(
+			hl.num_to_rgb(
+				hl.get_attr("fg", { "@constant" }) or hl.choice(16671755, 16429959)
+			)
+		);
+
+		---@type number, number, number Main color.
+		local bufname_L, bufname_A, bufname_B = hl.rgb_to_oklab(
+			hl.num_to_rgb(
+				hl.get_attr("fg", { "DiagnosticOk" }) or hl.choice(4235307, 10937249)
+			)
+		);
+
+		---@type number, number, number Main color.
+		local indicators_L, indicators_A, indicators_B = hl.rgb_to_oklab(
+			hl.num_to_rgb(
+				hl.get_attr("fg", { "@function", "Function" }) or hl.choice(1992437, 9024762)
+			)
+		);
+
+		---@type number, number, number Main color.
+		local lnum_L, lnum_A, lnum_B = hl.rgb_to_oklab(
+			hl.num_to_rgb(
+				hl.get_attr("fg", { "@comment" }) or hl.choice(8159123, 9673138)
+			)
+		);
+
+		return {
+			{
+				group_name = "UILSBuffer",
+				value = {
+					bg = string.format("#%02x%02x%02x", hl.oklab_to_rgb(buffer_L, buffer_A, buffer_B)),
+					fg = string.format("#%02x%02x%02x", hl.oklab_to_rgb(hl.visible_fg(buffer_L))),
+					bold = true
+				}
+			},
+			{
+				group_name = "UILSBufname",
+				value = {
+					bg = string.format("#%02x%02x%02x", hl.oklab_to_rgb(bufname_L, bufname_A, bufname_B)),
+					fg = string.format("#%02x%02x%02x", hl.oklab_to_rgb(hl.visible_fg(bufname_L))),
+					bold = true
+				}
+			},
+			{
+				group_name = "UILSIndicator",
+				value = {
+					bg = string.format("#%02x%02x%02x", hl.oklab_to_rgb(indicators_L, indicators_A, indicators_B)),
+					fg = string.format("#%02x%02x%02x", hl.oklab_to_rgb(hl.visible_fg(indicators_L))),
+					bold = true
+				}
+			},
+			{
+				group_name = "UILSLmum",
+				value = {
+					bg = string.format("#%02x%02x%02x", hl.oklab_to_rgb(lnum_L, lnum_A, lnum_B)),
+					fg = string.format("#%02x%02x%02x", hl.oklab_to_rgb(hl.visible_fg(lnum_L))),
+					bold = true
+				}
+			},
+		};
+
+		---|fE
+	end
 };
 
 hl.setup = function ()
@@ -726,7 +796,8 @@ hl.setup = function ()
 		if can_call and val then
 			for _, _hl in ipairs(val) do
 				log.assert(
-					pcall(vim.api.nvim_set_hl, 0, _hl.group_name, _hl.value)
+					"ui → highlights.lua",
+					tostring(pcall(vim.api.nvim_set_hl, 0, _hl.group_name, _hl.value))
 				);
 			end
 		end

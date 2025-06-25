@@ -129,8 +129,8 @@ spec.ignore_list = function (lines)
 	elseif string.match(_lines[1] or "", "^.-=.-$") and #_lines == 1 then
 		-- Ignore output of `set <option>?`
 		return true;
-	elseif #_lines == 1 then
-		-- List messages can't actually be 1 liners.
+	elseif #lines == 1 then
+		-- List messages can't be 1 liners.
 		return true;
 	end
 
@@ -730,8 +730,6 @@ spec.default = {
 					local content = msg.content[1];
 					local hl = utils.attr_to_hl(content[3]);
 
-					require("ui.log").print(vim.inspect(content[2]), "HERE")
-
 					if #msg.content == 1 then
 						if hl == "WarningMsg" then
 							config.icon = {
@@ -1253,6 +1251,7 @@ spec.default = {
 
 				condition = function ()
 					local last_cmd = vim.fn.histget("cmd", -1);
+					require("ui.log").print(last_cmd, "HERE")
 
 					for _, patt in ipairs({ "^ls", "^buffers", "^files" }) do
 						if string.match(last_cmd, patt) then
@@ -1267,6 +1266,7 @@ spec.default = {
 					local _lines, exts = {}, {};
 					local entries = {};
 
+					---@type table<string, integer>
 					local widths = {
 						id = 6,
 						name = 6,
@@ -1300,22 +1300,19 @@ spec.default = {
 					local title, title_exts = utils.to_row({
 						{
 							string.format(" %-" .. widths.id .. "s ", "Buffer"),
-							"@attribute"
+							"UILSBuffer"
 						},
-						{ "╷", "@function" },
 						{
 							string.format(" %-" .. widths.name .. "s ", "Name"),
-							"@attribute"
+							"UILSBufname"
 						},
-						{ "╷", "@function" },
 						{
 							string.format(" %-" .. widths.indicators .. "s ", "Indicators"),
-							"@attribute"
+							"UILSIndicator"
 						},
-						{ "╷", "@function" },
 						{
 							string.format(" %-" .. widths.lnum .. "s ", "Line"),
-							"@attribute"
+							"UILSLmum"
 						},
 					});
 
@@ -1323,27 +1320,22 @@ spec.default = {
 					table.insert(exts, title_exts);
 
 					for e, entry in ipairs(entries) do
-						local border = e == #entries and "╵" or "│";
-
 						local row, row_exts = utils.to_row({
 							{
 								string.format(" %-" .. widths.id .. "s ", entry.id),
-								"@comment"
+								e % 2 == 0 and "@comment" or "UICmdlineSearchDown"
 							},
-							{ border, "@function" },
 							{
 								string.format(" %-" .. widths.name .. "s ", entry.name),
-								"@comment"
+								e % 2 == 0 and "@comment" or "UICmdlineDefault"
 							},
-							{ border, "@function" },
 							{
 								string.format(" %-" .. widths.indicators .. "s ", entry.indicators),
-								"@comment"
+								e % 2 == 0 and "@comment" or "UICmdlineLua"
 							},
-							{ border, "@function" },
 							{
 								string.format(" %-" .. widths.lnum .. "s ", entry.lnum),
-								"@comment"
+								e % 2 == 0 and "@comment" or "UICmdlineSubstitute"
 							},
 						});
 
@@ -1352,7 +1344,10 @@ spec.default = {
 					end
 
 					return { lines = _lines, extmarks = exts };
-				end
+				end,
+
+				winhl = "Normal:@comment",
+				-- border = "rounded"
 
 				---|fE
 			},
