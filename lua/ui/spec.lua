@@ -369,9 +369,7 @@ spec.default = {
 				end,
 
 				winhl = "Normal:UICmdlineSearchUp",
-				filetype = function ()
-					return "text";
-				end,
+				filetype ="cmdline_search",
 
 				icon = { { "  ", "UICmdlineSearchUpIcon" } },
 
@@ -386,9 +384,7 @@ spec.default = {
 				end,
 
 				winhl = "Normal:UICmdlineSearchDown",
-				filetype = function ()
-					return "text";
-				end,
+				filetype ="cmdline_search",
 
 				icon = { { "  ", "UICmdlineSearchDownIcon" } },
 

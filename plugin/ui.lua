@@ -1,3 +1,6 @@
+vim.treesitter.language.register("regex", "cmdline_search");
+
+
 -- This needs to be immediately called
 -- otherwise start errors will get ignored.
 require("ui").setup({});

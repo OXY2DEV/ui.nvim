@@ -827,8 +827,16 @@ message.__render = function ()
 		exts = vim.list_extend(exts, m_exts)
 	end
 
+	-- Remove trailing newlines.
+	-- These are typically used before a `return_prompt`.
+	while lines[#lines] == "" do
+		table.remove(lines);
+	end
+
 	vim.api.nvim_buf_clear_namespace(message.msg_buffer, message.namespace, 0, -1);
 	vim.api.nvim_buf_set_lines(message.msg_buffer, 0, -1, false, lines);
+
+	log.print(lines, "LOGGER")
 
 	for l, line in ipairs(exts) do
 		for _, ext in ipairs(line) do
