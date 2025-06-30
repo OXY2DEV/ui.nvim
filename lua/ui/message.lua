@@ -484,13 +484,13 @@ message.__confirm = function (obj)
 			vim.api.nvim_win_set_var(message.confirm_window, "ui_window", true);
 		end
 
-		vim.api.nvim_win_set_cursor(message.confirm_window, { 1, 0 });
+		pcall(vim.api.nvim_win_set_cursor, message.confirm_window, { 1, 0 });
 		vim.api.nvim_buf_clear_namespace(message.confirm_buffer, message.namespace, 0, -1);
 		vim.api.nvim_buf_set_lines(message.confirm_buffer, 0, -1, false, lines);
 
 		for l, line in ipairs(exts) do
 			for _, ext in ipairs(line) do
-				vim.api.nvim_buf_set_extmark(message.confirm_buffer, message.namespace, l - 1, ext[1], {
+				pcall(vim.api.nvim_buf_set_extmark, message.confirm_buffer, message.namespace, l - 1, ext[1], {
 					end_col = ext[2],
 					hl_group = ext[3]
 				});
@@ -862,7 +862,7 @@ message.__render = function ()
 		end
 
 		if entry.line_hl_group then
-			vim.api.nvim_buf_set_extmark(message.msg_buffer, message.namespace, entry.from, 0, {
+			pcall(vim.api.nvim_buf_set_extmark, message.msg_buffer, message.namespace, entry.from, 0, {
 				end_row = entry.to,
 				line_hl_group = entry.line_hl_group
 			});
