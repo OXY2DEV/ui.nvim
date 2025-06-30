@@ -420,7 +420,16 @@ spec.default = {
 
 				offset = 1,
 				filetype = function (state)
-					return state.pos < 1 and "vim" or "lua";
+					---@type string? Shell name.
+					local shell = string.match(vim.o.shell, "%w+$");
+
+					if state.pos < 1 then
+						return "vim";
+					elseif shell then
+						return shell;
+					else
+						return "bash";
+					end
 				end,
 
 				icon = function ()
@@ -1219,6 +1228,7 @@ spec.default = {
 
 				---|fE
 			},
+
 
 			---|fE
 		},
