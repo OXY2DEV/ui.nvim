@@ -399,7 +399,6 @@ spec.default = {
 				end,
 
 				winhl = "Normal:UICmdlineDefault",
-
 				filetype = "vim",
 
 				icon = {
@@ -1230,6 +1229,60 @@ spec.default = {
 			},
 
 
+			terminal_command = {
+				---|fS
+
+				condition = function (_, lines)
+					return string.match(lines[1] or "", "^:!") ~= nil
+				end,
+
+				modifier = function (_, lines)
+					---@type string Removed trailing `^M`.
+					local removed_tail = string.gsub(lines[1] or "", ".$", "");
+
+					return {
+						extmarks = {
+							{ {  0, #removed_tail, "UICmdlineEvalIcon" } }
+						},
+						lines = { removed_tail }
+					};
+				end,
+
+				decorations = {
+					icon = {
+						{ "▍ ", "UICmdlineEvalIcon" }
+					},
+					padding = {
+						{ "▍  ", "UICmdlineEvalIcon" }
+					},
+
+					line_hl_group = "UICmdlineEval"
+				}
+
+				---|fE
+			},
+
+			shell_output = {
+				---|fS
+
+				condition = function (entry)
+					return entry.kind == "shell_out";
+				end,
+
+				decorations = {
+					icon = {
+						{ "▍󰡠 ", "UICmdlineSubstituteIcon" }
+					},
+					padding = {
+						{ "▍", "UICmdlineSubstituteIcon" }
+					},
+
+					line_hl_group = "UICmdlineSubstitute"
+				}
+
+				---|fE
+			},
+
 			---|fE
 		},
 
@@ -1448,7 +1501,7 @@ spec.default = {
 				border = "rounded",
 
 				---|fE
-			}
+			},
 		}
 
 		---|fE
