@@ -371,7 +371,7 @@ utils.wrapped_height = function(lines, width)
 		style = "minimal",
 	};
 
-	if type(utils.__wrapped_win) ~= "number" or vim.api.nvim_win_is_valid(utils.__wrapped_win) then
+	if type(utils.__wrapped_win) ~= "number" or vim.api.nvim_win_is_valid(utils.__wrapped_win) == false then
 		utils.__wrapped_win = vim.api.nvim_open_win(utils.__wrapped_buf, false, win_config);
 	else
 		vim.api.nvim_win_set_config(utils.__wrapped_win, win_config);

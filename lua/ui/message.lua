@@ -875,7 +875,11 @@ message.__render = function ()
 	local window_config = vim.tbl_extend("keep", spec.config.message.message_winconfig or {}, {
 		relative = "editor",
 
-		row = vim.o.lines - (vim.o.cmdheight + message.__get_cmdline_offset() + 1) - H,
+		-- Original: row = total_lines - height;
+		-- Offset: command_height + message_height + 1(statusline_height);
+		--
+		-- Result = Original - Offset;
+		row = (vim.o.lines - H) - (vim.o.cmdheight + message.__get_cmdline_offset() + 1),
 		col = vim.o.columns,
 
 		width = W + decor_size,
