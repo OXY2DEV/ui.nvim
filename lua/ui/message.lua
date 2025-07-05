@@ -400,7 +400,7 @@ message.__replace = function (kind, content, add_to_history)
 			-- to be added to the history.
 			message.history[message.id] = {
 				kind = kind,
-				content = { {1, "hi", 178 }} or content
+				content = content
 			};
 			message.id = message.id + 1;
 		else
@@ -971,6 +971,21 @@ message.__history = function (entries)
 		{}
 	};
 
+	--- Equalizes line & extmark count.
+	---@param _lines string[]
+	---@param _exts ( ui.message.hl_fragment[] )[]
+	local function lines_exts_equal (_lines, _exts)
+		if #_lines < #_exts then
+			for _ = 1, #_exts - #_lines do
+				table.insert(lines, "");
+			end
+		elseif #_lines > #_exts then
+			for _ = 1, #_lines - #_exts do
+				table.insert(exts, {});
+			end
+		end
+	end
+
 	---|fS
 
 	if vim.g.__ui_history_pref == "vim" and entries then
@@ -980,6 +995,8 @@ message.__history = function (entries)
 
 			lines = vim.list_extend(lines, _lines);
 			exts = vim.list_extend(exts, _exts);
+
+			lines_exts_equal(lines, exts);
 		end
 	else
 		-- Show history from `ui.nvim`.
@@ -1013,6 +1030,8 @@ message.__history = function (entries)
 
 			lines = vim.list_extend(lines, m_lines)
 			exts = vim.list_extend(exts, m_exts)
+
+			lines_exts_equal(lines, exts);
 		end
 	end
 
