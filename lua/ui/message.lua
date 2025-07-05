@@ -836,8 +836,6 @@ message.__render = function ()
 	vim.api.nvim_buf_clear_namespace(message.msg_buffer, message.namespace, 0, -1);
 	vim.api.nvim_buf_set_lines(message.msg_buffer, 0, -1, false, lines);
 
-	log.print(lines, "LOGGER")
-
 	for l, line in ipairs(exts) do
 		for _, ext in ipairs(line) do
 			if ext[3] == "" then

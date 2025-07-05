@@ -354,7 +354,7 @@ utils.wrapped_height = function(lines, width)
 
 	width = width or vim.o.columns;
 
-	if type(utils.__wrapped_buf) ~= "number" or vim.api.nvim_buf_is_valid(utils.__wrapped_buf) then
+	if type(utils.__wrapped_buf) ~= "number" or vim.api.nvim_buf_is_valid(utils.__wrapped_buf) == false then
 		utils.__wrapped_buf = vim.api.nvim_create_buf(false, true);
 	end
 
@@ -366,7 +366,7 @@ utils.wrapped_height = function(lines, width)
 		col = 5,
 
 		width = width,
-		height = 1,
+		height = #lines,
 
 		style = "minimal",
 	};
@@ -381,7 +381,7 @@ utils.wrapped_height = function(lines, width)
 	vim.wo[utils.__wrapped_win].linebreak = true;
 	vim.wo[utils.__wrapped_win].breakindent = true;
 
-	vim.api.nvim_buf_set_lines(utils.__wrapped_buf, 0, -1, false, lines);
+	pcall(vim.api.nvim_buf_set_lines, utils.__wrapped_buf, 0, -1, false, lines);
 
 	local text_height = vim.api.nvim_win_text_height(utils.__wrapped_win, { start_row = 0, end_row = -1 });
 	return text_height.all;
