@@ -320,13 +320,11 @@ end
 
 --- Creates list of confirm keys.
 ---@param prompt? string
----@param content? [ integer, string ][]
-utils.confirm_keys = function (prompt, content)
+---@param _? [ integer, string ][]
+utils.confirm_keys = function (prompt, _)
 	---|fS
 
-	if not prompt and not content then
-		vim.g.__confirm_keys = {};
-	elseif prompt then
+	if prompt then
 		-- You can hit `<CR>` to confirm the default
 		-- action.
 		-- You can hit `<ESC>` to cancel the action.

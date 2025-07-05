@@ -578,6 +578,12 @@ message.__confirm = function (obj)
 			-- We only need to call this for messages before `VimEnter`.
 			package.loaded["ui.cmdline"].__use_mode = true;
 			package.loaded["ui.cmdline"].__render();
+
+			-- The cmdline isn't visible in some cases.
+			-- Manually call `:mode` to make it visible.
+			vim.defer_fn(function ()
+				pcall(vim.cmd, "mode"); ---@diagnostic disable-line
+			end, 100);
 		end
 	end);
 

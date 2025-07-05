@@ -456,6 +456,11 @@ end
 cmdline.cmdline_show = function (content, pos, firstc, prompt, indent, level, hl_id)
 	---|fS
 
+	-- This is used to communicate between
+	-- the cmdline & message module when
+	-- confirmation prompts are shown.
+	utils.confirm_keys(prompt, content);
+
 	cmdline.visible = true;
 	cmdline.set_state({
 		content = content,
@@ -473,10 +478,6 @@ cmdline.cmdline_show = function (content, pos, firstc, prompt, indent, level, hl
 		cmdline.old_state = vim.deepcopy(cmdline.state);
 	end
 
-	-- This is used to communicate between
-	-- the cmdline & message module when
-	-- confirmation prompts are shown.
-	utils.confirm_keys(prompt, content);
 	cmdline.__render();
 
 	---|fE
