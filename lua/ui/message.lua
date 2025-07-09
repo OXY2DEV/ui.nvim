@@ -936,8 +936,15 @@ message.__history = function (entries)
 
 	---|fS "feat: Keymaps"
 
-	vim.api.nvim_buf_set_keymap(message.history_buffer, "n", "u", "<CMD>messages<CR>", {
+	vim.api.nvim_buf_set_keymap(message.history_buffer, "n", "u", "", {
 		desc = "[u]pdates message history.",
+		callback =  function ()
+			if vim.g.__ui_history_pref == "vim" then
+				vim.cmd("messages");
+			else
+				message.__history(entries);
+			end
+		end,
 	});
 	vim.api.nvim_buf_set_keymap(message.history_buffer, "n", "t", "", {
 		desc = "[t]oggles between `vim` and `ui.nvim`'s message history.",
