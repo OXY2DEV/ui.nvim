@@ -247,23 +247,23 @@ end
 message.__add = function (kind, content, add_to_history)
 	---|fS
 
-	if kind == "" and vim.tbl_isempty(message.visible) == false then
-		---@type integer[] Message IDs.
-		local IDs = vim.tbl_keys(message.visible);
-		table.sort(IDs);
+	if kind == "" and vim.tbl_isempty(message.history) == false then
+		-- Calling `nvim__redraw()` causes messages to duplicate
+		-- with incorrect kind.
+		-- So, we check if that's the case and handle accordingly.
+
+		--- Last shown message.
+		local last_shown = message.history[message.id - 1];
 
 		--- Last visible message.
-		local last = message.visible[IDs[#IDs]];
+		local last_visible = message.visible[message.id - 1];
 
-		if vim.deep_equal(last.content, content) then
-			-- BUG, Vim resends old message on redraw.
-			-- Last message will be replaced with this
-			-- one.
-			--
-			-- The second message has the wrong kind so
-			-- we use the original kind.
-
-			message.__replace(last.kind, content, false);
+		if last_visible and vim.deep_equal(last_visible.content, content) then
+			-- Message is still visible, extend duration.
+			message.__replace(last_visible.kind, content, false);
+			return;
+		elseif last_shown and vim.deep_equal(last_shown.content, content) then
+			-- Message is not visible, discard this one.
 			return;
 		end
 	end
