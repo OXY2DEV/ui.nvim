@@ -1308,17 +1308,14 @@ spec.default = {
 			ls = {
 				---|fS
 
-				condition = function ()
-					local last_cmd = vim.fn.histget("cmd", -1);
-					require("ui.log").print(last_cmd, "HERE")
-
-					for _, patt in ipairs({ "^ls", "^buffers", "^files" }) do
-						if string.match(last_cmd, patt) then
-							return true;
-						end
+				condition = function (msg, lines)
+					if msg.kind ~= "list_cmd" then
+						return false;
+					elseif string.match(lines[2], '^%s*(%d+)%s*([u%%#ah%-=RF%?%+x]+)%s*"(.+)"%s*line (%d+)$') == nil then
+						return false;
 					end
 
-					return false;
+					return true;
 				end,
 
 				modifier = function (_, lines)
