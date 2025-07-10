@@ -49,7 +49,8 @@
 ---@field wrap_notify? boolean Wrap `vim.notify()` & `vim.notify_once()`?
 ---@field respect_replace_last? boolean Should `replace_last` be respected?
 ---
----@field history_preference? "vim" | "ui" History preference for :messages
+---@field history_preference? ui.message.source History preference for :messages
+---@field history_types? ui.message.visible_types History message level.
 ---@field max_lines? integer Maximum number of lines a normal message can have.
 ---@field max_duration? integer Maximum number of milliseconds a message can be visible for.
 ---

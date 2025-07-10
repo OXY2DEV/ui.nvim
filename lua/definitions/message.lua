@@ -3,6 +3,34 @@
 ---@meta
 
 
+---@alias ui.message.source
+---| "vim" Neovim's message source(output of `:messages`).
+---| "ui" `ui.nvim`'s message source(output of `require("ui.message").history`).
+
+
+---@alias ui.message.type
+---| "normal"
+---| "hidden"
+---| "list"
+---| "confirm"
+
+
+---@class ui.message.visible_types
+---
+---@field normal boolean
+---@field hidden boolean
+---@field list boolean
+---@field confirm boolean
+
+
+--@class ui.message.type
+--
+--@field normal boolean
+--@field hidden boolean
+--@field list boolean
+--@field confirm boolean
+
+
 ---@class ui.message.style Message pstyle
 ---
 ---@field condition? fun(msg: ui.message.entry, lines: string[], extmarks: ui.message.extmarks): boolean Condition for this processor.
@@ -156,6 +184,8 @@
 
 
 ---@class ui.message.entry A message entry.
+---
+---@field type? ui.message.type
 ---
 ---@field kind ui.message.kind
 ---@field content ui.message.fragment[]

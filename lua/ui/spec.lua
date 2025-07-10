@@ -597,6 +597,12 @@ spec.default = {
 		respect_replace_last = true,
 
 		history_preference = "vim",
+		history_types = {
+			normal = true,
+			hidden = false,
+			list = false,
+			confirm = false,
+		},
 		max_lines = nil,
 		max_duration = 5000,
 

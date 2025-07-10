@@ -292,12 +292,12 @@ message.__add = function (kind, content, add_to_history)
 			log.assert(
 				"ui/message.lua → add_list",
 				pcall(message.__list, {
-					kind = kind,
-					content = content,
-
 					-- If the message is too long, it should be
 					-- added to history.
-					add_to_history = _add_to_history or #lines > max_lines
+					type = (_add_to_history or #lines > max_lines) and "normal" or "list",
+
+					kind = kind,
+					content = content,
 				})
 			);
 			return;
@@ -322,12 +322,12 @@ message.__add = function (kind, content, add_to_history)
 
 		-- Store the message in history & visible
 		-- message table.
-		if add_to_history then
-			message.history[message.id] = {
-				kind = kind,
-				content = content
-			};
-		end
+		message.history[message.id] = {
+			type = add_to_history and "normal" or "hidden",
+
+			kind = kind,
+			content = content
+		};
 
 		-- The visible message has a `timer`
 		-- thta shows/hides the message.
@@ -381,12 +381,12 @@ message.__replace = function (kind, content, add_to_history)
 			log.assert(
 				"ui/message.lua → replace_list",
 				pcall(message.__list, {
-					kind = kind,
-					content = content,
-
 					-- If the message is too long, it should be
 					-- added to history.
-					add_to_history = _add_to_history or #lines > max_lines
+					type = (_add_to_history or #lines > max_lines) and "normal" or "list",
+
+					kind = kind,
+					content = content,
 				})
 			);
 			return;
@@ -399,12 +399,16 @@ message.__replace = function (kind, content, add_to_history)
 			-- Certain replace type messages need
 			-- to be added to the history.
 			message.history[message.id] = {
+				type = "normal",
+
 				kind = kind,
 				content = content
 			};
 			message.id = message.id + 1;
 		else
 			message.history[keys[#keys]] = {
+				type = "normal",
+
 				kind = kind,
 				content = content
 			};
@@ -444,6 +448,9 @@ end
 ---@param obj ui.message.entry
 message.__confirm = function (obj)
 	---|fS
+
+	message.history[message.id] = obj;
+	message.id = message.id + 1;
 
 	--- All logic must be run outside of
 	--- fast event.
@@ -595,10 +602,8 @@ end
 message.__list = function (obj)
 	---|fS
 
-	if obj.add_to_history then
-		message.history[message.id] = obj;
-		message.id = message.id + 1;
-	end
+	message.history[message.id] = obj;
+	message.id = message.id + 1;
 
 	--- All logic must be run outside of
 	--- fast event.
@@ -927,8 +932,54 @@ end
 message.__history = function (entries)
 	---|fS
 
-	---@type "vim" | "ui" Message history source preference.
-	vim.g.__ui_history_pref = vim.g.__ui_history_pref or spec.config.message.history_preference;
+	local function get_msg_radio ()
+		local types = _G.__ui_history_types or {
+			normal = true,
+			hidden = false,
+			list = false,
+			confirm = false,
+		};
+
+		local items = {
+			normal = " [N]ormal ",
+			hidden = " [H]idden ",
+			list = " [L]ist ",
+			confirm = " [C]onfirm "
+		};
+
+		local keys = vim.tbl_keys(items);
+		table.sort(keys);
+
+		local line, exts = "Filters: ", {};
+		table.insert(exts, { 0, #line, "@comment" });
+
+		for k, key in ipairs(keys) do
+			local enabled = types[key];
+			local item = items[key];
+
+			local before = #line;
+			line = line .. item .. (k ~= #keys and " " or "");
+
+			if enabled == true then
+				table.insert(exts, { before, before + #item, "UICmdlineDefaultIcon" })
+			else
+				table.insert(exts, { before, before + #item, "UICmdlineSearchDownIcon" })
+			end
+		end
+
+		return line, exts;
+	end
+
+	---@type ui.message.source
+	vim.g.__ui_history_pref = vim.g.__ui_history_pref or spec.config.message.history_preference or "vim";
+
+	_G.__ui_history_types = _G.__ui_history_types or spec.config.message.history_types or {
+		normal = true,
+		hidden = false,
+		list = false,
+		confirm = false,
+	};
+
 	vim.g.__ui_history = true;
 
 	message.__prepare();
@@ -975,14 +1026,77 @@ message.__history = function (entries)
 		end
 	});
 
+	vim.api.nvim_buf_set_keymap(message.history_buffer, "n", "N", "", {
+		desc = "Toggles [N]ormal msssags visiblity.",
+		callback = function ()
+			if vim.g.__ui_history_pref == "vim" then
+				return;
+			end
+
+			_G.__ui_history_types.normal = not _G.__ui_history_types.normal;
+			message.__history(entries);
+		end
+	});
+
+	vim.api.nvim_buf_set_keymap(message.history_buffer, "n", "H", "", {
+		desc = "Toggles [H]idden msssags visiblity.",
+		callback = function ()
+			if vim.g.__ui_history_pref == "vim" then
+				return;
+			end
+
+			_G.__ui_history_types.hidden = not _G.__ui_history_types.hidden;
+			message.__history(entries);
+		end
+	});
+
+	vim.api.nvim_buf_set_keymap(message.history_buffer, "n", "L", "", {
+		desc = "Toggles [L]ist msssags visiblity.",
+		callback = function ()
+			if vim.g.__ui_history_pref == "vim" then
+				return;
+			end
+
+			_G.__ui_history_types.list = not _G.__ui_history_types.list;
+			message.__history(entries);
+		end
+	});
+
+	vim.api.nvim_buf_set_keymap(message.history_buffer, "n", "C", "", {
+		desc = "Toggles [C]onfirm msssags visiblity.",
+		callback = function ()
+			if vim.g.__ui_history_pref == "vim" then
+				return;
+			end
+
+			_G.__ui_history_types.confirm = not _G.__ui_history_types.confirm;
+			message.__history(entries);
+		end
+	});
+
 	---|fE
 
 	---@type string[], ( ui.message.hl_fragment[] )[]
-	local lines, exts = {
-		vim.g.__ui_history_pref == "vim" and " History:" or "󰋚 History:"
-	}, {
-		{}
-	};
+	local lines, exts = {}, {};
+
+	if vim.g.__ui_history_pref == "vim" then
+		table.insert(lines, " History:");
+		table.insert(exts, {
+			{ 0, #" ", "DiagnosticOk" },
+			{ #" ", #lines[1], "@comment" },
+		});
+	else
+		local l, x = get_msg_radio();
+
+		table.insert(lines, "󰊌 History:");
+		table.insert(lines, l);
+
+		table.insert(exts, {
+			{ 0, #"󰊌 ", "DiagnosticHint" },
+			{ #"󰊌 ", #lines[1], "@comment" },
+		});
+		table.insert(exts, x);
+	end
 
 	--- Equalizes line & extmark count.
 	---@param _lines string[]
@@ -999,7 +1113,7 @@ message.__history = function (entries)
 		end
 	end
 
-	---|fS
+	---|fS "code: Create lines & extmarks for messages"
 
 	if vim.g.__ui_history_pref == "vim" and entries then
 		-- Show raw history from Vim.
@@ -1020,9 +1134,29 @@ message.__history = function (entries)
 
 		for _, key in ipairs(keys) do
 			local value = message.history[key];
-			local m_lines, m_exts = utils.process_content(value.content);
 
-			local processor = spec.get_msg_style(value, m_lines, m_exts) or {};
+			if _G.__ui_history_types[value.type or "normal"] ~= true then
+				-- Ignore messages if their level is lower
+				-- then the preferred message level
+				goto ignore_message;
+			end
+
+			local m_lines, m_exts = utils.process_content(value.content);
+			local processor;
+
+			if not value.type or value.type == "normal" then
+				-- Regular message.
+				processor = spec.get_msg_style(value, m_lines, m_exts) or {};
+			elseif value.type == "hidden" then
+				-- Regular message's whose `history = false`.
+				processor = spec.get_msg_style(value, m_lines, m_exts) or {};
+			elseif value.type == "list" then
+				-- List message.
+				processor = spec.get_listmsg_style(value, m_lines, m_exts) or {};
+			elseif value.type == "confirm" then
+				-- Confirm message.
+				processor = spec.get_confirm_style(value, lines, exts) or {};
+			end
 
 			if processor.modifier then
 				m_lines = processor.modifier.lines or m_lines;
@@ -1045,6 +1179,8 @@ message.__history = function (entries)
 			exts = vim.list_extend(exts, m_exts)
 
 			lines_exts_equal(lines, exts);
+
+			::ignore_message::
 		end
 	end
 
@@ -1055,9 +1191,8 @@ message.__history = function (entries)
 	vim.api.nvim_buf_clear_namespace(message.history_buffer, message.namespace, 0, -1);
 	vim.api.nvim_buf_set_lines(message.history_buffer, 0, -1, false, lines);
 
-	---|fS
+	---|fS "doc: Add keymap hints"
 
-	-- Add keymap hints
 	vim.api.nvim_buf_set_extmark(message.history_buffer, message.namespace, 0, 0, {
 		virt_text_pos = "right_align",
 		virt_text = {
@@ -1071,7 +1206,7 @@ message.__history = function (entries)
 			{ " Quit ", "UIHistoryDesc" },
 		},
 
-		line_hl_group = "Comment"
+		hl_mode = "combine"
 	});
 
 	---|fE
@@ -1247,6 +1382,8 @@ message.msg_show = function (kind, content, replace_last, add_to_history)
 		log.assert(
 			"ui/message.lua → __confirm",
 			pcall(message.__confirm, {
+				type = "confirm",
+
 				kind = kind,
 				content = content,
 			})

@@ -176,6 +176,12 @@ Used by the messages. It has the following structure,
       respect_replace_last = true,
 
       history_preference = "vim",
+      history_types = {
+          normal = true,
+          hidden = false,
+          list = false,
+          confirm = false,
+      },
       max_lines = nil,
       max_duration = 5000,
   
@@ -256,6 +262,37 @@ messages(excluding `list` & `confirm` messages).
 
 ▌ 💡 Tip
 ▌ You can press `t` while inside the history window to toggle the source!
+
+history_types ~
+
+  • Type: `ui.message.visible_types`
+
+▌ 📜 Note
+▌ This only takes effect when viewing the `internal message source`(you can
+▌ toggle the source with `t`)!
+
+Types of messages to show in the message history,
+
+>lua
+  history_types = {
+      -- Normal messages.
+      normal = true,
+
+      -- Messages that have `history = false`.
+      hidden = false,
+
+      -- List messages.
+      list = false,
+
+      -- Confirm messages.
+      confirm = false,
+  },
+<
+
+▌ 💡 Tip
+▌ You can use `N`, `H`, `L` & `C` to toggle viewing of `Normal`,
+▌ `Hidden`, `List` & `Confirm` messages respectively from the message
+▌ history window.
 
 max_lines ~
 
