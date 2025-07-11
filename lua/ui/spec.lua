@@ -1,6 +1,110 @@
 local spec = {};
 local utils = require("ui.utils");
 
+--- Creates message text from highlight group properties.
+---@param props table
+---@return string[]
+---@return ( ui.message.hl_fragment[] )[]
+local function hl_prop_txt (props)
+	---|fS
+
+	local lines, exts = {}, {};
+
+	local function new_property (name, value, hl)
+		table.insert(lines, string.format("  %s: %s", name, value));
+		table.insert(exts, {});
+
+		table.insert(exts[#exts], { 2, 2 + #name, "@property" });
+		table.insert(exts[#exts], { 2 + #name, 2 + #name + 1, "@punctuation" });
+
+		table.insert(exts[#exts], { 2 + #name + 2, 2 + #name + 2 + #value, hl or "@string.special" });
+	end
+
+	table.insert(lines, string.format("Name: %s", props.group_name));
+	table.insert(exts, {});
+
+	table.insert(exts[#exts], { 0, 5, "@property" });
+	table.insert(exts[#exts], { 6, 6 + #props.group_name, "@string" });
+
+	if props.value then
+		if props.value.link then
+			new_property("link", tostring(props.value.link), tostring(props.value.link));
+		end
+
+		if vim.islist(props.value.cterm) then
+			table.insert(lines, "  cterm:");
+			table.insert(exts, {});
+
+			table.insert(exts[#exts], { 2, 7, "@property" });
+			table.insert(exts[#exts], { 7, 8, "@punctuation" });
+
+			for _, item in ipairs(props.value.cterm) do
+				table.insert(lines, string.format("    • %s", tostring(item)));
+				table.insert(exts, {});
+
+				table.insert(exts[#exts], { 4, 4 + #"•", "@punctuation" });
+				table.insert(exts[#exts], { #"    • ", #lines[#lines], "@constant" })
+			end
+		end
+
+		if props.value.start then
+			new_property("start", tostring(props.value.start), "@string.special");
+		end
+
+		if props.value.stop then
+			new_property("stop", tostring(props.value.stop), "@string.special");
+		end
+
+		if props.value.ctermfg then
+			new_property("ctermfg", tostring(props.value.ctermfg), "@number");
+		end
+
+		if props.value.ctermbg then
+			new_property("ctermbg", tostring(props.value.ctermbg), "@number");
+		end
+
+		if vim.islist(props.value.gui) then
+			table.insert(lines, "gui:");
+			table.insert(exts, {});
+
+			table.insert(exts[#exts], { 0, 3, "@property" });
+			table.insert(exts[#exts], { 3, 4, "@punctuation" });
+
+			for _, item in ipairs(props.value.gui) do
+				table.insert(lines, string.format("  • %s", tostring(item)));
+				table.insert(exts, {});
+
+				table.insert(exts[#exts], { 2, 2 + #"•", "@punctuation" });
+				table.insert(exts[#exts], { #"  • ", #lines[#lines], "@constant" })
+			end
+		end
+
+		if props.value.font then
+			new_property("font", props.value.font, "@string");
+		end
+
+		if props.value.guifg then
+			new_property("guifg", props.value.guifg, "@constant");
+		end
+
+		if props.value.guibg then
+			new_property("guibg", props.value.guibg, "@constant");
+		end
+
+		if props.value.guisp then
+			new_property("guisp", props.value.guisp, "@constant");
+		end
+
+		if props.value.blend then
+			new_property("blend", props.value.blend, "@number");
+		end
+	end
+
+	return lines, exts;
+
+	---|fE
+end
+
 --- Checks if a message is a list message.
 ---@param lines string[]
 ---@return boolean
@@ -1064,42 +1168,65 @@ spec.default = {
 				---|fS
 
 				condition = function (_, lines)
-					return #lines == 2 and string.match(lines[2], "^.- +xxx links to .-") ~= nil;
+					local is_hl, data = utils.is_hl_line(lines[2] or "")
+					return lines[1] == "" and is_hl and data.value.link;
 				end,
 
 				modifier = function (_, lines)
-					local group_name, link = string.match(lines[2], "^(.-) +xxx links to (.-)$");
-					group_name = string.gsub(group_name, "[^a-zA-Z0-9_.@-]", "");
+					local _, data = utils.is_hl_line(lines[2] or "")
+
+					local definition = vim.api.nvim_exec2("hi " .. data.value.link, { output = true }).output;
+					local _, def_data = utils.is_hl_line(definition);
+
+					local d_lines, d_exts = hl_prop_txt(def_data);
+
+					-- Remove the group name part.
+					table.remove(d_lines, 1);
+					table.remove(d_exts, 1);
+
+					local o_lines, o_exts = {
+						"abcABC 123",
+						"Name: " .. data.group_name,
+						"  link: " .. data.value.link,
+						"",
+						"Raw definition:"
+					}, {
+						{
+							{ 0, 10, data.group_name }
+						},
+						{
+							{ 0, 4, "@property" },
+							{ 4, 5, "@punctuation" },
+							{ 6, 6 + #data.group_name, "@string" },
+						},
+						{
+							{ 0, 6, "@property" },
+							{ 6, 7, "@punctuation" },
+							{ 8, 8 + #data.value.link, "@constant" },
+						},
+						{},
+						{
+							{ 0, #"Raw definition", "DiagnosticHint" },
+							{ #"Raw definition", #"Raw definition" + 1, "@punctuation" },
+						},
+					};
+
+					o_lines = vim.list_extend(o_lines, d_lines);
+					o_exts = vim.list_extend(o_exts, d_exts);
 
 					return {
-						lines = {
-							"abcABC 123",
-							string.format("Group: %s", group_name),
-							string.format("  Link: %s", link)
-						},
-						extmarks = {
-							{
-								{ 0, 10, group_name }
-							},
-							{
-								{ 0, 7, "DiagnosticInfo" },
-								{ 7, 7 + #group_name, "@label" }
-							},
-							{
-								{ 2, 7, "@property" },
-								{ 8, 8 + #link, "@constant" },
-							}
-						}
-					}
+						lines = o_lines,
+						extmarks = o_exts
+					};
 				end,
 				decorations = {
 					icon = {
-						{ "▍ ", "UIMessagePaletteSign" }
+						{ "▍ ", "UIMessagePalette" }
 					},
 					padding = {
-						{ "▍  ", "UIMessagePaletteSign" }
+						{ "▍  ", "UIMessagePalette" }
 					},
-				}
+				},
 
 				---|fE
 			},
@@ -1108,41 +1235,28 @@ spec.default = {
 				---|fS
 
 				condition = function (_, lines)
-					return #lines == 2 and string.match(lines[2], "^.- xxx links to .-") == nil and string.match(lines[2], "^.- +xxx") ~= nil;
+					local is_hl, data = utils.is_hl_line(lines[2] or "")
+					return lines[1] == "" and is_hl and data.value.link == nil;
 				end,
 
 				modifier = function (_, lines)
-					local group_name, properties = string.match(lines[2], "^(%S+)%s+xxx%s(.-)$");
-					group_name = string.gsub(group_name, "[^a-zA-Z0-9_.@-]", "");
+					local _, data = utils.is_hl_line(lines[2] or "")
+					local d_lines, d_exts = hl_prop_txt(data);
 
-					local _lines = {
+					local o_lines, o_exts = {
 						"abcABC 123",
-						string.format("Group: %s", group_name),
-					};
-					local _extmarks = {
+					}, {
 						{
-							{ 0, #_lines[1], group_name }
-						},
-						{
-							{ 0, 7, "DiagnosticInfo" },
-							{ 7, 7 + #group_name, "@label" }
+							{ 0, 10, data.group_name }
 						},
 					};
 
-					for _, property in ipairs(vim.split(properties, " ")) do
-						local name, value = string.match(property, "^(.-)=(.+)$");
-
-						table.insert(_lines, string.format("  %s: %s", name, value));
-						table.insert(_extmarks, {
-							{ 2, 2 + #name, "@property" },
-							{ 2 + #name, 2 + #name + 1, "Comment" },
-							{ 2 + #name + 2, 2 + #name + 2 + #value, "@constant" },
-						})
-					end
+					o_lines = vim.list_extend(o_lines, d_lines);
+					o_exts = vim.list_extend(o_exts, d_exts);
 
 					return {
-						lines = _lines,
-						extmarks = _extmarks
+						lines = o_lines,
+						extmarks = o_exts
 					};
 				end,
 
@@ -1417,16 +1531,10 @@ spec.default = {
 			hi = {
 				---|fS
 
-				condition = function ()
-					local last_cmd = vim.fn.histget("cmd", -1);
-
-					for _, patt in ipairs({ "^hi%s*$", "^highlight%s*$" }) do
-						if string.match(last_cmd, patt) then
-							return true;
-						end
-					end
-
-					return false;
+				condition = function (_, lines)
+					local is_hl = utils.is_hl_line(lines[2] or "");
+					require("ui.log").print(is_hl, "Blah");
+					return lines[1] == "" and is_hl;
 				end,
 
 				modifier = function (_, lines, exts)

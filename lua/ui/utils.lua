@@ -591,4 +591,64 @@ utils.trim_lines = function (lines)
 	---|fE
 end
 
+--- Checks if a line is in the format of `:hi`.
+---@param line string
+---@return boolean
+---@return table
+utils.is_hl_line = function (line)
+	---|fS
+
+	local data = {
+		group_name = nil,
+		value = {},
+	};
+
+	if string.match(line, "([a-zA-Z0-9_.@-]+) +xxx links to ([a-zA-Z0-9_.@-]+)$") then
+		-- @constant      xxx links to Constant
+		local group, link = string.match(line, "([a-zA-Z0-9_.@-]+) +xxx links to ([a-zA-Z0-9_.@-]+)$");
+
+		data.group_name = group;
+		data.value.link = link;
+	elseif string.match(line, "([a-zA-Z0-9_.@-]+) +xxx (.+)$") then
+		-- Cursor         xxx guifg=#1e1e2e guibg=#f5e0dc
+		local group, properties = string.match(line, "([a-zA-Z0-9_.@-]+) +xxx (.+)$");
+
+		data.group_name = group;
+
+		data.value.ctermfg = string.match(properties, "ctermfg=(%S+)");
+		data.value.ctermbg = string.match(properties, "ctermbg=(%S+)");
+
+		data.value.start = string.match(properties, "start=(%S+)");
+		data.value.stop = string.match(properties, "stop=(%S+)");
+
+		data.value.font = string.match(properties, "font=(%S+)");
+
+		data.value.guifg = string.match(properties, "guifg=(%S+)");
+		data.value.guibg = string.match(properties, "guibg=(%S+)");
+		data.value.guisp = string.match(properties, "guisp=(%S+)");
+
+		data.value.blend = string.match(properties, "blend=(%d+)");
+
+		if string.match(properties, "cterm=(%S+)") then
+			data.value.cterm = vim.split(
+				string.match(properties, "cterm=(%S+)"),
+				",",
+				{ trimempty = true }
+			);
+		end
+
+		if string.match(properties, "gui=(%S+)") then
+			data.value.gui = vim.split(
+				string.match(properties, "gui=(%S+)"),
+				",",
+				{ trimempty = true }
+			);
+		end
+	end
+
+	return data.group_name ~= nil, data;
+
+	---|fE
+end
+
 return utils;
