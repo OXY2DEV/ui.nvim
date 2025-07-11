@@ -294,7 +294,7 @@ message.__add = function (kind, content, add_to_history)
 				pcall(message.__list, {
 					-- If the message is too long, it should be
 					-- added to history.
-					type = (_add_to_history or #lines > max_lines) and "normal" or "list",
+					type = _add_to_history and "normal" or "list",
 
 					kind = kind,
 					content = content,
@@ -383,7 +383,7 @@ message.__replace = function (kind, content, add_to_history)
 				pcall(message.__list, {
 					-- If the message is too long, it should be
 					-- added to history.
-					type = (_add_to_history or #lines > max_lines) and "normal" or "list",
+					type = _add_to_history and "normal" or "list",
 
 					kind = kind,
 					content = content,
