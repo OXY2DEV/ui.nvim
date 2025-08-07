@@ -1533,7 +1533,6 @@ spec.default = {
 
 				condition = function (_, lines)
 					local is_hl = utils.is_hl_line(lines[2] or "");
-					require("ui.log").print(is_hl, "Blah");
 					return lines[1] == "" and is_hl;
 				end,
 
