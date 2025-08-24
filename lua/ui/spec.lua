@@ -628,7 +628,7 @@ spec.default = {
 				---|fS
 
 				condition = function (state)
-					return string.match(state.prompt or "", "[%[%(].[%]%)]") ~= nil;
+					return string.match(state.prompt or "", "[%[%(].[%]%)]%w+") ~= nil;
 				end,
 
 				title = function (state)
