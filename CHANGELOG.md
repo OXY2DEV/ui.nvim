@@ -1,5 +1,36 @@
 # Changelog
 
+## [1.4.0](https://github.com/OXY2DEV/ui.nvim/compare/v1.3.0...v1.4.0) (2025-09-19)
+
+
+### Features
+
+* **cmdline:** Added proper syntax for `:!` ([519d999](https://github.com/OXY2DEV/ui.nvim/commit/519d999535f5074b4dd2613e792ac6deb571ebca))
+* **messages:** Added ability to view various hidden messages ([2344085](https://github.com/OXY2DEV/ui.nvim/commit/234408578f8009e2c3666bfe0d138881070d24a7)), closes [#31](https://github.com/OXY2DEV/ui.nvim/issues/31)
+* **messages:** Added option to disable `replace_last` fir notify & notify_once ([cc9a233](https://github.com/OXY2DEV/ui.nvim/commit/cc9a233283feaae032df6cdf527bc919e2e8b2d6)), closes [#29](https://github.com/OXY2DEV/ui.nvim/issues/29)
+* **messages:** Linked highlight groups now also show their active ([26fd5ba](https://github.com/OXY2DEV/ui.nvim/commit/26fd5ba1b8a7de38cafbd2dfb80b2fe55d1d4ceb))
+
+
+### Bug Fixes
+
+* **cmdline:** Cmdline is no longer scheduled outside of fast-event ([8feaebb](https://github.com/OXY2DEV/ui.nvim/commit/8feaebb564ccad60453c1e59d6c74dc8566400d1))
+* **cmdline:** Fixed a bug with cmfline not hiding after using `&`. ([7ae6202](https://github.com/OXY2DEV/ui.nvim/commit/7ae6202c299d190154ed73d672ec0ffa484c9ea6))
+* **core:** Fixed a bug with cmdline window not hiding after `:UI enable` ([22a4f5d](https://github.com/OXY2DEV/ui.nvim/commit/22a4f5d2f66e2b241438fc28dffa360dc8631e01))
+* **core:** Fixed a bug with confirm messages clearing the screen ([d4031a1](https://github.com/OXY2DEV/ui.nvim/commit/d4031a17dcd545e0f8a42447fb027a6417db3b6d))
+* **core:** Fixed a bug with the confirm window not showing the cmdline on Neovim start ([2002231](https://github.com/OXY2DEV/ui.nvim/commit/200223143342b6b3cdcbac256009faf7e342176e))
+* **message:** Fixed a bug with messages not appearing sometimes ([caeb545](https://github.com/OXY2DEV/ui.nvim/commit/caeb545d4bf609c9f77aae72bdcbb13caf8c4f1a))
+* **messages:** `ERROR` level notify messages now get correct hl ([a7ccb44](https://github.com/OXY2DEV/ui.nvim/commit/a7ccb449ef1e2655f487bd3f58da51f97f2f6d25))
+* **messages:** Added extra lua pattern for label-styled messages from plugins ([4e13fcb](https://github.com/OXY2DEV/ui.nvim/commit/4e13fcb0c4a1a03037bd3b0f4ac164366ed8c49d))
+* **messages:** Fixed a bug where message window gets folded due to `foldexpr` ([fcb6186](https://github.com/OXY2DEV/ui.nvim/commit/fcb61862e55e86917bfdacbd4344560e421a665c))
+* **messages:** Fixed a bug with certain messagses duplicating on redraw ([00a6f38](https://github.com/OXY2DEV/ui.nvim/commit/00a6f38a4050837b67cc252450a638760c9cc8a2))
+* **messages:** Fixed a bug with message window having incorrect height ([d5e1e35](https://github.com/OXY2DEV/ui.nvim/commit/d5e1e354cfc0188619176e02caed4c1dbd72f1ae))
+* **messages:** Fixed an issue with message window having incorrect height in specific cases ([39af5ca](https://github.com/OXY2DEV/ui.nvim/commit/39af5ca16e34cdb2be43ce942118630b481500a3))
+* **messages:** Fixed an issue with unnecessary redraws for messages ([8e2c1eb](https://github.com/OXY2DEV/ui.nvim/commit/8e2c1ebbf5d2602849bcb66125d1c98be3711cde))
+* **messages:** List window no longer has incorrect height ([901196b](https://github.com/OXY2DEV/ui.nvim/commit/901196b9a4b0c3c7e633f1692afa599317df2b7b))
+* **messages:** Made `keymap` confirmation message pattern more strict ([4df20c2](https://github.com/OXY2DEV/ui.nvim/commit/4df20c2d97c0cce381ef275f8cdacea262b817f3))
+* **messages:** Mismatched line count & extmark count no longer breaks messages ([cc3aa38](https://github.com/OXY2DEV/ui.nvim/commit/cc3aa387101bcf09ea056ca1e4b48ba3e474771a))
+* **spec:** Fixed inconsistency of message decorations ([c8656e3](https://github.com/OXY2DEV/ui.nvim/commit/c8656e3abda9b9b0a8b0f03e8b5d33ebb82d5edd))
+
 ## [1.3.0](https://github.com/OXY2DEV/ui.nvim/compare/v1.2.0...v1.3.0) (2025-05-17)
 
 
