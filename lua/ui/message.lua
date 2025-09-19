@@ -914,7 +914,7 @@ message.__render = function ()
 	utils.set("w", message.msg_window, "linebreak", true);
 	utils.set("w", message.msg_window, "breakindent", true);
 
-	vim.api.nvim__redraw({
+	utils.redraw({
 		flush = true,
 		-- BUG, Visual artifacts are shown if the statuscolumn
 		-- is updated repeatedly.
@@ -1255,12 +1255,13 @@ message.__history = function (entries)
 	utils.set("w", message.history_window, "wrap", true);
 	utils.set("w", message.history_window, "linebreak", true);
 
-	vim.api.nvim__redraw({
+	utils.redraw({
 		flush = true,
 
 		win = message.history_window,
 		statuscolumn = true,
 	});
+
 	vim.g.__ui_history = false;
 
 	---|fE
@@ -1352,7 +1353,7 @@ message.__showcmd = function (content)
 		1, math.floor(window_config.width / 2)
 	});
 
-	vim.api.nvim__redraw({
+	utils.redraw({
 		flush = true,
 		win = message.show_window
 	});

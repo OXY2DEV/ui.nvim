@@ -651,4 +651,14 @@ utils.is_hl_line = function (line)
 	---|fE
 end
 
+utils.redraw = function (config)
+	local mode = vim.api.nvim_get_mode().mode;
+
+	if mode ~= "c" and mode ~= "no" then
+		return ;
+	end
+
+	pcall(vim.api.nvim__redraw, config or {});
+end
+
 return utils;
