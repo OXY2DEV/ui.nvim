@@ -833,7 +833,10 @@ spec.default = {
 				decorations = function (msg)
 					local config = {
 						icon = {
-							{ "▍", "UIMessageDefault" }
+							{ "▍󰍡 ", "UIMessageDefaultSign" }
+						},
+						padding = {
+							{ "▍  ", "UIMessageDefaultSign" }
 						}
 					};
 
@@ -870,8 +873,8 @@ spec.default = {
 							};
 							config.line_hl_group = "UIMessageInfo";
 						end
-					elseif string.match(content[2] or "", " .+ %w+%.nvim ") or string.match(content[2] or "", " %w+%.%w+ ") then
-						-- Error message format used by my plugins & blink.cmp
+					elseif string.match(content[2] or "", " .+ %w+%.nvim ") or string.match(content[2] or "", " [%w/\\]+%.%w+ ") then
+						-- Error message format used by *plugins*.
 						-- e plugin.nvim : Some message. 
 						return {};
 					end
@@ -1152,10 +1155,10 @@ spec.default = {
 
 				decorations = {
 					icon = {
-						{ "▍", "UIMessageErrorSign" }
+						{ "▍ ", "UIMessageErrorSign" }
 					},
 					padding = {
-						{ "▍", "UIMessageErrorSign" }
+						{ "▍ ", "UIMessageErrorSign" }
 					},
 
 					line_hl_group = "UIMessageError"
@@ -1394,7 +1397,7 @@ spec.default = {
 						{ "▍󰡠 ", "UICmdlineSubstituteIcon" }
 					},
 					padding = {
-						{ "▍", "UICmdlineSubstituteIcon" }
+						{ "▍  ", "UICmdlineSubstituteIcon" }
 					},
 
 					line_hl_group = "UICmdlineSubstitute"
