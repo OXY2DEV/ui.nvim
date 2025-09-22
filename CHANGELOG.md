@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.4.1](https://github.com/OXY2DEV/ui.nvim/compare/v1.4.0...v1.4.1) (2025-09-22)
+
+
+### Bug Fixes
+
+* **messages:** `showcmd` messages redraw the screen again ([a3ff145](https://github.com/OXY2DEV/ui.nvim/commit/a3ff145f1500d81b1bef9d31d91cc58e14190804))
+
 ## [1.4.0](https://github.com/OXY2DEV/ui.nvim/compare/v1.3.0...v1.4.0) (2025-09-19)
 
 
