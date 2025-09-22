@@ -1353,7 +1353,8 @@ message.__showcmd = function (content)
 		1, math.floor(window_config.width / 2)
 	});
 
-	utils.redraw({
+	-- `Showcmd` messages should always be updated!
+	vim.api.nvim__redraw({
 		flush = true,
 		win = message.show_window
 	});
