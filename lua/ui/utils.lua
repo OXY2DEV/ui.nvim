@@ -651,14 +651,22 @@ utils.is_hl_line = function (line)
 	---|fE
 end
 
-utils.redraw = function (config)
+--[[ Wrapper for `nvim__redraw()`. ]]
+---@param config vim.api.keyset.redraw
+---@param opts? { ignore: boolean }
+utils.redraw = function (config, opts)
+	---|fS
+
+	opts = opts or {};
 	local mode = vim.api.nvim_get_mode().mode;
 
-	if mode ~= "c" and mode ~= "no" then
+	if opts.ignore ~= true and ( mode ~= "c" and mode ~= "no" ) then
 		return ;
 	end
 
 	pcall(vim.api.nvim__redraw, config or {});
+
+	---|fE
 end
 
 return utils;

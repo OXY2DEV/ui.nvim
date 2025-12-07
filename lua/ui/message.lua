@@ -916,12 +916,15 @@ message.__render = function ()
 
 	utils.redraw({
 		flush = true,
-		-- BUG, Visual artifacts are shown if the statuscolumn
-		-- is updated repeatedly.
-		-- Solution: Update when the decoration size changes.
-		statuscolumn = last_decor_size ~= decor_size,
+		statuscolumn = true,
 
 		win = message.msg_window
+	}, {
+		--[[
+			BUG: Visual artifacts are shown if the statuscolumn size is updated repeatedly.
+			Solution: Update only when the decoration size changes.
+		]]
+		ignore = last_decor_size ~= decor_size
 	});
 
 	---|fE
