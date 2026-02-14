@@ -63,13 +63,13 @@ message.statuscolumn = function ()
 	for _, entry in ipairs(win == message.history_window and (message.history_decorations or {}) or (message.decorations or {})) do
 		if lnum >= entry.from and lnum <= entry.to then
 			if lnum == entry.from and vim.v.virtnum == 0 then
-				return utils.to_statuscolumn(entry.icon);
+				return "%=" .. utils.to_statuscolumn(entry.icon);
 			elseif lnum == entry.to and vim.v.virtnum == 0 then
-				return utils.to_statuscolumn(
+				return "%=" .. utils.to_statuscolumn(
 					entry.tail or entry.padding or entry.icon
 				);
 			else
-				return utils.to_statuscolumn(
+				return "%=" .. utils.to_statuscolumn(
 					entry.padding or entry.icon
 				);
 			end
@@ -1253,6 +1253,9 @@ message.__history = function (entries)
 
 	vim.api.nvim_set_current_win(message.history_window);
 
+	utils.set("w", message.history_window, "number", true);
+	utils.set("w", message.history_window, "relativenumber", true);
+	utils.set("w", message.history_window, "numberwidth", 1);
 	utils.set("w", message.history_window, "statuscolumn", "%!v:lua.__ui_statuscolumn()");
 
 	utils.set("w", message.history_window, "wrap", true);
@@ -1340,7 +1343,7 @@ message.__showcmd = function (content)
 	if message.show_window and vim.api.nvim_win_is_valid(message.show_window) then
 		vim.api.nvim_win_set_config(message.show_window, window_config);
 	else
-		message.show_window = vim.api.nvim_open_win(message.show_buffer, false, window_config);
+		message.show_window = utils.open_win(message.show_buffer, false, window_config);
 		vim.api.nvim_win_set_var(message.show_window, "ui_window", true);
 
 		--- Always horizontally center the cursor.
