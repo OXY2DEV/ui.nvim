@@ -82,7 +82,7 @@ cmdline.__prepare = function ()
 	-- configuration. That's why we open a hidden
 	-- window first.
 	if not cmdline.window or not vim.api.nvim_win_is_valid(cmdline.window) then
-		cmdline.window = vim.api.nvim_open_win(cmdline.buffer, false, {
+		cmdline.window = utils.open_win(cmdline.buffer, false, {
 			relative = "editor",
 
 			row = 0,

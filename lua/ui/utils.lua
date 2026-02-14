@@ -669,4 +669,15 @@ utils.redraw = function (config, opts)
 	---|fE
 end
 
+---@param buffer integer Source buffer.
+---@param enter boolean Should we enter the new window?
+---@param config vim.api.keyset.win_config Window configuration.
+---@return integer created_window
+utils.open_win = function (buffer, enter, config)
+	local win = vim.api.nvim_open_win(buffer, enter, config);
+	utils.set("w", win, "eventignorewin", "OptionSet");
+
+	return win;
+end
+
 return utils;

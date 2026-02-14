@@ -49,7 +49,7 @@ popup.__prepare = function ()
 	-- configuration. That's why we open a hidden
 	-- window first.
 	if not popup.window or vim.api.nvim_win_is_valid(popup.window) == false then
-		popup.window = vim.api.nvim_open_win(popup.buffer, false, {
+		popup.window = utils.open_win(popup.buffer, false, {
 			relative = "editor",
 
 			row = 0,
@@ -82,7 +82,7 @@ popup.__prepare = function ()
 	-- configuration. That's why we open a hidden
 	-- window first.
 	if not popup.info_window or vim.api.nvim_win_is_valid(popup.info_window) == false then
-		popup.info_window = vim.api.nvim_open_win(popup.info_buffer, false, {
+		popup.info_window = utils.open_win(popup.info_buffer, false, {
 			relative = "editor",
 
 			row = 0,

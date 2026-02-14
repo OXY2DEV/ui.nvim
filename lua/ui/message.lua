@@ -156,7 +156,7 @@ message.__prepare = function ()
 	end
 
 	if not message.msg_window or vim.api.nvim_win_is_valid(message.msg_window) == false then
-		message.msg_window = vim.api.nvim_open_win(message.msg_buffer, false, win_config);
+		message.msg_window = utils.open_win(message.msg_buffer, false, win_config);
 		vim.api.nvim_win_set_var(message.msg_window, "ui_window", true);
 
 		utils.set("w", message.msg_window, "foldmethod", "manual");
@@ -190,7 +190,7 @@ message.__prepare = function ()
 	end
 
 	if not message.show_window or vim.api.nvim_win_is_valid(message.show_window) == false then
-		message.show_window = vim.api.nvim_open_win(message.show_buffer, false, win_config);
+		message.show_window = utils.open_win(message.show_buffer, false, win_config);
 		vim.api.nvim_win_set_var(message.show_window, "ui_window", true);
 
 		utils.set("w", message.show_window, "foldmethod", "manual");
@@ -487,7 +487,7 @@ message.__confirm = function (obj)
 		if message.confirm_window and vim.api.nvim_win_is_valid(message.confirm_window) then
 			vim.api.nvim_win_set_config(message.confirm_window, window_config);
 		else
-			message.confirm_window = vim.api.nvim_open_win(message.confirm_buffer, false, window_config);
+			message.confirm_window = utils.open_win(message.confirm_buffer, false, window_config);
 			vim.api.nvim_win_set_var(message.confirm_window, "ui_window", true);
 		end
 
@@ -661,7 +661,7 @@ message.__list = function (obj)
 		if message.list_window and vim.api.nvim_win_is_valid(message.list_window) then
 			vim.api.nvim_win_set_config(message.list_window, window_config);
 		else
-			message.list_window = vim.api.nvim_open_win(message.list_buffer, false, window_config);
+			message.list_window = utils.open_win(message.list_buffer, false, window_config);
 			vim.api.nvim_win_set_var(message.list_window, "ui_window", true);
 
 			vim.api.nvim_create_autocmd("WinClosed", {
@@ -903,7 +903,7 @@ message.__render = function ()
 	if message.msg_window and vim.api.nvim_win_is_valid(message.msg_window) then
 		vim.api.nvim_win_set_config(message.msg_window, window_config);
 	else
-		message.msg_window = vim.api.nvim_open_win(message.msg_buffer, false, window_config);
+		message.msg_window = utils.open_win(message.msg_buffer, false, window_config);
 		vim.api.nvim_win_set_var(message.msg_window, "ui_window", true);
 	end
 
