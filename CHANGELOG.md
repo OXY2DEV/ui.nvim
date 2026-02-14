@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.4.2](https://github.com/OXY2DEV/ui.nvim/compare/v1.4.1...v1.4.2) (2026-02-14)
+
+
+### Bug Fixes
+
+* **messages:** Right align icons ([3462383](https://github.com/OXY2DEV/ui.nvim/commit/3462383a4d0a3f92ee35694d0c3c8bbb4faf7285))
+* **messages:** Set correct `numberwidth` & other statuscolumn options ([3462383](https://github.com/OXY2DEV/ui.nvim/commit/3462383a4d0a3f92ee35694d0c3c8bbb4faf7285))
+
 ## [1.4.1](https://github.com/OXY2DEV/ui.nvim/compare/v1.4.0...v1.4.1) (2025-12-07)
 
 
