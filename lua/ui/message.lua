@@ -213,6 +213,42 @@ end
 
 ------------------------------------------------------------------------------
 
+message.statuscolumn = function ()
+	---|fS
+
+	local win = vim.g.statusline_winid;
+
+	if win ~= message.data.window and win ~= message.data.history_window then
+		return "";
+	end
+
+	local row = vim.v.lnum - 1;
+
+	for _, item in ipairs(message.visible_decorations) do
+		if row >= item.from and row <= item.to then
+			if vim.v.virtnum == 0 then
+				if row == item.from then
+					return "%=" .. utils.to_statuscolumn(item.icon);
+				elseif row == item.to then
+					return "%=" .. utils.to_statuscolumn(item.tail or item.padding or item.icon);
+				else
+					return "%=" .. utils.to_statuscolumn(item.padding or item.icon);
+				end
+			else
+				return "%=";
+			end
+
+			break;
+		end
+	end
+
+	return "";
+
+	---|fE
+end
+
+_G.ui_statuscolumn = message.statuscolumn;
+
 message.set_buf_win = function (buf, win)
 	---@type vim.api.keyset.win_config
 	local window_opts = {
@@ -246,6 +282,8 @@ message.prepare = function ()
 	message.set_buf_win("list_buffer", "list_window");
 	message.set_buf_win("history_buffer", "history_window");
 	message.set_buf_win("showmode_buffer", "showmode_window");
+
+	utils.set("w", message.data.window, "statuscolumn", "%!v:lua.ui_statuscolumn()");
 end
 
 message.apply_extmarks = function (src, buffer, extmarks)
@@ -281,10 +319,17 @@ message.apply_extmarks = function (src, buffer, extmarks)
 	---|fE
 end
 
+---@return integer
 message.apply_msg_decorations = function ()
 	---|fS
 
+	local decor_width = 0;
+
 	for _, item in ipairs(message.visible_decorations) do
+		if item.icon then
+			decor_width = math.max(decor_width, utils.virt_len(item.icon));
+		end
+
 		if item.line_hl_group then
 			pcall(vim.api.nvim_buf_set_extmark, message.data.buffer, message.data.namespace, item.from, 0, {
 				end_row = item.to,
@@ -292,6 +337,8 @@ message.apply_msg_decorations = function ()
 			});
 		end
 	end
+
+	return decor_width;
 
 	---|fE
 end
@@ -352,7 +399,7 @@ message.render = function ()
 	vim.api.nvim_buf_set_lines(message.data.buffer, 0, -1, false, lines);
 
 	message.apply_extmarks("HERE", message.data.buffer, extmarks);
-	message.apply_msg_decorations();
+	local decor_size = message.apply_msg_decorations();
 
 	local width = math.min(
 		math.floor(vim.o.columns * 0.5),
@@ -367,7 +414,7 @@ message.render = function ()
 		row = vim.o.lines - 1,
 		col = vim.o.columns,
 
-		width = width,
+		width = width + decor_size,
 		height = height,
 
 		border = "none",
