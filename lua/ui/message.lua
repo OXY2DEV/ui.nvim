@@ -56,13 +56,16 @@ message.visible = {};
 message.visible_special = {};
 
 ---@type ui.message.decorations[]
+message.visible_decorations = {};
+
+---@type ui.message.decorations[]
 message.statuscolumn_decorations = {}
 
 message.timer = function (id, duration, interval)
 	local timer = vim.uv.new_timer();
 
 	if timer then
-		timer:start(duration, interval, vim.schedule_wrap(function ()
+		timer:start(duration or 5000, interval or 0, vim.schedule_wrap(function ()
 			message.free(id);
 		end));
 	end
@@ -110,10 +113,79 @@ end
 
 ------------------------------------------------------------------------------
 
+message.msg_list = function (kind, content, replace_last, history, append, id, trigger)
+	---|fS
+
+	local msg = message.new(kind, content, replace_last, history, append, id, trigger);
+	message.history[id] = msg;
+	message.prepare();
+
+	vim.api.nvim_buf_set_keymap(message.data.list_buffer, "n", "q", "", {
+		callback = function ()
+			pcall(vim.api.nvim_win_close, message.data.list_window, true);
+		end
+	});
+
+	local lines, extmarks = utils.process_content(content);
+	local style = spec.get_listmsg_style(msg, lines, extmarks);
+
+	log.print(style, "HERE");
+
+	if style.modifier then
+		lines = style.modifier.lines or lines;
+		extmarks = style.modifier.extmarks or extmarks;
+	end
+
+	vim.api.nvim_buf_clear_namespace(message.data.list_buffer, message.data.namespace, 0, -1);
+	vim.api.nvim_buf_set_lines(message.data.list_buffer, 0, -1, false, lines);
+
+	local width = math.min(
+		math.floor(vim.o.columns * 0.5),
+		utils.max_len(lines)
+	);
+	local height = utils.wrapped_height(lines, width);
+
+	local window_opts = vim.tbl_extend("force", spec.config.message.list_winconfig, {
+		relative = "editor",
+
+		row = style.row or math.ceil((vim.o.lines - height) / 2),
+		col = style.col or math.ceil((vim.o.columns - width) / 2),
+
+		width = width,
+		height = height,
+
+		border = "none",
+
+		zindex = 200,
+		hide = false,
+	});
+
+	vim.api.nvim_win_set_config(message.data.list_window, window_opts);
+	vim.api.nvim_set_current_win(message.data.list_window);
+
+	utils.redraw({
+		flush = true,
+		statuscolumn = true,
+
+		win = message.data.list_window
+	}, {
+		ignore = false,
+	});
+
+	---|fE
+end
+
 message.msg_show = function (kind, content, replace_last, history, append, id, trigger)
 	vim.schedule(function ()
+		local is_list = spec.is_list(kind, content, history);
 		local msg = message.new(kind, content, replace_last, history, append, id, trigger);
 		local lines = utils.to_lines(content);
+
+		if is_list or #lines > (spec.config.message.max_lines or math.floor(vim.o.lines * 0.5)) then
+			message.msg_list(kind, content, replace_last, history, append, id, trigger);
+			return;
+		end
+
 		local style = spec.get_msg_style(msg, lines, {}) or {};
 
 		-- NOTE: Make sure to reset the freeing timer.
@@ -176,10 +248,59 @@ message.prepare = function ()
 	message.set_buf_win("showmode_buffer", "showmode_window");
 end
 
+message.apply_extmarks = function (src, buffer, extmarks)
+	---|fS
+
+	for l, line in ipairs(extmarks) do
+		for _, item in ipairs(line) do
+			if item[3] == "" then
+				goto continue;
+			end
+
+			log.assert(
+				"ui/message.lua → " .. src,
+				pcall(
+					vim.api.nvim_buf_set_extmark,
+					buffer,
+					message.data.namespace,
+
+					l - 1,
+					item[1],
+
+					{
+						end_col = item[2],
+						hl_group = item[3],
+					}
+				)
+			);
+
+			::continue::
+		end
+	end
+
+	---|fE
+end
+
+message.apply_msg_decorations = function ()
+	---|fS
+
+	for _, item in ipairs(message.visible_decorations) do
+		if item.line_hl_group then
+			pcall(vim.api.nvim_buf_set_extmark, message.data.buffer, message.data.namespace, item.from, 0, {
+				end_row = item.to,
+				line_hl_group = item.line_hl_group,
+			});
+		end
+	end
+
+	---|fE
+end
+
 message.render = function ()
 	---|fS
 
 	message.prepare();
+	message.visible_decorations = {};
 
 	local lines = {};
 	local extmarks = {};
@@ -195,35 +316,33 @@ message.render = function ()
 
 	table.sort(msg_orders);
 
-	for _, msg_order in ipairs(msg_orders) do
-		local msg = message.visible[msg_order];
-		local m_lines, m_exts = utils.process_content(msg.content);
+	local function handle_msg_orders (orders, msgs)
+		for _, msg_order in ipairs(orders) do
+			local msg = msgs[msg_order];
+			local m_lines, m_exts = utils.process_content(msg.content);
 
-		local style = spec.get_msg_style(msg, m_lines, m_exts) or {};
-		if style.modifier then
-			m_lines = style.modifier.lines or m_lines;
-			m_exts = style.modifier.extmarks or m_exts;
+			local style = spec.get_msg_style(msg, m_lines, m_exts) or {};
+			if style.modifier then
+				m_lines = style.modifier.lines or m_lines;
+				m_exts = style.modifier.extmarks or m_exts;
+			end
+
+			if style.decorations then
+				table.insert(message.visible_decorations, vim.tbl_extend("force", style.decorations, {
+					from = #lines,
+					to = (#lines + #m_lines) - 1,
+				}));
+			end
+
+			lines = vim.list_extend(lines, m_lines);
+			extmarks = vim.list_extend(extmarks, m_exts);
 		end
-
-		lines = vim.list_extend(lines, m_lines);
-		extmarks = vim.list_extend(extmarks, m_exts);
 	end
+
+	handle_msg_orders(msg_orders, message.visible)
 
 	table.sort(sp_msg_orders);
-
-	for _, msg_order in ipairs(sp_msg_orders) do
-		local msg = message.visible_special[msg_order];
-		local m_lines, m_exts = utils.process_content(msg.content);
-
-		local style = spec.get_msg_style(msg, m_lines, m_exts) or {};
-		if style.modifier then
-			m_lines = style.modifier.lines or m_lines;
-			m_exts = style.modifier.extmarks or m_exts;
-		end
-
-		lines = vim.list_extend(lines, m_lines);
-		extmarks = vim.list_extend(extmarks, m_exts);
-	end
+	handle_msg_orders(sp_msg_orders, message.visible_special)
 
 	while lines[#lines] == "" do
 		table.remove(lines);
@@ -231,6 +350,9 @@ message.render = function ()
 
 	vim.api.nvim_buf_clear_namespace(message.data.buffer, message.data.namespace, 0, -1);
 	vim.api.nvim_buf_set_lines(message.data.buffer, 0, -1, false, lines);
+
+	message.apply_extmarks("HERE", message.data.buffer, extmarks);
+	message.apply_msg_decorations();
 
 	local width = math.min(
 		math.floor(vim.o.columns * 0.5),
