@@ -1280,7 +1280,7 @@ spec.default = {
 				---|fS
 
 				condition = function (msg)
-					return msg.kind == "bufwrite";
+					return msg.id == "bufwrite";
 				end,
 
 				modifier = function (_, lines)
