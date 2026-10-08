@@ -113,6 +113,126 @@ end
 
 ------------------------------------------------------------------------------
 
+local movement_keys = {
+	vim.api.nvim_replace_termcodes("<left>", true, true, true),
+	vim.api.nvim_replace_termcodes("<down>", true, true, true),
+	vim.api.nvim_replace_termcodes("<up>", true, true, true),
+	vim.api.nvim_replace_termcodes("<right>", true, true, true),
+
+	vim.api.nvim_replace_termcodes("h", true, true, true),
+	vim.api.nvim_replace_termcodes("j", true, true, true),
+	vim.api.nvim_replace_termcodes("k", true, true, true),
+	vim.api.nvim_replace_termcodes("l", true, true, true),
+};
+
+message.confirm_movement = function (key)
+	---|fS
+
+	local success, pos = pcall(vim.api.nvim_win_get_cursor, message.data.confirm_window);
+	if not success then return; end
+
+	if key == movement_keys[1] or key == movement_keys[5] then
+		pos[1] = math.max(0, pos[1] - 1);
+	elseif key == movement_keys[2] or key == movement_keys[6] then
+		pos[2] = math.max(0, pos[2] - 1);
+	elseif key == movement_keys[3] or key == movement_keys[7] then
+		pos[2] = pos[2] + 1;
+	elseif key == movement_keys[4] or key == movement_keys[8] then
+		pos[1] = pos[1] + 1;
+	end
+
+	pcall(vim.api.nvim_win_set_cursor, message.data.confirm_window, pos);
+
+	---|fE
+end
+
+---@param kind ui.message.kind
+---@param content ui.message.fragment[]
+---@param replace_last boolean
+---@param history boolean
+---@param append boolean
+---@param id string
+---@param trigger string
+message.msg_confirm = function (kind, content, replace_last, history, append, id, trigger)
+	---|fS
+
+	local msg = message.new(kind, content, replace_last, history, append, id, trigger);
+	vim.g.__ui_confirm_msg = msg;
+
+	message.history[id] = msg;
+	message.prepare();
+
+	local lines, extmarks = utils.process_content(content);
+	local style = spec.get_confirm_style(msg, lines, extmarks);
+
+	if style.modifier then
+		lines = style.modifier.lines or lines;
+		extmarks = style.modifier.extmarks or extmarks;
+	end
+
+	vim.api.nvim_buf_clear_namespace(message.data.confirm_buffer, message.data.namespace, 0, -1);
+	vim.api.nvim_buf_set_lines(message.data.confirm_buffer, 0, -1, false, lines);
+	message.apply_extmarks("msg_confirm", message.data.confirm_buffer, extmarks);
+
+	local width = math.min(
+		math.floor(vim.o.columns * 0.5),
+		utils.max_len(lines)
+	);
+	local height = utils.wrapped_height(lines, width);
+
+	local window_opts = vim.tbl_extend("force", spec.config.message.confirm_winconfig or {}, {
+		relative = "editor",
+
+		row = style.row or math.ceil((vim.o.lines - height) / 2),
+		col = style.col or math.ceil((vim.o.columns - width) / 2),
+
+		width = width,
+		height = height,
+
+		border = "none",
+
+		zindex = 200,
+		hide = false,
+	});
+
+	vim.api.nvim_win_set_config(message.data.confirm_window, window_opts);
+	vim.api.nvim_set_current_win(message.data.confirm_window);
+
+	utils.redraw({
+		flush = true,
+		statuscolumn = true,
+
+		win = message.data.confirm_window
+	}, {
+		ignore = false,
+	});
+
+	vim.on_key(function (key)
+		if not vim.list_contains(vim.g.__confirm_keys or {}, string.lower(key)) then
+			if vim.list_contains(movement_keys, key) then
+				pcall(message.confirm_movement, key);
+				pcall(vim.cmd, "mode");
+			end
+
+			return;
+		end
+
+		pcall(vim.api.nvim_win_close, message.data.confirm_window, true);
+		vim.on_key(nil, message.data.namespace);
+
+		vim.g.__ui_confirm_msg = nil;
+	end, message.data.namespace)
+
+	---|fE
+end
+
+---@param kind ui.message.kind
+---@param content ui.message.fragment[]
+---@param replace_last boolean
+---@param history boolean
+---@param append boolean
+---@param id string
+---@param trigger string
 message.msg_list = function (kind, content, replace_last, history, append, id, trigger)
 	---|fS
 
@@ -129,8 +249,6 @@ message.msg_list = function (kind, content, replace_last, history, append, id, t
 	local lines, extmarks = utils.process_content(content);
 	local style = spec.get_listmsg_style(msg, lines, extmarks);
 
-	log.print(style, "HERE");
-
 	if style.modifier then
 		lines = style.modifier.lines or lines;
 		extmarks = style.modifier.extmarks or extmarks;
@@ -138,6 +256,7 @@ message.msg_list = function (kind, content, replace_last, history, append, id, t
 
 	vim.api.nvim_buf_clear_namespace(message.data.list_buffer, message.data.namespace, 0, -1);
 	vim.api.nvim_buf_set_lines(message.data.list_buffer, 0, -1, false, lines);
+	message.apply_extmarks("msg_list", message.data.list_buffer, extmarks);
 
 	local width = math.min(
 		math.floor(vim.o.columns * 0.5),
@@ -145,7 +264,7 @@ message.msg_list = function (kind, content, replace_last, history, append, id, t
 	);
 	local height = utils.wrapped_height(lines, width);
 
-	local window_opts = vim.tbl_extend("force", spec.config.message.list_winconfig, {
+	local window_opts = vim.tbl_extend("force", spec.config.message.list_winconfig or {}, {
 		relative = "editor",
 
 		row = style.row or math.ceil((vim.o.lines - height) / 2),
@@ -175,8 +294,20 @@ message.msg_list = function (kind, content, replace_last, history, append, id, t
 	---|fE
 end
 
+---@param kind ui.message.kind
+---@param content ui.message.fragment[]
+---@param replace_last boolean
+---@param history boolean
+---@param append boolean
+---@param id string
+---@param trigger string
 message.msg_show = function (kind, content, replace_last, history, append, id, trigger)
 	vim.schedule(function ()
+		if kind == "confirm" then
+			message.msg_confirm(kind, content, replace_last, history, append, id, trigger);
+			return;
+		end
+
 		local is_list = spec.is_list(kind, content, history);
 		local msg = message.new(kind, content, replace_last, history, append, id, trigger);
 		local lines = utils.to_lines(content);
@@ -407,7 +538,7 @@ message.render = function ()
 	);
 	local height = utils.wrapped_height(lines, width);
 
-	local window_opts = vim.tbl_extend("force", spec.config.message.message_winconfig, {
+	local window_opts = vim.tbl_extend("force", spec.config.message.message_winconfig or {}, {
 		relative = "editor",
 		anchor = "SE",
 
