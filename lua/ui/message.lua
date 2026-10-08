@@ -390,59 +390,55 @@ end
 message.msg_showcmd = function (content)
 	---|fS
 
-	vim.schedule(function ()
-		if #content == 0 then
-			message.showmode_hide();
-			return;
-		end
+	if #content == 0 then
+		message.showmode_hide();
+		return;
+	end
 
-		message.prepare();
+	message.prepare();
 
-		local lines, extmarks = utils.process_content(content);
-		local modifier = utils.eval(spec.config.message.showcmd.modifier, content, lines, extmarks);
+	local lines, extmarks = utils.process_content(content);
+	local modifier = utils.eval(spec.config.message.showcmd.modifier, content, lines, extmarks);
 
-		if modifier then
-			lines = modifier.lines or lines;
-			extmarks = modifier.extmarks or extmarks;
-		end
+	if modifier then
+		lines = modifier.lines or lines;
+		extmarks = modifier.extmarks or extmarks;
+	end
 
-		vim.api.nvim_buf_clear_namespace(message.data.showmode_buffer, message.data.namespace, 0, -1);
-		vim.api.nvim_buf_set_lines(message.data.showmode_buffer, 0, -1, false, lines);
-		message.apply_extmarks("msg_list", message.data.showmode_buffer, extmarks);
+	vim.api.nvim_buf_clear_namespace(message.data.showmode_buffer, message.data.namespace, 0, -1);
+	vim.api.nvim_buf_set_lines(message.data.showmode_buffer, 0, -1, false, lines);
+	message.apply_extmarks("msg_list", message.data.showmode_buffer, extmarks);
 
-		local width = utils.max_len(lines);
-		local height = 1;
+	local width = utils.max_len(lines);
+	local height = 1;
 
-		---@type vim.api.keyset.win_config
-		local window_opts = {
-			relative = "editor",
-			anchor = "SW",
+	---@type vim.api.keyset.win_config
+	local window_opts = {
+		relative = "editor",
+		anchor = "SW",
 
-			row = vim.o.lines - (1 + message.cmdline_offset()),
-			col = 0,
+		row = vim.o.lines - (1 + message.cmdline_offset()),
+		col = 0,
 
-			width = width,
-			height = height,
+		width = width,
+		height = height,
 
-			border = "none",
+		border = "none",
 
-			zindex = 200,
-			hide = false,
-		};
+		zindex = 200,
+		hide = false,
+	};
 
-		vim.api.nvim_win_set_config(message.data.showmode_window, window_opts);
-		utils.set("w", message.data.showmode_window, "sidescrolloff", 999)
-		pcall(vim.api.nvim_win_set_cursor, message.data.showmode_window, { 0, width })
+	vim.api.nvim_win_set_config(message.data.showmode_window, window_opts);
+	utils.set("w", message.data.showmode_window, "sidescrolloff", 999)
+	pcall(vim.api.nvim_win_set_cursor, message.data.showmode_window, { 0, width })
 
-		utils.redraw({
-			flush = true,
-			statuscolumn = true,
-
-			win = message.data.showmode_window
-		}, {
-			ignore = false,
-		});
-	end);
+	utils.redraw({
+		flush = true,
+		win = message.data.showmode_window
+	}, {
+		ignore = false,
+	});
 
 	---|fE
 end
