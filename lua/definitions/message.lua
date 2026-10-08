@@ -177,7 +177,7 @@
 
 ---@class ui.message.entry A message entry.
 ---
----@field id string
+---@field id string | integer
 ---@field type? ui.message.type
 ---
 ---@field kind ui.message.kind

@@ -1,5 +1,4 @@
---- Custom message for
---- Neovim.
+--- Custom message for Neovim.
 local message = {};
 
 local log = require("ui.log");
@@ -61,7 +60,12 @@ message.visible_decorations = {};
 ---@type ui.message.decorations[]
 message.history_decorations = {}
 
+---@param id string | integer Item id to remove.
+---@param duration? integer Duration(in ms) until activation.
+---@param interval? integer Delay between repeats(`nil` disables repeating).
 message.timer = function(id, duration, interval)
+	---|fS
+
 	local timer = vim.uv.new_timer();
 
 	if timer then
@@ -71,9 +75,14 @@ message.timer = function(id, duration, interval)
 	end
 
 	return timer;
+
+	---|fE
 end
 
+---@param id string | integer Item `id` to free.
 message.free = function(id)
+	---|fS
+
 	if type(id) == "string" then
 		message.visible_special[id] = nil;
 	else
@@ -86,17 +95,19 @@ message.free = function(id)
 			pcall(message.render)
 		);
 	end);
+
+	---|fE
 end
 
 ---@param kind ui.message.kind
 ---@param content ui.message.fragment[]
 ---@param replace_last boolean
 ---@param history boolean
----@param _append boolean
----@param id string
----@param _trigger string
+---@param id string | integer
 ---@return ui.message.entry
-message.new = function(kind, content, replace_last, history, _append, id, _trigger)
+message.new = function(kind, content, replace_last, history, _, id, _)
+	---|fS
+
 	return {
 		id = id,
 		kind = kind,
@@ -109,6 +120,8 @@ message.new = function(kind, content, replace_last, history, _append, id, _trigg
 
 		timer = nil,
 	} --[[@as ui.message.entry]];
+
+	---|fE
 end
 
 ------------------------------------------------------------------------------
@@ -125,6 +138,7 @@ local movement_keys = {
 	vim.api.nvim_replace_termcodes("l", true, true, true),
 };
 
+---@param key string Key to handle.
 message.confirm_movement = function(key)
 	---|fS
 
@@ -151,7 +165,7 @@ end
 ---@param replace_last boolean
 ---@param history boolean
 ---@param append boolean
----@param id string
+---@param id string | integer
 ---@param trigger string
 message.msg_confirm = function(kind, content, replace_last, history, append, id, trigger)
 	---|fS
@@ -211,7 +225,7 @@ message.msg_confirm = function(kind, content, replace_last, history, append, id,
 		if not vim.list_contains(vim.g.__confirm_keys or {}, string.lower(key)) then
 			if vim.list_contains(movement_keys, key) then
 				pcall(message.confirm_movement, key);
-				pcall(vim.cmd, "mode");
+				pcall(vim.cmd, "mode"); ---@diagnostic disable-line
 			end
 
 			return;
@@ -231,7 +245,7 @@ end
 ---@param replace_last boolean
 ---@param history boolean
 ---@param append boolean
----@param id string
+---@param id string | integer
 ---@param trigger string
 message.msg_list = function(kind, content, replace_last, history, append, id, trigger)
 	---|fS
@@ -299,9 +313,11 @@ end
 ---@param replace_last boolean
 ---@param history boolean
 ---@param append boolean
----@param id string
+---@param id string | integer
 ---@param trigger string
 message.msg_show = function(kind, content, replace_last, history, append, id, trigger)
+	---|fS
+
 	vim.schedule(function()
 		if kind == "confirm" then
 			message.msg_confirm(kind, content, replace_last, history, append, id, trigger);
@@ -339,12 +355,16 @@ message.msg_show = function(kind, content, replace_last, history, append, id, tr
 			"ui/message.lua → add_render",
 			pcall(message.render)
 		);
-	end)
+	end);
+
+	---|fE
 end
 
 local showcmd_hide_timer = vim.uv.new_timer();
 
 message.showcmd_hide = function()
+	---|fS
+
 	if not showcmd_hide_timer then
 		showcmd_hide_timer = vim.uv.new_timer();
 	end
@@ -356,6 +376,8 @@ message.showcmd_hide = function()
 			pcall(vim.api.nvim_buf_set_lines, message.data.showcmd_buffer, 0, -1, false, {})
 		end));
 	end
+
+	---|fE
 end
 
 message.showcmd_resize = function()
@@ -400,6 +422,7 @@ message.showcmd_resize = function()
 	---|fE
 end
 
+---@param content ui.message.fragment[]
 message.msg_showcmd = function(content)
 	---|fS
 
@@ -443,7 +466,6 @@ message.msg_showcmd = function(content)
 	};
 
 	vim.api.nvim_win_set_config(message.data.showcmd_window, window_opts);
-	utils.set("w", message.data.showcmd_window, "sidescrolloff", 999)
 	pcall(vim.api.nvim_win_set_cursor, message.data.showcmd_window, { 0, width })
 
 
@@ -455,7 +477,10 @@ message.msg_showcmd = function(content)
 	---|fE
 end
 
+---@param items ui.message.entry[] Items used for reloading the history window.
 message.history_keymaps = function(items)
+	---|fS
+
 	if not message.data.history_buffer then
 		return;
 	end
@@ -533,9 +558,14 @@ message.history_keymaps = function(items)
 			message.msg_history_show(items);
 		end
 	});
+
+	---|fE
 end
 
+---@param items ui.message.entry[]
 message.msg_history_show = function(items)
+	---|fS
+
 	vim.g.history_source = vim.g.history_source or "vim";
 	_G.history_show = _G.history_show or {
 		normal = true,
@@ -606,8 +636,6 @@ message.msg_history_show = function(items)
 				extmarks = vim.list_extend(extmarks, m_exts);
 			end
 		end
-
-		utils.set("w", message.data.history_window, "statuscolumn", "%!v:lua.ui_statuscolumn()");
 	end
 
 	vim.bo[message.data.history_buffer].modifiable = true;
@@ -671,10 +699,13 @@ message.msg_history_show = function(items)
 
 	vim.api.nvim_win_set_config(message.data.history_window, window_opts);
 	vim.api.nvim_set_current_win(message.data.history_window);
+
+	---|fE
 end
 
 ------------------------------------------------------------------------------
 
+---@return string
 message.statuscolumn = function()
 	---|fS
 
@@ -711,7 +742,12 @@ end
 
 _G.ui_statuscolumn = message.statuscolumn;
 
+--- Creates a buffer & window pair & assign them to `message.data`
+---@param buf string Buffer name
+---@param win string Window name
 message.set_buf_win = function(buf, win)
+	---|fS
+
 	---@type vim.api.keyset.win_config
 	local window_opts = {
 		relative = "editor",
@@ -739,9 +775,14 @@ message.set_buf_win = function(buf, win)
 		utils.set("w", message.data[win], "foldmethod", "manual");
 		utils.set("w", message.data[win], "numberwidth", 1);
 	end
+
+	---|fE
 end
 
+--- Prepare all buffers & windows used for messages.
 message.prepare = function()
+	---|fS
+
 	message.set_buf_win("buffer", "window");
 	message.set_buf_win("confirm_buffer", "confirm_window");
 	message.set_buf_win("list_buffer", "list_window");
@@ -749,8 +790,17 @@ message.prepare = function()
 	message.set_buf_win("showcmd_buffer", "showcmd_window");
 
 	utils.set("w", message.data.window, "statuscolumn", "%!v:lua.ui_statuscolumn()");
+	utils.set("w", message.data.window, "wrap", true);
+
+	utils.set("w", message.data.history_window, "statuscolumn", "%!v:lua.ui_statuscolumn()");
+	utils.set("w", message.data.showcmd_window, "sidescrolloff", 999)
+
+	---|fE
 end
 
+---@param src string Source used for logs
+---@param buffer integer Buffer ID
+---@param extmarks ui.message.hl_fragment[][]
 message.apply_extmarks = function(src, buffer, extmarks)
 	---|fS
 
@@ -784,6 +834,7 @@ message.apply_extmarks = function(src, buffer, extmarks)
 	---|fE
 end
 
+---@param src ui.message.decorations[]
 ---@return integer
 message.apply_msg_decorations = function(src, buffer)
 	---|fS
@@ -808,12 +859,17 @@ message.apply_msg_decorations = function(src, buffer)
 	---|fE
 end
 
+---@return integer RowOffset Rows used by the command-line
 message.cmdline_offset = function()
+	---|fS
+
 	if (vim.g.__ui_cmd_height or 0) > 0 then
 		return (vim.g.__ui_cmd_height or 0) + (spec.config.cmdline.row_offset or 1)
 	end
 
 	return (vim.g.__ui_cmd_height or 0);
+
+	---|fE
 end
 
 message.render = function()
@@ -870,8 +926,6 @@ message.render = function()
 
 	vim.api.nvim_buf_clear_namespace(message.data.buffer, message.data.namespace, 0, -1);
 	vim.api.nvim_buf_set_lines(message.data.buffer, 0, -1, false, lines);
-
-	utils.set("w", message.data.window, "wrap", true);
 
 	message.apply_extmarks("msg_render", message.data.buffer, extmarks);
 	local decor_size = message.apply_msg_decorations(message.visible_decorations, message.data.buffer);
