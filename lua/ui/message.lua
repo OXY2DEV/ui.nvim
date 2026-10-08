@@ -342,6 +342,111 @@ message.msg_show = function (kind, content, replace_last, history, append, id, t
 	end)
 end
 
+local showmode_hide_timer = vim.uv.new_timer();
+
+message.showmode_hide = function ()
+	if not showmode_hide_timer then
+		showmode_hide_timer = vim.uv.new_timer();
+	end
+
+	if showmode_hide_timer then
+		showmode_hide_timer:stop();
+		showmode_hide_timer:start(500, 0, vim.schedule_wrap(function ()
+			pcall(vim.api.nvim_win_close, message.data.showmode_window, true);
+		end));
+	end
+end
+
+message.showmode_resize = function ()
+	---|fS
+
+	if vim.api.nvim_win_is_valid(message.data.showmode_window) then
+		---@type vim.api.keyset.win_config
+		local window_opts = {
+			relative = "editor",
+			anchor = "SW",
+
+			row = vim.o.lines - (1 + message.cmdline_offset()),
+			col = 0,
+
+			border = "none",
+
+			zindex = 200,
+			hide = false,
+		};
+
+		vim.api.nvim_win_set_config(message.data.showmode_window, window_opts);
+		utils.redraw({
+			flush = true,
+			win = message.data.showmode_window
+		}, {
+			ignore = false,
+		});
+	end
+
+	---|fE
+end
+
+message.msg_showcmd = function (content)
+	---|fS
+
+	vim.schedule(function ()
+		if #content == 0 then
+			message.showmode_hide();
+			return;
+		end
+
+		message.prepare();
+
+		local lines, extmarks = utils.process_content(content);
+		local modifier = utils.eval(spec.config.message.showcmd.modifier, content, lines, extmarks);
+
+		if modifier then
+			lines = modifier.lines or lines;
+			extmarks = modifier.extmarks or extmarks;
+		end
+
+		vim.api.nvim_buf_clear_namespace(message.data.showmode_buffer, message.data.namespace, 0, -1);
+		vim.api.nvim_buf_set_lines(message.data.showmode_buffer, 0, -1, false, lines);
+		message.apply_extmarks("msg_list", message.data.showmode_buffer, extmarks);
+
+		local width = utils.max_len(lines);
+		local height = 1;
+
+		---@type vim.api.keyset.win_config
+		local window_opts = {
+			relative = "editor",
+			anchor = "SW",
+
+			row = vim.o.lines - (1 + message.cmdline_offset()),
+			col = 0,
+
+			width = width,
+			height = height,
+
+			border = "none",
+
+			zindex = 200,
+			hide = false,
+		};
+
+		vim.api.nvim_win_set_config(message.data.showmode_window, window_opts);
+		utils.set("w", message.data.showmode_window, "sidescrolloff", 999)
+		pcall(vim.api.nvim_win_set_cursor, message.data.showmode_window, { 0, width })
+
+		utils.redraw({
+			flush = true,
+			statuscolumn = true,
+
+			win = message.data.showmode_window
+		}, {
+			ignore = false,
+		});
+	end);
+
+	---|fE
+end
+
 ------------------------------------------------------------------------------
 
 message.statuscolumn = function ()
@@ -474,6 +579,14 @@ message.apply_msg_decorations = function ()
 	---|fE
 end
 
+message.cmdline_offset = function ()
+	if (vim.g.__ui_cmd_height or 0) > 0 then
+		return (vim.g.__ui_cmd_height or 0) + (spec.config.cmdline.row_offset or 1)
+	end
+
+	return (vim.g.__ui_cmd_height or 0);
+end
+
 message.render = function ()
 	---|fS
 
@@ -542,7 +655,7 @@ message.render = function ()
 		relative = "editor",
 		anchor = "SE",
 
-		row = vim.o.lines - 1,
+		row = vim.o.lines - (1 + message.cmdline_offset()),
 		col = vim.o.columns,
 
 		width = width + decor_size,
@@ -591,34 +704,26 @@ message.setup = function ()
 
 	vim.api.nvim_create_autocmd("VimResized", {
 		callback = function ()
-			-- message.__list_resize();
-			--
-			-- if vim.g.__ui_showcmd then
-			-- 	message.__showcmd(vim.g.__ui_showcmd);
-			-- end
-
+			message.showmode_resize();
 			message.render();
 		end
 	});
-	--
-	-- vim.api.nvim_create_autocmd("TabLeave", {
-	-- 	callback = function ()
-	-- 		pcall(vim.api.nvim_win_close, message.msg_window, true);
-	-- 		pcall(vim.api.nvim_win_close, message.show_window, true);
-	--
-	-- 		message.msg_window = nil;
-	-- 		message.show_window = nil;
-	-- 	end
-	-- });
-	--
-	-- vim.api.nvim_create_autocmd({
-	-- 	"VimEnter",
-	-- 	"TabEnter"
-	-- }, {
-	-- 	callback = function ()
-	-- 		message.__render();
-	-- 	end
-	-- });
+
+	vim.api.nvim_create_autocmd("TabLeave", {
+		callback = function ()
+			pcall(vim.api.nvim_win_close, message.data.window, true);
+			pcall(vim.api.nvim_win_close, message.data.showmode_window, true);
+		end
+	});
+
+	vim.api.nvim_create_autocmd({
+		"VimEnter",
+		"TabEnter"
+	}, {
+		callback = function ()
+			message.render();
+		end
+	});
 
 	---|fE
 end
