@@ -22,8 +22,8 @@ local utils = require("ui.utils");
 ---@field list_buffer? integer
 ---@field list_window? integer
 ---
----@field showmode_buffer? integer
----@field showmode_window? integer
+---@field showcmd_buffer? integer
+---@field showcmd_window? integer
 ---
 ---@field history_buffer? integer
 ---@field history_window? integer
@@ -39,8 +39,8 @@ message.data = {
 	list_buffer = nil,
 	list_window = nil,
 
-	showmode_buffer = nil,
-	showmode_window = nil,
+	showcmd_buffer = nil,
+	showcmd_window = nil,
 
 	history_buffer = nil,
 	history_window = nil,
@@ -342,25 +342,38 @@ message.msg_show = function(kind, content, replace_last, history, append, id, tr
 	end)
 end
 
-local showmode_hide_timer = vim.uv.new_timer();
+local showcmd_hide_timer = vim.uv.new_timer();
 
-message.showmode_hide = function()
-	if not showmode_hide_timer then
-		showmode_hide_timer = vim.uv.new_timer();
+message.showcmd_hide = function()
+	if not showcmd_hide_timer then
+		showcmd_hide_timer = vim.uv.new_timer();
 	end
 
-	if showmode_hide_timer then
-		showmode_hide_timer:stop();
-		showmode_hide_timer:start(500, 0, vim.schedule_wrap(function()
-			pcall(vim.api.nvim_win_close, message.data.showmode_window, true);
+	if showcmd_hide_timer then
+		showcmd_hide_timer:stop();
+		showcmd_hide_timer:start(500, 0, vim.schedule_wrap(function()
+			pcall(vim.api.nvim_win_close, message.data.showcmd_window, true);
+			pcall(vim.api.nvim_buf_set_lines, message.data.showcmd_buffer, 0, -1, false, {})
 		end));
 	end
 end
 
-message.showmode_resize = function()
+message.showcmd_resize = function()
 	---|fS
 
-	if vim.api.nvim_win_is_valid(message.data.showmode_window) then
+	local success, valid = pcall(vim.api.nvim_buf_is_valid, message.data.showcmd_buffer)
+
+	if not success or not valid then
+		return;
+	end
+
+	local lines = vim.api.nvim_buf_get_lines(message.data.showcmd_buffer, 0, -1, false);
+
+	if not lines[1] or lines[1] == "" then
+		return;
+	end
+
+	if vim.api.nvim_win_is_valid(message.data.showcmd_window) then
 		---@type vim.api.keyset.win_config
 		local window_opts = {
 			relative = "editor",
@@ -375,10 +388,10 @@ message.showmode_resize = function()
 			hide = false,
 		};
 
-		vim.api.nvim_win_set_config(message.data.showmode_window, window_opts);
+		vim.api.nvim_win_set_config(message.data.showcmd_window, window_opts);
 		utils.redraw({
 			flush = true,
-			win = message.data.showmode_window
+			win = message.data.showcmd_window
 		}, {
 			ignore = false,
 		});
@@ -391,7 +404,7 @@ message.msg_showcmd = function(content)
 	---|fS
 
 	if #content == 0 then
-		message.showmode_hide();
+		message.showcmd_hide();
 		return;
 	end
 
@@ -405,9 +418,9 @@ message.msg_showcmd = function(content)
 		extmarks = modifier.extmarks or extmarks;
 	end
 
-	vim.api.nvim_buf_clear_namespace(message.data.showmode_buffer, message.data.namespace, 0, -1);
-	vim.api.nvim_buf_set_lines(message.data.showmode_buffer, 0, -1, false, lines);
-	message.apply_extmarks("msg_list", message.data.showmode_buffer, extmarks);
+	vim.api.nvim_buf_clear_namespace(message.data.showcmd_buffer, message.data.namespace, 0, -1);
+	vim.api.nvim_buf_set_lines(message.data.showcmd_buffer, 0, -1, false, lines);
+	message.apply_extmarks("msg_list", message.data.showcmd_buffer, extmarks);
 
 	local width = utils.max_len(lines);
 	local height = 1;
@@ -429,16 +442,15 @@ message.msg_showcmd = function(content)
 		hide = false,
 	};
 
-	vim.api.nvim_win_set_config(message.data.showmode_window, window_opts);
-	utils.set("w", message.data.showmode_window, "sidescrolloff", 999)
-	pcall(vim.api.nvim_win_set_cursor, message.data.showmode_window, { 0, width })
+	vim.api.nvim_win_set_config(message.data.showcmd_window, window_opts);
+	utils.set("w", message.data.showcmd_window, "sidescrolloff", 999)
+	pcall(vim.api.nvim_win_set_cursor, message.data.showcmd_window, { 0, width })
 
-	utils.redraw({
+
+	vim.api.nvim__redraw({
 		flush = true,
-		win = message.data.showmode_window
-	}, {
-		ignore = false,
-	});
+		win = message.data.showcmd_window
+	})
 
 	---|fE
 end
@@ -685,7 +697,7 @@ message.statuscolumn = function()
 					return "%=" .. utils.to_statuscolumn(item.padding or item.icon);
 				end
 			else
-				return "%=";
+				return utils.to_statuscolumn(item.padding or item.icon);
 			end
 
 			break;
@@ -734,7 +746,7 @@ message.prepare = function()
 	message.set_buf_win("confirm_buffer", "confirm_window");
 	message.set_buf_win("list_buffer", "list_window");
 	message.set_buf_win("history_buffer", "history_window");
-	message.set_buf_win("showmode_buffer", "showmode_window");
+	message.set_buf_win("showcmd_buffer", "showcmd_window");
 
 	utils.set("w", message.data.window, "statuscolumn", "%!v:lua.ui_statuscolumn()");
 end
@@ -859,6 +871,8 @@ message.render = function()
 	vim.api.nvim_buf_clear_namespace(message.data.buffer, message.data.namespace, 0, -1);
 	vim.api.nvim_buf_set_lines(message.data.buffer, 0, -1, false, lines);
 
+	utils.set("w", message.data.window, "wrap", true);
+
 	message.apply_extmarks("msg_render", message.data.buffer, extmarks);
 	local decor_size = message.apply_msg_decorations(message.visible_decorations, message.data.buffer);
 
@@ -921,7 +935,7 @@ message.setup = function()
 
 	vim.api.nvim_create_autocmd("VimResized", {
 		callback = function()
-			message.showmode_resize();
+			message.showcmd_resize();
 			message.render();
 		end
 	});
@@ -929,7 +943,7 @@ message.setup = function()
 	vim.api.nvim_create_autocmd("TabLeave", {
 		callback = function()
 			pcall(vim.api.nvim_win_close, message.data.window, true);
-			pcall(vim.api.nvim_win_close, message.data.showmode_window, true);
+			pcall(vim.api.nvim_win_close, message.data.showcmd_window, true);
 		end
 	});
 
