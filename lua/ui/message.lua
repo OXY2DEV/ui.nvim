@@ -861,15 +861,7 @@ end
 
 ---@return integer RowOffset Rows used by the command-line
 message.cmdline_offset = function()
-	---|fS
-
-	if (vim.g.__ui_cmd_height or 0) > 0 then
-		return (vim.g.__ui_cmd_height or 0) + (spec.config.cmdline.row_offset or 1)
-	end
-
-	return (vim.g.__ui_cmd_height or 0);
-
-	---|fE
+	return (vim.g.ui_cmd_height or 0) + (spec.config.cmdline.row_offset or 0) - 1
 end
 
 message.render = function()
