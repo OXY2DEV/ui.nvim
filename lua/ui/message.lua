@@ -104,14 +104,26 @@ end
 ---@param replace_last boolean
 ---@param history boolean
 ---@param id string | integer
+---@param _type? ui.message.type
 ---@return ui.message.entry
-message.new = function(kind, content, replace_last, history, _, id, _)
+message.new = function(kind, content, replace_last, history, _, id, _, _type)
 	---|fS
+
+	---@type ui.message.type
+	local type = "normal";
+
+	if _type then
+		type = _type;
+	elseif kind == "confirm" then
+		type = "confirm";
+	elseif not history then
+		type = "hidden";
+	end
 
 	return {
 		id = id,
 		kind = kind,
-		type = "normal",
+		type = type,
 
 		content = content,
 
@@ -170,7 +182,7 @@ end
 message.msg_confirm = function(kind, content, replace_last, history, append, id, trigger)
 	---|fS
 
-	local msg = message.new(kind, content, replace_last, history, append, id, trigger);
+	local msg = message.new(kind, content, replace_last, history, append, id, trigger, "confirm");
 	vim.g.__ui_confirm_msg = msg;
 
 	message.history[id] = msg;
@@ -250,7 +262,7 @@ end
 message.msg_list = function(kind, content, replace_last, history, append, id, trigger)
 	---|fS
 
-	local msg = message.new(kind, content, replace_last, history, append, id, trigger);
+	local msg = message.new(kind, content, replace_last, history, append, id, trigger, "list");
 	message.history[id] = msg;
 	message.prepare();
 
@@ -597,6 +609,11 @@ message.msg_history_show = function(items)
 			{ " [C]onfirm ", _G.history_show.confirm },
 		};
 
+		-- Taken from `ZeroBrane`
+		local function padnum(d)
+			return ("%03d%s"):format(#d, d)
+		end
+
 		local line, extmark = "", {};
 
 		for i, item in ipairs(ui_chips) do
@@ -611,7 +628,14 @@ message.msg_history_show = function(items)
 		table.insert(extmarks, extmark);
 
 		local msg_orders = vim.tbl_keys(message.history);
-		table.sort(msg_orders);
+		table.sort(msg_orders, function (a, b)
+			if type(a) == "number" and type(b) == "number" then
+				return a < b;
+			else
+				-- There may be special message order(e.g. `bufwrite`), this is an Overkill BTW.
+				return tostring(a):gsub("%d+", padnum) < tostring(b):gsub("%d+", padnum);
+			end
+		end);
 
 		for _, order in ipairs(msg_orders) do
 			local msg = message.history[order];
