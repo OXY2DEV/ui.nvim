@@ -1,16 +1,17 @@
 local spec = {};
 local utils = require("ui.utils");
+local modifiers = require("ui.spec.modifiers");
 
 --- Creates message text from highlight group properties.
 ---@param props table
 ---@return string[]
 ---@return ( ui.message.hl_fragment[] )[]
-local function hl_prop_txt (props)
+local function hl_prop_txt(props)
 	---|fS
 
 	local lines, exts = {}, {};
 
-	local function new_property (name, value, hl)
+	local function new_property(name, value, hl)
 		table.insert(lines, string.format("  %s: %s", name, value));
 		table.insert(exts, {});
 
@@ -108,7 +109,7 @@ end
 --- Checks if a message is a list message.
 ---@param lines string[]
 ---@return boolean
-spec.generic_list_msg = function (lines)
+spec.generic_list_msg = function(lines)
 	---|fS
 
 	local start_marker = "";
@@ -188,7 +189,7 @@ spec.generic_list_msg = function (lines)
 	};
 
 	local additional_condition = {
-		[9] = function (_lines)
+		[9] = function(_lines)
 			if #_lines <= 2 then
 				return false;
 			end
@@ -219,7 +220,7 @@ end
 --- Checks if a message is a list message is valid.
 ---@param lines string[]
 ---@return boolean
-spec.ignore_list = function (lines)
+spec.ignore_list = function(lines)
 	---|fS
 
 	local _lines = utils.trim_lines(lines);
@@ -250,7 +251,7 @@ spec.default = {
 
 		enable = true,
 
-		winconfig = function (_, position)
+		winconfig = function(_, position)
 			---|fS
 
 			if position == "top_left" then
@@ -311,7 +312,7 @@ spec.default = {
 
 			---|fE
 		end,
-		tooltip = function ()
+		tooltip = function()
 			local mode = vim.api.nvim_get_mode().mode;
 			return mode == "c" and {
 				{ " 󰸾 󰹀 ", "UIMenuKeymap" },
@@ -335,7 +336,7 @@ spec.default = {
 
 			-- Buffer variables(b:).
 			buffer_variable = {
-				condition = function (word)
+				condition = function(word)
 					return string.match(word, "^b:") ~= nil;
 				end,
 
@@ -345,7 +346,7 @@ spec.default = {
 
 			-- Global variables(g:).
 			global_variable = {
-				condition = function (word)
+				condition = function(word)
 					return string.match(word, "^g:") ~= nil;
 				end,
 
@@ -355,7 +356,7 @@ spec.default = {
 
 			-- Local/argument variables(l:,a:,s:).
 			local_variable = {
-				condition = function (word)
+				condition = function(word)
 					return string.match(word, "^[las]:") ~= nil;
 				end,
 
@@ -365,7 +366,7 @@ spec.default = {
 
 			-- Tab variables(t:).
 			tabpage_variable = {
-				condition = function (word)
+				condition = function(word)
 					return string.match(word, "^t:") ~= nil;
 				end,
 
@@ -375,7 +376,7 @@ spec.default = {
 
 			-- Vim variables(v:).
 			vim_variable = {
-				condition = function (word)
+				condition = function(word)
 					return string.match(word, "^v:") ~= nil;
 				end,
 
@@ -385,7 +386,7 @@ spec.default = {
 
 			-- Window variables(w:).
 			window_variable = {
-				condition = function (word)
+				condition = function(word)
 					return string.match(word, "^w:") ~= nil;
 				end,
 
@@ -395,7 +396,7 @@ spec.default = {
 
 
 			class = {
-				condition = function (_, kind)
+				condition = function(_, kind)
 					return kind == "m";
 				end,
 
@@ -403,7 +404,7 @@ spec.default = {
 			},
 
 			["function"] = {
-				condition = function (word, kind)
+				condition = function(word, kind)
 					return kind == "f" or string.match(word, "%(%)?$") ~= nil;
 				end,
 
@@ -412,7 +413,7 @@ spec.default = {
 			},
 
 			macro = {
-				condition = function (_, kind)
+				condition = function(_, kind)
 					return kind == "d";
 				end,
 
@@ -421,7 +422,7 @@ spec.default = {
 			},
 
 			type_definiton = {
-				condition = function (_, kind)
+				condition = function(_, kind)
 					return kind == "t";
 				end,
 
@@ -430,7 +431,7 @@ spec.default = {
 			},
 
 			variable = {
-				condition = function (_, kind)
+				condition = function(_, kind)
 					return kind == "v";
 				end,
 
@@ -468,12 +469,12 @@ spec.default = {
 			search_up = {
 				---|fS
 
-				condition = function (state)
+				condition = function(state)
 					return state.firstc == "/";
 				end,
 
 				winhl = "Normal:UICmdlineSearchUp",
-				filetype ="cmdline_search",
+				filetype = "cmdline_search",
 
 				icon = { { "  ", "UICmdlineSearchUpIcon" } },
 
@@ -483,12 +484,12 @@ spec.default = {
 			search_down = {
 				---|fS
 
-				condition = function (state)
+				condition = function(state)
 					return state.firstc == "?";
 				end,
 
 				winhl = "Normal:UICmdlineSearchDown",
-				filetype ="cmdline_search",
+				filetype = "cmdline_search",
 
 				icon = { { "  ", "UICmdlineSearchDownIcon" } },
 
@@ -498,7 +499,7 @@ spec.default = {
 			set = {
 				---|fS
 
-				condition = function (_, lines)
+				condition = function(_, lines)
 					return string.match(lines[#lines], "^set ") ~= nil;
 				end,
 
@@ -515,14 +516,14 @@ spec.default = {
 			shell = {
 				---|fS
 
-				condition = function (_, lines)
+				condition = function(_, lines)
 					return string.match(lines[#lines], "^!") ~= nil;
 				end,
 
 				winhl = "Normal:UICmdlineEval",
 
 				offset = 1,
-				filetype = function (state)
+				filetype = function(state)
 					---@type string? Shell name.
 					local shell = string.match(vim.o.shell, "%w+$");
 
@@ -535,7 +536,7 @@ spec.default = {
 					end
 				end,
 
-				icon = function ()
+				icon = function()
 					---@diagnostic disable:undefined-field
 					if not _G.is_within_termux then
 						return {
@@ -559,7 +560,7 @@ spec.default = {
 			substitute = {
 				---|fS
 
-				condition = function (_, lines)
+				condition = function(_, lines)
 					return string.match(lines[#lines], "^%S*s/") ~= nil;
 				end,
 
@@ -567,7 +568,7 @@ spec.default = {
 
 				filetype = "vim",
 
-				icon = function (_, lines)
+				icon = function(_, lines)
 					if string.match(lines[#lines], "^s/") then
 						return {
 							{ "  ", "UICmdlineSubstituteIcon" }
@@ -585,14 +586,14 @@ spec.default = {
 			lua_eval = {
 				---|fS
 
-				condition = function (_, lines)
+				condition = function(_, lines)
 					return string.match(lines[#lines], "^=") ~= nil;
 				end,
 
 				winhl = "Normal:UICmdlineEval",
 
 				offset = 1,
-				filetype = function (state)
+				filetype = function(state)
 					return state.pos < 1 and "vim" or "lua";
 				end,
 
@@ -606,14 +607,14 @@ spec.default = {
 			lua = {
 				---|fS
 
-				condition = function (_, lines)
+				condition = function(_, lines)
 					return string.match(lines[#lines], "^lua ") ~= nil;
 				end,
 
 				winhl = "Normal:UICmdlineLua",
 
 				offset = 4,
-				filetype = function (state)
+				filetype = function(state)
 					return state.pos < 4 and "vim" or "lua";
 				end,
 
@@ -627,11 +628,11 @@ spec.default = {
 			__keymap = {
 				---|fS
 
-				condition = function (state)
+				condition = function(state)
 					return string.match(state.prompt or "", "[%[%(].[%]%)]%w+") ~= nil;
 				end,
 
-				title = function (state)
+				title = function(state)
 					---@type ( [ string, string? ][] )[]
 					local title = {};
 					local is_first = true;
@@ -658,11 +659,11 @@ spec.default = {
 			prompt = {
 				---|fS
 
-				condition = function (state)
+				condition = function(state)
 					return state.prompt ~= "";
 				end,
 
-				title = function (state)
+				title = function(state)
 					---@type ( [ string, string? ][] )[]
 					local output = {};
 					local lines = utils.text_wrap({ state.prompt or "" }, math.floor(vim.o.columns * 0.8));
@@ -715,7 +716,7 @@ spec.default = {
 		list_winconfig = {},
 		history_winconfig = {},
 
-		ignore = function (kind, content)
+		ignore = function(kind, content)
 			---|fS
 
 			if kind == "bufwrite" then
@@ -735,7 +736,7 @@ spec.default = {
 		showcmd = {
 			max_width = math.floor(vim.o.columns * 0.4),
 
-			modifier = function (_, lines)
+			modifier = function(_, lines)
 				---|fS
 
 				local mode = vim.api.nvim_get_mode().mode;
@@ -813,7 +814,7 @@ spec.default = {
 			default = {
 				---|fS
 
-				duration = function (msg, lines)
+				duration = function(msg, lines)
 					local duration = 2500;
 
 					if msg.kind == "write" then
@@ -830,7 +831,7 @@ spec.default = {
 
 					return duration + utils.read_time(lines);
 				end,
-				decorations = function (msg)
+				decorations = function(msg)
 					local config = {
 						icon = {
 							{ "▍󰍡 ", "UIMessageDefaultSign" }
@@ -875,7 +876,7 @@ spec.default = {
 						end
 					elseif string.match(content[2] or "", " .+ %w+%.nvim ") or string.match(content[2] or "", " [%w/\\]+%.%w+ ") then
 						-- Error message format used by *plugins*.
-						-- e plugin.nvim : Some message. 
+						-- e plugin.nvim : Some message.
 						return {};
 					end
 
@@ -888,7 +889,7 @@ spec.default = {
 			__swap = {
 				---|fS
 
-				condition = function (_, lines)
+				condition = function(_, lines)
 					return string.match(lines[2], "Found a swap file") ~= nil;
 				end,
 
@@ -908,7 +909,7 @@ spec.default = {
 			__spell = {
 				---|fS
 
-				condition = function (_, lines)
+				condition = function(_, lines)
 					return string.match(lines[1], "Word (.+) added to .-%.add$") ~= nil;
 				end,
 
@@ -927,7 +928,7 @@ spec.default = {
 			__lua_error = {
 				---|fS
 
-				condition = function (_, lines)
+				condition = function(_, lines)
 					for _, line in ipairs(lines) do
 						if string.match(line, ".-Error.-:%d+: ?.-$") then
 							return true;
@@ -937,7 +938,7 @@ spec.default = {
 					return false;
 				end,
 
-				modifier = function (_, lines)
+				modifier = function(_, lines)
 					if vim.g.__ui_history then
 						return {};
 					end
@@ -991,20 +992,20 @@ spec.default = {
 								{ 0, #actual_error, "DiagnosticError" },
 							},
 							{
-								{ 0, 5, "Comment" },
+								{ 0, 5,         "Comment" },
 								{ 6, 6 + #path, "DiagnosticHint" },
 							},
 							{
-								{ 0, 5, "Comment" },
+								{ 0, 5,         "Comment" },
 								{ 6, 6 + #line, "DiagnosticHint" },
 							},
 							(code or exec) and {} or nil,
 							code and {
-								{ 0, 5, "Comment" },
+								{ 0, 5,         "Comment" },
 								{ 6, 6 + #code, "DiagnosticError" },
 							} or nil,
 							exec and {
-								{ 0, 5, "Comment" },
+								{ 0, 5,         "Comment" },
 								{ 6, 6 + #exec, "DiagnosticError" },
 							} or nil,
 						}
@@ -1024,10 +1025,34 @@ spec.default = {
 				---|fE
 			},
 
+			__ls = {
+				---|fS
+
+				condition = function(...)
+					return modifiers.is_ls(...);
+				end,
+
+				modifier = function (...)
+					return modifiers.ls(...);
+				end,
+
+				decorations = {
+					icon = {
+						{ " 󰙅 ", "Constant" }
+					},
+					padding = {
+						{ "   ", "Normal" }
+					},
+					line_hl_group = "",
+				}
+
+				---|fE
+			},
+
 			option = {
 				---|fS
 
-				condition = function (_, lines)
+				condition = function(_, lines)
 					if string.match(lines[1], "^%s+%w+=") then
 						local opt, val = string.match(lines[1], "^%s+(%w+)=(.*)$");
 
@@ -1050,7 +1075,7 @@ spec.default = {
 					return vim.o[option] ~= nil and type(vim.o[option]) == "boolean";
 				end,
 
-				modifier = function (_, lines)
+				modifier = function(_, lines)
 					if string.match(lines[1], "^%s*(%w+)$") then
 						local key = string.match(lines[1], "^%s*(.*)$");
 						local state = string.match(key, "^no") == nil;
@@ -1063,8 +1088,8 @@ spec.default = {
 							},
 							extmarks = {
 								{
-									{ 0, #key, "@property" },
-									{ #key, #key + 1, "@punctuation" },
+									{ 0,        #key,                        "@property" },
+									{ #key,     #key + 1,                    "@punctuation" },
 									{ #key + 2, #key + 2 + #tostring(state), "@boolean" },
 								}
 							}
@@ -1082,8 +1107,8 @@ spec.default = {
 							},
 							extmarks = {
 								{
-									{ 0, #key, "@property" },
-									{ #key, #key + 1, "@punctuation" },
+									{ 0,        #key,              "@property" },
+									{ #key,     #key + 1,          "@punctuation" },
 									{ #key + 2, #key + 2 + #value, "@" .. utils.get_type(value) },
 								}
 							}
@@ -1105,11 +1130,11 @@ spec.default = {
 			search = {
 				---|fS
 
-				condition = function (msg)
+				condition = function(msg)
 					return msg.kind == "search_cmd";
 				end,
 
-				modifier = function (_, lines)
+				modifier = function(_, lines)
 					local term = string.match(lines[1], "^[%?/](.*)$");
 
 					return {
@@ -1119,7 +1144,7 @@ spec.default = {
 						}
 					};
 				end,
-				decorations = function (_, lines)
+				decorations = function(_, lines)
 					if string.match(lines[#lines], "^/") then
 						return {
 							icon = {
@@ -1149,7 +1174,7 @@ spec.default = {
 			error_msg = {
 				---|fS
 
-				condition = function (msg)
+				condition = function(msg)
 					return msg.kind == "emsg";
 				end,
 
@@ -1170,12 +1195,12 @@ spec.default = {
 			highlight_link = {
 				---|fS
 
-				condition = function (_, lines)
+				condition = function(_, lines)
 					local is_hl, data = utils.is_hl_line(lines[2] or "")
 					return lines[1] == "" and is_hl and data.value.link;
 				end,
 
-				modifier = function (_, lines)
+				modifier = function(_, lines)
 					local _, data = utils.is_hl_line(lines[2] or "")
 
 					local definition = vim.api.nvim_exec2("hi " .. data.value.link, { output = true }).output;
@@ -1198,18 +1223,18 @@ spec.default = {
 							{ 0, 10, data.group_name }
 						},
 						{
-							{ 0, 4, "@property" },
-							{ 4, 5, "@punctuation" },
+							{ 0, 4,                    "@property" },
+							{ 4, 5,                    "@punctuation" },
 							{ 6, 6 + #data.group_name, "@string" },
 						},
 						{
-							{ 0, 6, "@property" },
-							{ 6, 7, "@punctuation" },
+							{ 0, 6,                    "@property" },
+							{ 6, 7,                    "@punctuation" },
 							{ 8, 8 + #data.value.link, "@constant" },
 						},
 						{},
 						{
-							{ 0, #"Raw definition", "DiagnosticHint" },
+							{ 0,                 #"Raw definition",     "DiagnosticHint" },
 							{ #"Raw definition", #"Raw definition" + 1, "@punctuation" },
 						},
 					};
@@ -1237,12 +1262,12 @@ spec.default = {
 			highlight_group = {
 				---|fS
 
-				condition = function (_, lines)
+				condition = function(_, lines)
 					local is_hl, data = utils.is_hl_line(lines[2] or "")
 					return lines[1] == "" and is_hl and data.value.link == nil;
 				end,
 
-				modifier = function (_, lines)
+				modifier = function(_, lines)
 					local _, data = utils.is_hl_line(lines[2] or "")
 					local d_lines, d_exts = hl_prop_txt(data);
 
@@ -1279,11 +1304,11 @@ spec.default = {
 			write = {
 				---|fS
 
-				condition = function (msg)
+				condition = function(msg)
 					return msg.id == "bufwrite";
 				end,
 
-				modifier = function (_, lines)
+				modifier = function(_, lines)
 					local filename, _, bytes;
 
 					if string.match(lines[#lines], "%[New%]") then
@@ -1299,13 +1324,13 @@ spec.default = {
 						},
 						extmarks = {
 							{
-								{ 0, 9, "Comment" },
-								{ 9, 9 + #filename, "Special" },
+								{ 0,             9,              "Comment" },
+								{ 9,             9 + #filename,  "Special" },
 								{ 9 + #filename, 10 + #filename, "Comment" }
 							},
 							{
-								{ 0, 7, "Comment" },
-								{ 7, 7 + #bytes, "@constant" },
+								{ 0,          7,           "Comment" },
+								{ 7,          7 + #bytes,  "@constant" },
 								{ 8 + #bytes, 13 + #bytes, "Comment" }
 							},
 						}
@@ -1327,14 +1352,15 @@ spec.default = {
 			undo_redo = {
 				---|fS
 
-				condition = function (_, lines)
+				condition = function(_, lines)
 					if lines[1] == "Already at oldest change" then
 						return true;
 					elseif lines[1] == "Already at newest change" then
 						return true;
 					end
 
-					return string.match(lines[1], "%d+ .-; %w+ #%d+") ~= nil or  string.match(lines[1], "%d+ line less; %w+ #%d+") ~= nil;
+					return string.match(lines[1], "%d+ .-; %w+ #%d+") ~= nil or
+					string.match(lines[1], "%d+ line less; %w+ #%d+") ~= nil;
 				end,
 
 				decorations = {
@@ -1355,17 +1381,17 @@ spec.default = {
 			terminal_command = {
 				---|fS
 
-				condition = function (_, lines)
+				condition = function(_, lines)
 					return string.match(lines[1] or "", "^:!") ~= nil
 				end,
 
-				modifier = function (_, lines)
+				modifier = function(_, lines)
 					---@type string Removed trailing `^M`.
 					local removed_tail = string.gsub(lines[1] or "", ".$", "");
 
 					return {
 						extmarks = {
-							{ {  0, #removed_tail, "UICmdlineEvalIcon" } }
+							{ { 0, #removed_tail, "UICmdlineEvalIcon" } }
 						},
 						lines = { removed_tail }
 					};
@@ -1388,7 +1414,7 @@ spec.default = {
 			shell_output = {
 				---|fS
 
-				condition = function (entry)
+				condition = function(entry)
 					return entry.kind == "shell_out";
 				end,
 
@@ -1409,7 +1435,7 @@ spec.default = {
 			---|fE
 		},
 
-		is_list = function (kind, content, add_to_history)
+		is_list = function(kind, content, add_to_history)
 			local lines = utils.to_lines(content);
 
 			if kind == "list_cmd" then
@@ -1431,98 +1457,12 @@ spec.default = {
 			ls = {
 				---|fS
 
-				condition = function (msg, lines)
-					if msg.kind ~= "list_cmd" then
-						return false;
-					elseif string.match(lines[2], '^%s*(%d+)%s*([u%%#ah%-=RF%?%+x]+)%s*"(.+)"%s*line (%d+)$') == nil then
-						return false;
-					end
-
-					return true;
+				condition = function(...)
+					return modifiers.is_ls(...);
 				end,
 
-				modifier = function (_, lines)
-					local _lines, exts = {}, {};
-					local entries = {};
-
-					---@type table<string, integer>
-					local widths = {
-						id = 6,
-						name = 6,
-						lnum = 4,
-						indicators = 10
-					};
-
-					for l, line in ipairs(lines) do
-						if l == 1 then
-							goto continue;
-						end
-
-						local ID, indicators, name, lnum = string.match(line, '^%s*(%d+)%s*([u%%#ah%-=RF%?%+x]+)%s*"(.+)"%s*line (%d+)$');
-
-						table.insert(entries, {
-							id = ID or "",
-							name = name or "",
-							lnum = lnum or "",
-
-							indicators = indicators or "",
-						});
-
-						widths.id = math.max(widths.id, vim.fn.strdisplaywidth(ID or ""));
-						widths.name = math.max(widths.name, vim.fn.strdisplaywidth(name or ""));
-						widths.lnum = math.max(widths.lnum, vim.fn.strdisplaywidth(lnum or ""));
-						widths.indicators = math.max(widths.indicators, vim.fn.strdisplaywidth(indicators or ""));
-
-						::continue::
-					end
-
-					local title, title_exts = utils.to_row({
-						{
-							string.format(" %-" .. widths.id .. "s ", "Buffer"),
-							"UILSBuffer"
-						},
-						{
-							string.format(" %-" .. widths.name .. "s ", "Name"),
-							"UILSBufname"
-						},
-						{
-							string.format(" %-" .. widths.indicators .. "s ", "Indicators"),
-							"UILSIndicator"
-						},
-						{
-							string.format(" %-" .. widths.lnum .. "s ", "Line"),
-							"UILSLmum"
-						},
-					});
-
-					table.insert(_lines, title);
-					table.insert(exts, title_exts);
-
-					for e, entry in ipairs(entries) do
-						local row, row_exts = utils.to_row({
-							{
-								string.format(" %-" .. widths.id .. "s ", entry.id),
-								e % 2 == 0 and "@comment" or "UICmdlineSearchDown"
-							},
-							{
-								string.format(" %-" .. widths.name .. "s ", entry.name),
-								e % 2 == 0 and "@comment" or "UICmdlineDefault"
-							},
-							{
-								string.format(" %-" .. widths.indicators .. "s ", entry.indicators),
-								e % 2 == 0 and "@comment" or "UICmdlineLua"
-							},
-							{
-								string.format(" %-" .. widths.lnum .. "s ", entry.lnum),
-								e % 2 == 0 and "@comment" or "UICmdlineSubstitute"
-							},
-						});
-
-						table.insert(_lines, row);
-						table.insert(exts, row_exts);
-					end
-
-					return { lines = _lines, extmarks = exts };
+				modifier = function(...)
+					return modifiers.ls(...);
 				end,
 
 				winhl = "Normal:@comment",
@@ -1534,12 +1474,12 @@ spec.default = {
 			hi = {
 				---|fS
 
-				condition = function (_, lines)
+				condition = function(_, lines)
 					local is_hl = utils.is_hl_line(lines[2] or "");
 					return lines[1] == "" and is_hl;
 				end,
 
-				modifier = function (_, lines, exts)
+				modifier = function(_, lines, exts)
 					local _lines = vim.deepcopy(lines);
 					local _exts = vim.deepcopy(exts);
 
@@ -1561,7 +1501,7 @@ spec.default = {
 			swap_alert = {
 				---|fS
 
-				condition = function (_, lines)
+				condition = function(_, lines)
 					return string.match(lines[2] or "", '^Swap') ~= nil
 				end,
 
@@ -1575,7 +1515,7 @@ spec.default = {
 							{ 0, 26, "DiagnosticWarn" }
 						},
 						{
-							{ 6, 10, "@comment" },
+							{ 6,  10, "@comment" },
 							{ 10, 17, "DiagnosticVirtualTextHint" }
 						}
 					}
@@ -1590,11 +1530,11 @@ spec.default = {
 			write_confirm = {
 				---|fS
 
-				condition = function (_, lines)
+				condition = function(_, lines)
 					return string.match(lines[2] or "", '^Save changes to "([^"]+)"') ~= nil
 				end,
 
-				modifier = function (_, lines)
+				modifier = function(_, lines)
 					local file = string.match(lines[2] or "", 'Save changes to "([^"]+)"')
 
 					return {
@@ -1603,8 +1543,8 @@ spec.default = {
 						},
 						extmarks = {
 							{
-								{ 0, 13, "@comment" },
-								{ 13, 15 + #file, "DiagnosticVirtualTextHint" },
+								{ 0,          13,         "@comment" },
+								{ 13,         15 + #file, "DiagnosticVirtualTextHint" },
 								{ 15 + #file, 16 + #file, "@comment" },
 							}
 						}
@@ -1628,7 +1568,7 @@ spec.config = vim.deepcopy(spec.default);
 ---@param state ui.cmdline.state
 ---@param lines string[]
 ---@return ui.cmdline.style__static
-spec.get_cmdline_style = function (state, lines)
+spec.get_cmdline_style = function(state, lines)
 	---|fS
 
 	local styles = spec.config.cmdline.styles or {};
@@ -1652,7 +1592,7 @@ spec.get_cmdline_style = function (state, lines)
 			break;
 		end
 
-	    ::continue::
+		::continue::
 	end
 
 	---@type ui.cmdline.style__static
@@ -1684,7 +1624,7 @@ end
 ---@param lines string[]
 ---@param extmarks ui.message.extmarks
 ---@return ui.message.confirm__static
-spec.get_confirm_style = function (msg, lines, extmarks)
+spec.get_confirm_style = function(msg, lines, extmarks)
 	---|fS
 
 	local styles = spec.config.message.confirm_styles or {};
@@ -1707,7 +1647,7 @@ spec.get_confirm_style = function (msg, lines, extmarks)
 			break;
 		end
 
-	    ::continue::
+		::continue::
 	end
 
 	---@type ui.message.confirm__static
@@ -1740,7 +1680,7 @@ end
 ---@param lines string[]
 ---@param extmarks ui.message.extmarks
 ---@return ui.message.list__static
-spec.get_listmsg_style = function (msg, lines, extmarks)
+spec.get_listmsg_style = function(msg, lines, extmarks)
 	---|fS
 
 	local styles = spec.config.message.list_styles or {};
@@ -1763,7 +1703,7 @@ spec.get_listmsg_style = function (msg, lines, extmarks)
 			break;
 		end
 
-	    ::continue::
+		::continue::
 	end
 
 	---@type ui.message.list__static
@@ -1795,10 +1735,10 @@ end
 ---@param lines string[]
 ---@param extmarks ui.message.extmarks
 ---@return ui.message.style__static
-spec.get_msg_style = function (msg, lines, extmarks)
+spec.get_msg_style = function(msg, lines, extmarks)
 	---|fS
 
-	local processors= spec.config.message.msg_styles or {};
+	local processors = spec.config.message.msg_styles or {};
 	local _output = processors.default or {};
 
 	---@type string[]
@@ -1817,7 +1757,7 @@ spec.get_msg_style = function (msg, lines, extmarks)
 			break;
 		end
 
-	    ::continue::
+		::continue::
 	end
 
 	local output = {};
@@ -1872,7 +1812,7 @@ end
 ---@param history boolean
 ---@return boolean
 ---@return boolean
-spec.is_list = function (kind, content, history)
+spec.is_list = function(kind, content, history)
 	---|fS
 
 	if not spec.config.message.is_list then
@@ -1896,7 +1836,7 @@ end
 ---@param menu string
 ---@param info string
 ---@return ui.popupmenu.style__static
-spec.get_item_style = function (word, kind, menu, info)
+spec.get_item_style = function(word, kind, menu, info)
 	---|fS
 
 	local styles = spec.default.popupmenu.styles or {};
@@ -1919,7 +1859,7 @@ spec.get_item_style = function (word, kind, menu, info)
 			break;
 		end
 
-	    ::continue::
+		::continue::
 	end
 
 	---@type ui.popupmenu.style__static
