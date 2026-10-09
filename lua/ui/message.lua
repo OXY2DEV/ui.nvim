@@ -285,7 +285,7 @@ message.msg_list = function(kind, content, replace_last, history, append, id, tr
 	message.apply_extmarks("msg_list", message.data.list_buffer, extmarks);
 
 	local width = math.min(
-		math.floor(vim.o.columns * 0.5),
+		math.floor(vim.o.columns * 0.75),
 		utils.max_len(lines)
 	);
 	local height = utils.wrapped_height(lines, width);
@@ -511,7 +511,7 @@ message.history_keymaps = function(items)
 		desc = "[t]oggles between `vim` and `ui.nvim`'s message history.",
 		callback = function()
 			if vim.g.history_source == "vim" then
-				vim.g.history_source = "ui.nvim";
+				vim.g.history_source = "ui";
 			else
 				vim.g.history_source = "vim";
 			end
@@ -614,7 +614,9 @@ message.msg_history_show = function(items)
 			return ("%03d%s"):format(#d, d)
 		end
 
-		local line, extmark = "", {};
+		local line, extmark = " Filters ", {
+			{ 0, 11, "Comment" }
+		};
 
 		for i, item in ipairs(ui_chips) do
 			local before = #line;
