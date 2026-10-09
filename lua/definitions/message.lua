@@ -23,14 +23,6 @@
 ---@field confirm boolean
 
 
---@class ui.message.type
---
---@field normal boolean
---@field hidden boolean
---@field list boolean
---@field confirm boolean
-
-
 ---@class ui.message.style Message pstyle
 ---
 ---@field condition? fun(msg: ui.message.entry, lines: string[], extmarks: ui.message.extmarks): boolean Condition for this processor.
@@ -185,6 +177,7 @@
 
 ---@class ui.message.entry A message entry.
 ---
+---@field id string | integer
 ---@field type? ui.message.type
 ---
 ---@field kind ui.message.kind

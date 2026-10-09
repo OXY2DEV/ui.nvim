@@ -1,5 +1,4 @@
---- Custom message for
---- Neovim.
+--- Custom message for Neovim.
 local message = {};
 
 local log = require("ui.log");
@@ -8,70 +7,754 @@ local utils = require("ui.utils");
 
 ------------------------------------------------------------------------------
 
----@type integer Namespace for decorations in messages.
-message.namespace = vim.api.nvim_create_namespace("ui.message")
+---@class ui.message
+---
+---@field namespace integer
+---@field current_order integer Current messages order.
+---
+---@field buffer? integer
+---@field window? integer
+---
+---@field confirm_buffer? integer
+---@field confirm_window? integer
+---
+---@field list_buffer? integer
+---@field list_window? integer
+---
+---@field showcmd_buffer? integer
+---@field showcmd_window? integer
+---
+---@field history_buffer? integer
+---@field history_window? integer
+message.data = {
+	namespace = vim.api.nvim_create_namespace("ui.message"),
 
----@type integer, integer Buffer & window for messages.
-message.msg_buffer, message.msg_window = nil, nil;
+	buffer = nil,
+	window = nil,
 
----@type integer, integer Buffer & window for showing larger messages.
-message.list_buffer, message.list_window = nil, nil;
+	confirm_buffer = nil,
+	confirm_window = nil,
 
----@type integer, integer Buffer & window for confirmation messages.
-message.confirm_buffer, message.confirm_window = nil, nil;
+	list_buffer = nil,
+	list_window = nil,
 
----@type integer, integer Buffer & window for message history.
-message.history_buffer, message.history_window = nil, nil;
+	showcmd_buffer = nil,
+	showcmd_window = nil,
 
----@type integer, integer Buffer & window for showmode.
-message.show_buffer, message.show_window = nil, nil;
+	history_buffer = nil,
+	history_window = nil,
+};
+
+---@type ui.message.entry[]
+message.history = {};
+
+---@type ui.message.entry[]
+message.visible = {};
+
+---@type table<string, ui.message.entry>
+message.visible_special = {};
+
+---@type ui.message.decorations[]
+message.visible_decorations = {};
+
+---@type ui.message.decorations[]
+message.history_decorations = {}
+
+---@param id string | integer Item id to remove.
+---@param duration? integer Duration(in ms) until activation.
+---@param interval? integer Delay between repeats(`nil` disables repeating).
+message.timer = function(id, duration, interval)
+	---|fS
+
+	local timer = vim.uv.new_timer();
+
+	if timer then
+		timer:start(duration or 5000, interval or 0, vim.schedule_wrap(function()
+			message.free(id);
+		end));
+	end
+
+	return timer;
+
+	---|fE
+end
+
+---@param id string | integer Item `id` to free.
+message.free = function(id)
+	---|fS
+
+	if type(id) == "string" then
+		message.visible_special[id] = nil;
+	else
+		message.visible[id] = nil;
+	end
+
+	vim.schedule(function()
+		log.assert(
+			"ui/message.lua → remove_render",
+			pcall(message.render)
+		);
+	end);
+
+	---|fE
+end
+
+---@param kind ui.message.kind
+---@param content ui.message.fragment[]
+---@param replace_last boolean
+---@param history boolean
+---@param id string | integer
+---@param _type? ui.message.type
+---@return ui.message.entry
+message.new = function(kind, content, replace_last, history, _, id, _, _type)
+	---|fS
+
+	---@type ui.message.type
+	local type = "normal";
+
+	if _type then
+		type = _type;
+	elseif kind == "confirm" then
+		type = "confirm";
+	elseif not history then
+		type = "hidden";
+	end
+
+	return {
+		id = id,
+		kind = kind,
+		type = type,
+
+		content = content,
+
+		replace_last = replace_last,
+		add_to_history = history,
+
+		timer = nil,
+	} --[[@as ui.message.entry]];
+
+	---|fE
+end
 
 ------------------------------------------------------------------------------
 
----@type integer Current message ID.
-message.id = 2000;
+local movement_keys = {
+	vim.api.nvim_replace_termcodes("<left>", true, true, true),
+	vim.api.nvim_replace_termcodes("<down>", true, true, true),
+	vim.api.nvim_replace_termcodes("<up>", true, true, true),
+	vim.api.nvim_replace_termcodes("<right>", true, true, true),
 
----@type ui.message.entry[] Message history(stores messages not available in `:messages`).
-message.history = {};
----@type ui.message.entry[] Currently visible message.
-message.visible = {};
+	vim.api.nvim_replace_termcodes("h", true, true, true),
+	vim.api.nvim_replace_termcodes("j", true, true, true),
+	vim.api.nvim_replace_termcodes("k", true, true, true),
+	vim.api.nvim_replace_termcodes("l", true, true, true),
+};
 
----@type ui.message.decorations[] Decorations to show in the statuscolumn.
-message.decorations = {};
+---@param key string Key to handle.
+message.confirm_movement = function(key)
+	---|fS
 
----@type ui.message.decorations[] Decorations to show in the statuscolumn for history.
-message.history_decorations = {};
+	local success, pos = pcall(vim.api.nvim_win_get_cursor, message.data.confirm_window);
+	if not success then return; end
 
---- Custom statuscolumn for the message window.
+	if key == movement_keys[1] or key == movement_keys[5] then
+		pos[1] = math.max(0, pos[1] - 1);
+	elseif key == movement_keys[2] or key == movement_keys[6] then
+		pos[2] = math.max(0, pos[2] - 1);
+	elseif key == movement_keys[3] or key == movement_keys[7] then
+		pos[2] = pos[2] + 1;
+	elseif key == movement_keys[4] or key == movement_keys[8] then
+		pos[1] = pos[1] + 1;
+	end
+
+	pcall(vim.api.nvim_win_set_cursor, message.data.confirm_window, pos);
+
+	---|fE
+end
+
+---@param kind ui.message.kind
+---@param content ui.message.fragment[]
+---@param replace_last boolean
+---@param history boolean
+---@param append boolean
+---@param id string | integer
+---@param trigger string
+message.msg_confirm = function(kind, content, replace_last, history, append, id, trigger)
+	---|fS
+
+	local msg = message.new(kind, content, replace_last, history, append, id, trigger, "confirm");
+	vim.g.__ui_confirm_msg = msg;
+
+	message.history[id] = msg;
+	message.prepare();
+
+	local lines, extmarks = utils.process_content(content);
+	local style = spec.get_confirm_style(msg, lines, extmarks);
+
+	if style.modifier then
+		lines = style.modifier.lines or lines;
+		extmarks = style.modifier.extmarks or extmarks;
+	end
+
+	vim.api.nvim_buf_clear_namespace(message.data.confirm_buffer, message.data.namespace, 0, -1);
+	vim.api.nvim_buf_set_lines(message.data.confirm_buffer, 0, -1, false, lines);
+	message.apply_extmarks("msg_confirm", message.data.confirm_buffer, extmarks);
+
+	local width = math.min(
+		math.floor(vim.o.columns * 0.5),
+		utils.max_len(lines)
+	);
+	local height = utils.wrapped_height(lines, width);
+
+	local window_opts = vim.tbl_extend("force", spec.config.message.confirm_winconfig or {}, {
+		relative = "editor",
+
+		row = style.row or math.ceil((vim.o.lines - height) / 2),
+		col = style.col or math.ceil((vim.o.columns - width) / 2),
+
+		width = width,
+		height = height,
+
+		border = "none",
+
+		zindex = 200,
+		hide = false,
+	});
+
+	vim.api.nvim_win_set_config(message.data.confirm_window, window_opts);
+	vim.api.nvim_set_current_win(message.data.confirm_window);
+
+	utils.redraw({
+		flush = true,
+		statuscolumn = true,
+
+		win = message.data.confirm_window
+	}, {
+		ignore = false,
+	});
+
+	vim.on_key(function(key)
+		if not vim.list_contains(vim.g.__confirm_keys or {}, string.lower(key)) then
+			if vim.list_contains(movement_keys, key) then
+				pcall(message.confirm_movement, key);
+				pcall(vim.cmd, "mode"); ---@diagnostic disable-line
+			end
+
+			return;
+		end
+
+		pcall(vim.api.nvim_win_close, message.data.confirm_window, true);
+		vim.on_key(nil, message.data.namespace);
+
+		vim.g.__ui_confirm_msg = nil;
+	end, message.data.namespace)
+
+	---|fE
+end
+
+---@param kind ui.message.kind
+---@param content ui.message.fragment[]
+---@param replace_last boolean
+---@param history boolean
+---@param append boolean
+---@param id string | integer
+---@param trigger string
+message.msg_list = function(kind, content, replace_last, history, append, id, trigger)
+	---|fS
+
+	local msg = message.new(kind, content, replace_last, history, append, id, trigger, "list");
+	message.history[id] = msg;
+	message.prepare();
+
+	vim.api.nvim_buf_set_keymap(message.data.list_buffer, "n", "q", "", {
+		callback = function()
+			pcall(vim.api.nvim_win_close, message.data.list_window, true);
+		end
+	});
+
+	local lines, extmarks = utils.process_content(content);
+	local style = spec.get_listmsg_style(msg, lines, extmarks);
+
+	if style.modifier then
+		lines = style.modifier.lines or lines;
+		extmarks = style.modifier.extmarks or extmarks;
+	end
+
+	vim.api.nvim_buf_clear_namespace(message.data.list_buffer, message.data.namespace, 0, -1);
+	vim.api.nvim_buf_set_lines(message.data.list_buffer, 0, -1, false, lines);
+	message.apply_extmarks("msg_list", message.data.list_buffer, extmarks);
+
+	local width = math.min(
+		math.floor(vim.o.columns * 0.75),
+		utils.max_len(lines)
+	);
+	local height = utils.wrapped_height(lines, width);
+
+	local window_opts = vim.tbl_extend("force", spec.config.message.list_winconfig or {}, {
+		relative = "editor",
+
+		row = style.row or math.ceil((vim.o.lines - height) / 2),
+		col = style.col or math.ceil((vim.o.columns - width) / 2),
+
+		width = width,
+		height = height,
+
+		border = "none",
+
+		zindex = 200,
+		hide = false,
+	});
+
+	vim.api.nvim_win_set_config(message.data.list_window, window_opts);
+	vim.api.nvim_set_current_win(message.data.list_window);
+
+	utils.redraw({
+		flush = true,
+		statuscolumn = true,
+
+		win = message.data.list_window
+	}, {
+		ignore = false,
+	});
+
+	---|fE
+end
+
+---@param kind ui.message.kind
+---@param content ui.message.fragment[]
+---@param replace_last boolean
+---@param history boolean
+---@param append boolean
+---@param id string | integer
+---@param trigger string
+message.msg_show = function(kind, content, replace_last, history, append, id, trigger)
+	---|fS
+
+	vim.schedule(function()
+		if kind == "confirm" then
+			message.msg_confirm(kind, content, replace_last, history, append, id, trigger);
+			return;
+		end
+
+		local is_list = spec.is_list(kind, content, history);
+		local msg = message.new(kind, content, replace_last, history, append, id, trigger);
+		local lines = utils.to_lines(content);
+
+		if is_list or #lines > (spec.config.message.max_lines or math.floor(vim.o.lines * 0.5)) then
+			message.msg_list(kind, content, replace_last, history, append, id, trigger);
+			return;
+		end
+
+		local style = spec.get_msg_style(msg, lines, {}) or {};
+
+		-- NOTE: Make sure to reset the freeing timer.
+		if message.visible_special[id] then
+			message.visible_special[id].timer:stop();
+		elseif message.visible[id] then
+			message.visible[id].timer:stop();
+		end
+
+		msg.timer = message.timer(id, style.duration or 5000);
+
+		if type(id) == "string" then
+			message.visible_special[id] = msg;
+		else
+			message.visible[id] = msg;
+		end
+		message.history[id] = msg;
+
+		log.assert(
+			"ui/message.lua → add_render",
+			pcall(message.render)
+		);
+	end);
+
+	---|fE
+end
+
+local showcmd_hide_timer = vim.uv.new_timer();
+
+message.showcmd_hide = function()
+	---|fS
+
+	if not showcmd_hide_timer then
+		showcmd_hide_timer = vim.uv.new_timer();
+	end
+
+	if showcmd_hide_timer then
+		showcmd_hide_timer:stop();
+		showcmd_hide_timer:start(500, 0, vim.schedule_wrap(function()
+			pcall(vim.api.nvim_win_close, message.data.showcmd_window, true);
+			pcall(vim.api.nvim_buf_set_lines, message.data.showcmd_buffer, 0, -1, false, {})
+		end));
+	end
+
+	---|fE
+end
+
+message.showcmd_resize = function()
+	---|fS
+
+	local success, valid = pcall(vim.api.nvim_buf_is_valid, message.data.showcmd_buffer)
+
+	if not success or not valid then
+		return;
+	end
+
+	local lines = vim.api.nvim_buf_get_lines(message.data.showcmd_buffer, 0, -1, false);
+
+	if not lines[1] or lines[1] == "" then
+		return;
+	end
+
+	if vim.api.nvim_win_is_valid(message.data.showcmd_window) then
+		---@type vim.api.keyset.win_config
+		local window_opts = {
+			relative = "editor",
+			anchor = "SW",
+
+			row = vim.o.lines - (1 + message.cmdline_offset()),
+			col = 0,
+
+			border = "none",
+
+			zindex = 200,
+			hide = false,
+		};
+
+		vim.api.nvim_win_set_config(message.data.showcmd_window, window_opts);
+		utils.redraw({
+			flush = true,
+			win = message.data.showcmd_window
+		}, {
+			ignore = false,
+		});
+	end
+
+	---|fE
+end
+
+---@param content ui.message.fragment[]
+message.msg_showcmd = function(content)
+	---|fS
+
+	if #content == 0 then
+		message.showcmd_hide();
+		return;
+	end
+
+	message.prepare();
+
+	local lines, extmarks = utils.process_content(content);
+	local modifier = utils.eval(spec.config.message.showcmd.modifier, content, lines, extmarks);
+
+	if modifier then
+		lines = modifier.lines or lines;
+		extmarks = modifier.extmarks or extmarks;
+	end
+
+	vim.api.nvim_buf_clear_namespace(message.data.showcmd_buffer, message.data.namespace, 0, -1);
+	vim.api.nvim_buf_set_lines(message.data.showcmd_buffer, 0, -1, false, lines);
+	message.apply_extmarks("msg_list", message.data.showcmd_buffer, extmarks);
+
+	local width = utils.max_len(lines);
+	local height = 1;
+
+	---@type vim.api.keyset.win_config
+	local window_opts = {
+		relative = "editor",
+		anchor = "SW",
+
+		row = vim.o.lines - (1 + message.cmdline_offset()),
+		col = 0,
+
+		width = width,
+		height = height,
+
+		border = "none",
+
+		zindex = 200,
+		hide = false,
+	};
+
+	vim.api.nvim_win_set_config(message.data.showcmd_window, window_opts);
+	pcall(vim.api.nvim_win_set_cursor, message.data.showcmd_window, { 0, width })
+
+
+	vim.api.nvim__redraw({
+		flush = true,
+		win = message.data.showcmd_window
+	})
+
+	---|fE
+end
+
+---@param items ui.message.entry[] Items used for reloading the history window.
+message.history_keymaps = function(items)
+	---|fS
+
+	if not message.data.history_buffer then
+		return;
+	end
+
+	vim.api.nvim_buf_set_keymap(message.data.history_buffer, "n", "u", "", {
+		desc = "[u]pdates message history.",
+		callback = function()
+			if vim.g.history_source == "vim" then
+				vim.cmd("message");
+			else
+				message.msg_history_show(items);
+			end
+		end
+	});
+	vim.api.nvim_buf_set_keymap(message.data.history_buffer, "n", "t", "", {
+		desc = "[t]oggles between `vim` and `ui.nvim`'s message history.",
+		callback = function()
+			if vim.g.history_source == "vim" then
+				vim.g.history_source = "ui";
+			else
+				vim.g.history_source = "vim";
+			end
+
+			message.msg_history_show(items);
+		end
+	});
+
+	vim.api.nvim_buf_set_keymap(message.data.history_buffer, "n", "q", "", {
+		desc = "[q]uit",
+		callback = function()
+			log.assert(
+				"ui/message.lua → history_quit",
+				pcall(vim.api.nvim_win_close, message.data.history_window, true)
+			)
+		end
+	});
+
+	vim.api.nvim_buf_set_keymap(message.data.history_buffer, "n", "N", "", {
+		desc = "Toggles [N]ormal msssags visiblity.",
+		callback = function()
+			if _G.history_show then
+				_G.history_show.normal = not _G.history_show.normal;
+			end
+
+			message.msg_history_show(items);
+		end
+	});
+	vim.api.nvim_buf_set_keymap(message.data.history_buffer, "n", "H", "", {
+		desc = "Toggles [H]idden msssags visiblity.",
+		callback = function()
+			if _G.history_show then
+				_G.history_show.hidden = not _G.history_show.hidden;
+			end
+
+			message.msg_history_show(items);
+		end
+	});
+	vim.api.nvim_buf_set_keymap(message.data.history_buffer, "n", "L", "", {
+		desc = "Toggles [L]ist msssags visiblity.",
+		callback = function()
+			if _G.history_show then
+				_G.history_show.list = not _G.history_show.list;
+			end
+
+			message.msg_history_show(items);
+		end
+	});
+	vim.api.nvim_buf_set_keymap(message.data.history_buffer, "n", "C", "", {
+		desc = "Toggles [C]onfirm msssags visiblity.",
+		callback = function()
+			if _G.history_show then
+				_G.history_show.confirm = not _G.history_show.confirm;
+			end
+
+			message.msg_history_show(items);
+		end
+	});
+
+	---|fE
+end
+
+---@param items ui.message.entry[]
+message.msg_history_show = function(items)
+	---|fS
+
+	vim.g.history_source = vim.g.history_source or "vim";
+	_G.history_show = _G.history_show or {
+		normal = true,
+
+		hidden = false,
+		list = false,
+		confirm = false,
+	};
+
+	message.prepare();
+	message.history_keymaps(items);
+
+	message.history_decorations = {};
+
+	local lines, extmarks = {}, {};
+
+	if vim.g.history_source == "vim" then
+		for _, item in ipairs(items) do
+			local i_lines, i_extmarks = utils.process_content(item[2]);
+
+			lines = vim.list_extend(lines, i_lines);
+			extmarks = vim.list_extend(extmarks, i_extmarks);
+		end
+	else
+		local ui_chips = {
+			{ " [N]ormal ",  _G.history_show.normal },
+			{ " [H]idden ",  _G.history_show.hidden },
+			{ " [L]ist ",    _G.history_show.list },
+			{ " [C]onfirm ", _G.history_show.confirm },
+		};
+
+		-- Taken from `ZeroBrane`
+		local function padnum(d)
+			return ("%03d%s"):format(#d, d)
+		end
+
+		local line, extmark = " Filters ", {
+			{ 0, 11, "Comment" }
+		};
+
+		for i, item in ipairs(ui_chips) do
+			local before = #line;
+			line = line .. item[1] .. (i ~= #ui_chips and " " or "");
+
+			table.insert(extmark,
+				{ before, before + #item[1], item[2] and "UICmdlineDefaultIcon" or "UICmdlineSearchUpIcon" })
+		end
+
+		table.insert(lines, line);
+		table.insert(extmarks, extmark);
+
+		local msg_orders = vim.tbl_keys(message.history);
+		table.sort(msg_orders, function (a, b)
+			if type(a) == "number" and type(b) == "number" then
+				return a < b;
+			else
+				-- There may be special message order(e.g. `bufwrite`), this is an Overkill BTW.
+				return tostring(a):gsub("%d+", padnum) < tostring(b):gsub("%d+", padnum);
+			end
+		end);
+
+		for _, order in ipairs(msg_orders) do
+			local msg = message.history[order];
+
+			if _G.history_show[msg.type or "normal"] then
+				local m_lines, m_exts = utils.process_content(msg.content);
+
+				local style = spec.get_msg_style(msg, m_lines, m_exts) or {};
+				if style.modifier then
+					m_lines = style.modifier.lines or m_lines;
+					m_exts = style.modifier.extmarks or m_exts;
+				end
+
+				if style.decorations then
+					table.insert(message.history_decorations, vim.tbl_extend("force", style.decorations, {
+						from = #lines,
+						to = (#lines + #m_lines) - 1,
+					}));
+				end
+
+				lines = vim.list_extend(lines, m_lines);
+				extmarks = vim.list_extend(extmarks, m_exts);
+			end
+		end
+	end
+
+	vim.bo[message.data.history_buffer].modifiable = true;
+
+	vim.api.nvim_buf_clear_namespace(message.data.history_buffer, message.data.namespace, 0, -1);
+	vim.api.nvim_buf_set_lines(message.data.history_buffer, 0, -1, false, lines);
+
+	vim.bo[message.data.history_buffer].modifiable = false;
+
+	if vim.g.history_source == "vim" then
+		vim.wo[message.data.history_window].statusline = table.concat({
+			"%#UILSBufname#",
+			" VIM ",
+			"%#Normal#",
+			"%=",
+			"%#UIHistoryKeymap#",
+			" t ",
+			"%#UIHistoryDesc#",
+			" Toggle source ",
+			"%#Normal#",
+			"  ",
+			"%#UIHistoryKeymap#",
+			" q ",
+			"%#UIHistoryDesc#",
+			" Quit ",
+		}, "");
+	else
+		vim.wo[message.data.history_window].statusline = table.concat({
+			"%#UILSBuffer#",
+			" UI.nvim ",
+			"%#Normal#",
+			"%=",
+			"%#UIHistoryKeymap#",
+			" u ",
+			"%#UIHistoryDesc#",
+			" Update ",
+			"%#Normal#",
+			"  ",
+			"%#UIHistoryKeymap#",
+			" t ",
+			"%#UIHistoryDesc#",
+			" Toggle source ",
+			"%#Normal#",
+			"  ",
+			"%#UIHistoryKeymap#",
+			" q ",
+			"%#UIHistoryDesc#",
+			" Quit ",
+		}, "");
+	end
+
+	message.apply_extmarks("HERE", message.data.history_buffer, extmarks);
+	message.apply_msg_decorations(message.history_decorations, message.data.history_buffer);
+
+	local window_opts = vim.tbl_extend("force", spec.config.message.history_winconfig or {}, {
+		split = "below",
+		win = -1,
+
+		height = 10,
+	});
+
+	vim.api.nvim_win_set_config(message.data.history_window, window_opts);
+	vim.api.nvim_set_current_win(message.data.history_window);
+
+	---|fE
+end
+
+------------------------------------------------------------------------------
+
 ---@return string
-message.statuscolumn = function ()
+message.statuscolumn = function()
 	---|fS
 
 	local win = vim.g.statusline_winid;
 
-	if win ~= message.msg_window and win ~= message.history_window then
-		-- Wrong window.
-		return "";
-	elseif not message.decorations and not message.history_decorations then
-		-- Decorations not available.
+	if win ~= message.data.window and win ~= message.data.history_window then
 		return "";
 	end
 
-	---@type integer Current line-number(0-indexed).
-	local lnum = vim.v.lnum - 1;
+	local row = vim.v.lnum - 1;
 
-	for _, entry in ipairs(win == message.history_window and (message.history_decorations or {}) or (message.decorations or {})) do
-		if lnum >= entry.from and lnum <= entry.to then
-			if lnum == entry.from and vim.v.virtnum == 0 then
-				return "%=" .. utils.to_statuscolumn(entry.icon);
-			elseif lnum == entry.to and vim.v.virtnum == 0 then
-				return "%=" .. utils.to_statuscolumn(
-					entry.tail or entry.padding or entry.icon
-				);
+	for _, item in ipairs(win == message.data.window and message.visible_decorations or message.history_decorations) do
+		if row >= item.from and row <= item.to then
+			if vim.v.virtnum == 0 then
+				if row == item.from then
+					return "%=" .. utils.to_statuscolumn(item.icon);
+				elseif row == item.to then
+					return "%=" .. utils.to_statuscolumn(item.tail or item.padding or item.icon);
+				else
+					return "%=" .. utils.to_statuscolumn(item.padding or item.icon);
+				end
 			else
-				return "%=" .. utils.to_statuscolumn(
-					entry.padding or entry.icon
-				);
+				return utils.to_statuscolumn(item.padding or item.icon);
 			end
 
 			break;
@@ -83,1458 +766,228 @@ message.statuscolumn = function ()
 	---|fE
 end
 
--- Export the statuscolumn so that we can use it in 'statuscolumn' option.
-_G.__ui_statuscolumn = message.statuscolumn;
+_G.ui_statuscolumn = message.statuscolumn;
 
-------------------------------------------------------------------------------
-
----@type boolean Have we passed UIEnter event?
-message.ui_attached = false;
----@type ui.message.entry[] List of messages to echo after UIEnter.
-message.ui_echo = {};
-
---- Caches given message.
----@param kind ui.message.kind
----@param content ui.message.fragment[]
----@param replace_last boolean
----@param add_to_history boolean
-message.cache = function (kind, content, replace_last, add_to_history)
+--- Creates a buffer & window pair & assign them to `message.data`
+---@param buf string Buffer name
+---@param win string Window name
+message.set_buf_win = function(buf, win)
 	---|fS
 
-	if #message.ui_echo > 0 and replace_last == true then
-		message.ui_echo[#message.ui_echo] = {
-			kind = kind,
-			content = content,
-			replace_last = replace_last,
-
-			add_to_history = add_to_history
-		};
-	else
-		table.insert(message.ui_echo, {
-			kind = kind,
-			content = content,
-			replace_last = replace_last,
-
-			add_to_history = add_to_history
-		});
-	end
-
-	---|fE
-end
-
-vim.api.nvim_create_autocmd("UIEnter", {
-	callback = function ()
-		message.ui_attached = true;
-
-		for _, item in ipairs(message.ui_echo) do
-			message.__add(item.kind, item.content, item.add_to_history or true);
-		end
-	end
-});
-
-------------------------------------------------------------------------------
-
---- Prepares various window & buffers.
-message.__prepare = function ()
-	---|fS
-
-	local win_config = {
+	---@type vim.api.keyset.win_config
+	local window_opts = {
 		relative = "editor",
 
-		row = 0, col = 0,
-		width = 1, height = 1,
+		row = 0,
+		col = 0,
+		width = 1,
+		height = 1,
 
 		border = "none",
-
 		style = "minimal",
+
 		hide = true,
 		focusable = false
 	};
 
-	if not message.msg_buffer or vim.api.nvim_buf_is_valid(message.msg_buffer) == false then
-		message.msg_buffer = vim.api.nvim_create_buf(false, true);
+	if not message.data[buf] or not vim.api.nvim_buf_is_valid(message.data[buf]) then
+		message.data[buf] = vim.api.nvim_create_buf(false, true);
 	end
 
-	if not message.msg_window or vim.api.nvim_win_is_valid(message.msg_window) == false then
-		message.msg_window = utils.open_win(message.msg_buffer, false, win_config);
-		vim.api.nvim_win_set_var(message.msg_window, "ui_window", true);
+	if not message.data[win] or not vim.api.nvim_win_is_valid(message.data[win]) then
+		message.data[win] = vim.api.nvim_open_win(message.data[buf], false, window_opts);
+		vim.api.nvim_win_set_var(message.data[win], "ui_window", true);
 
-		utils.set("w", message.msg_window, "foldmethod", "manual");
-
-		utils.set("w", message.msg_window, "numberwidth", 1);
-		utils.set("w", message.msg_window, "statuscolumn", "%!v:lua.__ui_statuscolumn()");
-	end
-
-	----------
-
-	if not message.list_buffer or vim.api.nvim_buf_is_valid(message.list_buffer) == false then
-		message.list_buffer = vim.api.nvim_create_buf(false, true);
-	end
-
-	----------
-
-	if not message.confirm_buffer or vim.api.nvim_buf_is_valid(message.confirm_buffer) == false then
-		message.confirm_buffer = vim.api.nvim_create_buf(false, true);
-	end
-
-	----------
-
-	if not message.history_buffer or vim.api.nvim_buf_is_valid(message.history_buffer) == false then
-		message.history_buffer = vim.api.nvim_create_buf(false, true);
-	end
-
-	----------
-
-	if not message.show_buffer or vim.api.nvim_buf_is_valid(message.show_buffer) == false then
-		message.show_buffer = vim.api.nvim_create_buf(false, true);
-	end
-
-	if not message.show_window or vim.api.nvim_win_is_valid(message.show_window) == false then
-		message.show_window = utils.open_win(message.show_buffer, false, win_config);
-		vim.api.nvim_win_set_var(message.show_window, "ui_window", true);
-
-		utils.set("w", message.show_window, "foldmethod", "manual");
-		utils.set("w", message.show_window, "sidescrolloff", 0);
+		utils.set("w", message.data[win], "foldmethod", "manual");
+		utils.set("w", message.data[win], "numberwidth", 1);
+		utils.set("w", message.data[win], "winhl", "Normal:Normal");
 	end
 
 	---|fE
 end
 
---- Wrapper for `vim.uv.new_timer()`.
----@param callback function
----@param duration? integer
----@param interval? integer
----@return table
-message.timer = function (callback, duration, interval)
+--- Prepare all buffers & windows used for messages.
+message.prepare = function()
 	---|fS
 
-	local timer = vim.uv.new_timer(); ---@diagnostic disable-line
+	message.set_buf_win("buffer", "window");
+	message.set_buf_win("confirm_buffer", "confirm_window");
+	message.set_buf_win("list_buffer", "list_window");
+	message.set_buf_win("history_buffer", "history_window");
+	message.set_buf_win("showcmd_buffer", "showcmd_window");
 
-	if interval then
-		timer:start(0, duration, vim.schedule_wrap(callback));
-	else
-		timer:start(duration, 0, vim.schedule_wrap(callback));
-	end
+	utils.set("w", message.data.window, "statuscolumn", "%!v:lua.ui_statuscolumn()");
+	utils.set("w", message.data.window, "wrap", true);
 
-	return timer;
+	utils.set("w", message.data.history_window, "statuscolumn", "%!v:lua.ui_statuscolumn()");
+	utils.set("w", message.data.showcmd_window, "sidescrolloff", 999)
 
 	---|fE
 end
 
---- Removes message with `ID`.
----@param id integer
-message.__remove = function (id)
+---@param src string Source used for logs
+---@param buffer integer Buffer ID
+---@param extmarks ui.message.hl_fragment[][]
+message.apply_extmarks = function(src, buffer, extmarks)
 	---|fS
 
-	if message.visible[id] then
-		message.visible[id] = nil;
+	for l, line in ipairs(extmarks) do
+		for _, item in ipairs(line) do
+			if item[3] == "" then
+				goto continue;
+			end
 
-		vim.schedule(function ()
 			log.assert(
-				"ui/message.lua → remove_render",
-				pcall(message.__render)
-			)
-		end)
-	end
+				"ui/message.lua → " .. src,
+				pcall(
+					vim.api.nvim_buf_set_extmark,
+					buffer,
+					message.data.namespace,
 
-	---|fE
-end
+					l - 1,
+					item[1],
 
---- Adds a new message.
----@param kind ui.message.kind
----@param content ui.message.fragment[]
----@param add_to_history boolean
-message.__add = function (kind, content, add_to_history)
-	---|fS
-
-	if kind == "" and vim.tbl_isempty(message.history) == false then
-		-- Calling `nvim__redraw()` causes messages to duplicate
-		-- with incorrect kind.
-		-- So, we check if that's the case and handle accordingly.
-
-		--- Last shown message.
-		local last_shown = message.history[message.id - 1];
-
-		--- Last visible message.
-		local last_visible = message.visible[message.id - 1];
-
-		if last_visible and vim.deep_equal(last_visible.content, content) then
-			-- Message is still visible, extend duration.
-			message.__replace(last_visible.kind, content, false);
-			return;
-		elseif last_shown and vim.deep_equal(last_shown.content, content) then
-			-- Message is not visible, discard this one.
-			return;
-		end
-	end
-
-	vim.schedule(function ()
-		---|fS
-
-		---@type boolean Should this message be ignored?
-		local condition = utils.eval(spec.config.message.ignore, kind, content);
-
-		if condition == true then
-			return;
-		end
-
-		local lines = utils.to_lines(content);
-
-		---@type boolean, boolean?
-		local is_list, _add_to_history = spec.is_list(kind, content, add_to_history);
-		local max_lines = spec.config.message.max_lines or math.floor(vim.o.lines * 0.5);
-
-		if is_list == true or #lines > max_lines then
-			-- The message should be shown as a list.
-			-- It either,
-			--     1. Is a list message with inaccurate `kind`.
-			--     2. Is too long to show.
-			log.assert(
-				"ui/message.lua → add_list",
-				pcall(message.__list, {
-					-- If the message is too long, it should be
-					-- added to history.
-					type = _add_to_history and "normal" or "list",
-
-					kind = kind,
-					content = content,
-				})
+					{
+						end_col = item[2],
+						hl_group = item[3],
+					}
+				)
 			);
-			return;
-		elseif kind == "list_cmd" then
-			-- If the message isn't considered a list command,
-			-- we should change it's kind even if Neovim tells
-			-- us otherwise.
-			kind = "not_list_cmd";
+
+			::continue::
 		end
-
-		---@type integer Current message's ID.
-		local current_id = message.id;
-
-		---@type ui.message.style__static
-		local style = spec.get_msg_style({ kind = kind, content = content }, lines, {}) or {};
-
-		---@type integer Message visibility duration.
-		local duration = math.min(
-			style.duration or 5000,
-			spec.config.message.max_duration or 5000
-		);
-
-		-- Store the message in history & visible
-		-- message table.
-		message.history[message.id] = {
-			type = add_to_history and "normal" or "hidden",
-
-			kind = kind,
-			content = content
-		};
-
-		-- The visible message has a `timer`
-		-- thta shows/hides the message.
-		message.visible[message.id] = vim.tbl_extend("force", {
-			kind = kind,
-			content = content
-		}, {
-			timer = message.timer(function ()
-				message.__remove(current_id);
-			end, duration)
-		});
-
-		message.id = message.id + 1;
-
-		log.assert(
-			"ui/message.lua → add_render",
-			pcall(message.__render)
-		);
-
-		---|fE
-	end);
+	end
 
 	---|fE
 end
 
---- Replaces the last visible message.
----@param kind ui.message.kind
----@param content ui.message.fragment[]
----@param add_to_history boolean
-message.__replace = function (kind, content, add_to_history)
+---@param src ui.message.decorations[]
+---@return integer
+message.apply_msg_decorations = function(src, buffer)
 	---|fS
 
-	vim.schedule(function ()
-		---@type boolean Should this message be ignored?
-		local condition = utils.eval(spec.config.message.ignore, kind, content, true);
+	local decor_width = 0;
 
-		if condition == true then
-			return;
+	for _, item in ipairs(src) do
+		if item.icon then
+			decor_width = math.max(decor_width, utils.virt_len(item.icon));
 		end
 
-		---@type integer[]
-		local keys = vim.tbl_keys(message.visible);
-
-		local lines = utils.to_lines(content);
-
-		---@type boolean, boolean?
-		local is_list, _add_to_history = spec.is_list(kind, content, add_to_history);
-		local max_lines = spec.config.message.max_lines or math.floor(vim.o.lines * 0.5);
-
-		if is_list == true or #lines > max_lines then
-			log.assert(
-				"ui/message.lua → replace_list",
-				pcall(message.__list, {
-					-- If the message is too long, it should be
-					-- added to history.
-					type = _add_to_history and "normal" or "list",
-
-					kind = kind,
-					content = content,
-				})
-			);
-			return;
-		elseif #keys == 0 or not message.visible[keys[#keys]] then
-			-- No last visible message available.
-			-- Add new message.
-			message.__add(kind, content, add_to_history);
-			return;
-		elseif add_to_history then
-			-- Certain replace type messages need
-			-- to be added to the history.
-			message.history[message.id] = {
-				type = "normal",
-
-				kind = kind,
-				content = content
-			};
-			message.id = message.id + 1;
-		else
-			message.history[keys[#keys]] = {
-				type = "normal",
-
-				kind = kind,
-				content = content
-			};
+		if item.line_hl_group then
+			pcall(vim.api.nvim_buf_set_extmark, buffer, message.data.namespace, item.from, 0, {
+				end_row = item.to,
+				line_hl_group = item.line_hl_group,
+			});
 		end
+	end
 
-		--- Last visible message.
-		local last = message.visible[keys[#keys]];
-
-		last.timer:stop();
-
-		last.kind = kind;
-		last.content = content;
-
-		---@type ui.message.style__static
-		local style = spec.get_msg_style({ kind = kind, content = content }, lines, {}) or {};
-		local duration = math.min(
-			style.duration or 5000,
-			spec.config.message.max_duration or 5000
-		);
-
-		last.timer:start(duration, 0, vim.schedule_wrap(function ()
-			message.__remove(keys[#keys]);
-		end));
-
-		log.assert(
-			"ui/message.lua → replace_render",
-			pcall(message.__render)
-		);
-	end);
+	return decor_width;
 
 	---|fE
 end
 
-------------------------------------------------------------------------------
-
---- Confirmation message.
----@param obj ui.message.entry
-message.__confirm = function (obj)
-	---|fS
-
-	message.history[message.id] = obj;
-	message.id = message.id + 1;
-
-	--- All logic must be run outside of
-	--- fast event.
-	vim.schedule(function ()
-		vim.g.__ui_confirm_msg = obj;
-		local lines, exts = utils.process_content(obj.content);
-
-		message.__prepare();
-
-		---@type ui.message.confirm__static
-		local config = spec.get_confirm_style(obj, lines, exts);
-
-		if config.modifier then
-			lines = config.modifier.lines or lines;
-			exts = config.modifier.extmarks or exts;
-		end
-
-		local window_config = vim.tbl_extend("force", {
-			relative = "editor",
-
-			row = config.row or math.ceil((vim.o.lines - #lines) / 2),
-			col = config.col or math.ceil((vim.o.columns - utils.max_len(lines)) / 2),
-
-			width = config.width or utils.max_len(lines),
-			height = config.height or utils.wrapped_height(lines, config.width),
-
-			border = config.border or "none",
-			style = "minimal",
-
-			zindex = 90,
-			hide = false
-		}, spec.config.message.confirm_winconfig or {});
-
-		if message.confirm_window and vim.api.nvim_win_is_valid(message.confirm_window) then
-			vim.api.nvim_win_set_config(message.confirm_window, window_config);
-		else
-			message.confirm_window = utils.open_win(message.confirm_buffer, false, window_config);
-			vim.api.nvim_win_set_var(message.confirm_window, "ui_window", true);
-		end
-
-		pcall(vim.api.nvim_win_set_cursor, message.confirm_window, { 1, 0 });
-		vim.api.nvim_buf_clear_namespace(message.confirm_buffer, message.namespace, 0, -1);
-		vim.api.nvim_buf_set_lines(message.confirm_buffer, 0, -1, false, lines);
-
-		for l, line in ipairs(exts) do
-			for _, ext in ipairs(line) do
-				pcall(vim.api.nvim_buf_set_extmark, message.confirm_buffer, message.namespace, l - 1, ext[1], {
-					end_col = ext[2],
-					hl_group = ext[3]
-				});
-			end
-		end
-
-		utils.set("w", message.confirm_window, "foldmethod", "manual");
-
-		utils.set("w", message.confirm_window, "wrap", true);
-		utils.set("w", message.confirm_window, "linebreak", true);
-		utils.set("w", message.confirm_window, "cursorline", #lines > 1);
-
-		if config.winhl then
-			utils.set("w", message.confirm_window, "winhl", config.winhl);
-		end
-
-		---|fS "feat: Allow moving in the confirm window."
-
-		---@type string[] Various movement keys
-		local movememt_keys = {
-			vim.api.nvim_replace_termcodes("<left>", true, true, true),
-			vim.api.nvim_replace_termcodes("<right>", true, true, true),
-
-			vim.api.nvim_replace_termcodes("<down>", true, true, true),
-			vim.api.nvim_replace_termcodes("<up>", true, true, true),
-
-			vim.api.nvim_replace_termcodes("h", true, true, true),
-			vim.api.nvim_replace_termcodes("l", true, true, true),
-
-			vim.api.nvim_replace_termcodes("j", true, true, true),
-			vim.api.nvim_replace_termcodes("k", true, true, true),
-		};
-
-		---  Handles cursor movements.
-		---@param key string
-		local function handle_movement (key)
-			---|fS
-
-			local pos = vim.api.nvim_win_get_cursor(message.confirm_window);
-			local X, Y = pos[2], pos[1];
-
-			if key == movememt_keys[1] or key == movememt_keys[5] then
-				X = math.max(0, X - 1);
-			elseif key == movememt_keys[2] or key == movememt_keys[6] then
-				X = math.min(string.len(lines[Y] or ""), X + 1);
-			elseif key == movememt_keys[3] or key == movememt_keys[7] then
-				Y = math.min(#lines, Y + 1);
-			else
-				Y = math.max(1, Y - 1);
-			end
-
-			pcall(vim.api.nvim_win_set_cursor, message.confirm_window, { Y, X });
-
-			---|fE
-		end
-
-		---|fE
-
-		--- Auto hide on next key press.
-		vim.on_key(function (key)
-			if vim.list_contains(vim.g.__confirm_keys or {}, string.lower(key)) == false then
-				if vim.list_contains(movememt_keys, key) then
-					-- If the key is a movement key then
-					-- we try to do the movement and
-					-- redraw the entire screen.
-					-- `nvim__redraw()` doesn't work
-					-- here.
-					pcall(handle_movement, key);
-					pcall(vim.cmd, "mode"); ---@diagnostic disable-line
-				end
-
-				return;
-			end
-
-			pcall(vim.api.nvim_win_close, message.confirm_window, true);
-			vim.on_key(nil, message.namespace);
-
-			vim.g.__ui_confirm_msg = nil;
-		end, message.namespace);
-
-		if package.loaded["ui.cmdline"] and vim.v.vim_did_enter ~= 1 then
-			-- The cmdline is initially hidden when Neovim starts.
-			-- So, we make the next `cmdline_show` fire a `:mode`.
-			--
-			-- We only need to call this for messages before `VimEnter`.
-			package.loaded["ui.cmdline"].__use_mode = true;
-			package.loaded["ui.cmdline"].__render();
-
-			-- The cmdline isn't visible in some cases.
-			-- Manually call `:mode` to make it visible.
-			vim.defer_fn(function ()
-				pcall(vim.cmd, "mode"); ---@diagnostic disable-line
-			end, 100);
-		end
-	end);
-
-	---|fE
+---@return integer RowOffset Rows used by the command-line
+message.cmdline_offset = function()
+	return (vim.g.ui_cmd_height or 0) + (spec.config.cmdline.row_offset or 0) - 1
 end
 
---- List message.
----@param obj ui.message.entry
-message.__list = function (obj)
+message.render = function()
 	---|fS
 
-	message.history[message.id] = obj;
-	message.id = message.id + 1;
+	message.prepare();
+	message.visible_decorations = {};
 
-	--- All logic must be run outside of
-	--- fast event.
-	vim.schedule(function ()
-		message.__prepare();
-		vim.g.__ui_list_msg = obj;
+	local lines = {};
+	local extmarks = {};
 
-		local lines, exts = utils.process_content(obj.content);
+	-- Visible messages
+	local msg_orders = vim.tbl_keys(message.visible);
+	local sp_msg_orders = vim.tbl_keys(message.visible_special);
 
-		---@type ui.message.list__static
-		local config = spec.get_listmsg_style(obj, lines, exts);
-
-		if config.modifier then
-			lines = config.modifier.lines or lines;
-			exts = config.modifier.extmarks or exts;
-		end
-
-		---|fS "feat: Keymap(s)"
-
-		vim.api.nvim_buf_set_keymap(message.list_buffer, "n", "q", "", {
-			callback = function ()
-				vim.api.nvim_set_current_win(
-					utils.last_win()
-				);
-				pcall(vim.api.nvim_win_close, message.list_window, true);
-
-				vim.g.__ui_list_msg = nil;
-			end
-		});
-
-		---|fE
-
-		---@type integer
-		local W = math.min(utils.max_len(lines), math.floor(vim.o.columns * 0.75));
-		---@type integer
-		local H = math.min(#lines, vim.o.lines - 2);
-
-		local window_config = vim.tbl_extend("force", {
-			relative = "editor",
-
-			row = config.row or math.ceil((vim.o.lines - H) / 2),
-			col = config.col or math.ceil((vim.o.columns - W) / 2),
-
-			width = config.width or W,
-			height = config.height or H,
-
-			border = config.border or "none",
-			style = "minimal",
-
-			zindex = 50,
-			hide = false,
-			focusable = true
-		}, spec.config.message.list_winconfig or {});
-
-		if message.list_window and vim.api.nvim_win_is_valid(message.list_window) then
-			vim.api.nvim_win_set_config(message.list_window, window_config);
-		else
-			message.list_window = utils.open_win(message.list_buffer, false, window_config);
-			vim.api.nvim_win_set_var(message.list_window, "ui_window", true);
-
-			vim.api.nvim_create_autocmd("WinClosed", {
-				pattern = tostring(message.list_window),
-				callback = function ()
-					message.list_window = nil;
-					vim.g.__ui_list_msg = nil;
-				end
-			})
-		end
-
-		---|fS
-
-		vim.bo[message.list_buffer].modifiable = true;
-
-		vim.api.nvim_buf_clear_namespace(message.list_buffer, message.namespace, 0, -1);
-		vim.api.nvim_buf_set_lines(message.list_buffer, 0, -1, false, lines);
-
-		for l, line in ipairs(exts) do
-			for _, ext in ipairs(line) do
-				log.assert(
-					"ui/message.lua → list_highlights",
-					pcall(
-						vim.api.nvim_buf_set_extmark,
-						message.list_buffer,
-						message.namespace,
-
-						l - 1,
-						ext[1],
-
-						{
-							end_col = ext[2],
-							hl_group = ext[3]
-						}
-					)
-				);
-			end
-		end
-
-		vim.bo[message.list_buffer].modifiable = false;
-
-		---|fE
-
-		vim.api.nvim_set_current_win(message.list_window);
-		utils.set("w", message.list_window, "foldmethod", "manual");
-		utils.set("w", message.list_window, "wrap", false);
-
-		if config.winhl then
-			utils.set("w", message.list_window, "winhl", config.winhl);
-		end
-	end);
-
-	---|fE
-end
-
-message.__list_resize = function ()
-	---|fS
-
-	if not vim.g.__ui_list_msg then
-		return;
-	elseif not message.list_window or not vim.api.nvim_win_is_valid(message.list_window) then
+	if #msg_orders == 0 and #sp_msg_orders == 0 then
+		vim.api.nvim_win_close(message.data.window, true);
 		return;
 	end
 
-	local lines, exts = utils.process_content(vim.g.__ui_list_msg.content);
+	table.sort(msg_orders);
 
-	---@type ui.message.list__static
-	local config = spec.get_listmsg_style(vim.g.__ui_list_msg, lines, exts);
+	local function handle_msg_orders(orders, msgs)
+		for _, msg_order in ipairs(orders) do
+			local msg = msgs[msg_order];
+			local m_lines, m_exts = utils.process_content(msg.content);
 
-	if config.modifier then
-		lines = config.modifier.lines or lines;
-		exts = config.modifier.extmarks or exts;
-	end
+			local style = spec.get_msg_style(msg, m_lines, m_exts) or {};
+			if style.modifier then
+				m_lines = style.modifier.lines or m_lines;
+				m_exts = style.modifier.extmarks or m_exts;
+			end
 
-	---@type integer
-	local W = math.min(utils.max_len(lines), math.floor(vim.o.columns * 0.75));
-	---@type integer
-	local H = math.min(#lines, vim.o.lines - 2);
+			if style.decorations then
+				table.insert(message.visible_decorations, vim.tbl_extend("force", style.decorations, {
+					from = #lines,
+					to = (#lines + #m_lines) - 1,
+				}));
+			end
 
-	local window_config = vim.tbl_extend("force", {
-		relative = "editor",
-
-		row = config.row or math.ceil((vim.o.lines - H) / 2),
-		col = config.col or math.ceil((vim.o.columns - W) / 2),
-
-		width = config.width or W,
-		height = config.height or H,
-
-		border = config.border or "none",
-		style = "minimal",
-
-		zindex = 90,
-		hide = false,
-		focusable = true
-	}, spec.config.message.list_winconfig or {});
-
-	vim.api.nvim_win_set_config(message.list_window, window_config);
-
-	---|fE
-end
-
---- Hides the message window.
-message.__hide = function ()
-	---|fS
-
-	local keys = vim.tbl_keys(message.visible);
-	if #keys ~= 0 then return; end
-
-	pcall(vim.api.nvim_win_set_config, message.msg_window, { hide = true });
-
-	---|fE
-end
-
-message.__get_cmdline_offset = function ()
-	---|fS
-
-	local cmdline_offset = 0
-
-	if vim.g.__ui_cmd_height and vim.g.__ui_cmd_height > 0 then
-		cmdline_offset = vim.g.__ui_cmd_height + spec.config.cmdline.row_offset - 1
-	end
-
-	return cmdline_offset
-
-	---|fE
-end
-
---- Renders visible messages.
-message.__render = function ()
-	---|fS
-
-	local keys = vim.tbl_keys(message.visible);
-	table.sort(keys);
-
-	if #keys == 0 then
-		message.__hide();
-		return;
-	end
-
-	message.__prepare();
-
-	---@type integer
-	local last_decor_size = 0;
-
-	for _, entry in ipairs(message.decorations) do
-		if entry.icon then
-			last_decor_size = math.max(last_decor_size, utils.virt_len(entry.icon));
+			lines = vim.list_extend(lines, m_lines);
+			extmarks = vim.list_extend(extmarks, m_exts);
 		end
 	end
 
-	local lines, exts = {}, {};
-	message.decorations = {};
+	handle_msg_orders(msg_orders, message.visible)
 
-	for _, key in ipairs(keys) do
-		local value = message.visible[key];
-		local m_lines, m_exts = utils.process_content(value.content);
+	table.sort(sp_msg_orders);
+	handle_msg_orders(sp_msg_orders, message.visible_special)
 
-		---@type ui.message.style__static
-		local style = spec.get_msg_style(value, m_lines, m_exts) or {};
-
-		if style.modifier then
-			m_lines = style.modifier.lines or m_lines;
-			m_exts = style.modifier.extmarks or m_exts;
-		end
-
-		if style.decorations then
-			table.insert(message.decorations, vim.tbl_extend("force", style.decorations, {
-				from = #lines,
-				to = #lines + (#m_lines - 1)
-			}));
-		end
-
-		lines = vim.list_extend(lines, m_lines)
-		exts = vim.list_extend(exts, m_exts)
-	end
-
-	-- Remove trailing newlines.
-	-- These are typically used before a `return_prompt`.
 	while lines[#lines] == "" do
 		table.remove(lines);
 	end
 
-	vim.api.nvim_buf_clear_namespace(message.msg_buffer, message.namespace, 0, -1);
-	vim.api.nvim_buf_set_lines(message.msg_buffer, 0, -1, false, lines);
+	vim.api.nvim_buf_clear_namespace(message.data.buffer, message.data.namespace, 0, -1);
+	vim.api.nvim_buf_set_lines(message.data.buffer, 0, -1, false, lines);
 
-	for l, line in ipairs(exts) do
-		for _, ext in ipairs(line) do
-			if ext[3] == "" then
-				goto continue;
-			end
+	message.apply_extmarks("msg_render", message.data.buffer, extmarks);
+	local decor_size = message.apply_msg_decorations(message.visible_decorations, message.data.buffer);
 
-			vim.api.nvim_buf_set_extmark(message.msg_buffer, message.namespace, l - 1, ext[1], {
-				end_col = ext[2],
-				hl_group = ext[3]
-			});
+	local width = math.min(
+		math.floor(vim.o.columns * 0.5),
+		utils.max_len(lines)
+	);
+	local height = utils.wrapped_height(lines, width);
 
-		    ::continue::
-		end
-	end
-
-	---@type integer Number of columns decorations take.
-	local decor_size = 0;
-
-	for _, entry in ipairs(message.decorations) do
-		if entry.icon then
-			decor_size = math.max(decor_size, utils.virt_len(entry.icon));
-		end
-
-		if entry.line_hl_group then
-			pcall(vim.api.nvim_buf_set_extmark, message.msg_buffer, message.namespace, entry.from, 0, {
-				end_row = entry.to,
-				line_hl_group = entry.line_hl_group
-			});
-		end
-	end
-
-	local W = math.min(math.floor(vim.o.columns * 0.5), utils.max_len(lines));
-	local H = utils.wrapped_height(lines, W);
-
-	local window_config = vim.tbl_extend("keep", spec.config.message.message_winconfig or {}, {
+	local window_opts = vim.tbl_extend("force", spec.config.message.message_winconfig or {}, {
 		relative = "editor",
+		anchor = "SE",
 
-		-- Original: row = total_lines - height;
-		-- Offset: command_height + message_height + 1(statusline_height);
-		--
-		-- Result = Original - Offset;
-		row = (vim.o.lines - H) - (vim.o.cmdheight + message.__get_cmdline_offset() + 1),
+		row = vim.o.lines - (1 + message.cmdline_offset()),
 		col = vim.o.columns,
 
-		width = W + decor_size,
-		height = H,
+		width = width + decor_size,
+		height = height,
 
 		border = "none",
 
-		zindex = 80,
-		hide = false
+		zindex = 200,
+		hide = false,
 	});
 
-	if message.msg_window and vim.api.nvim_win_is_valid(message.msg_window) then
-		vim.api.nvim_win_set_config(message.msg_window, window_config);
-	else
-		message.msg_window = utils.open_win(message.msg_buffer, false, window_config);
-		vim.api.nvim_win_set_var(message.msg_window, "ui_window", true);
-	end
-
-	utils.set("w", message.msg_window, "winhl", "Normal:Normal");
-	utils.set("w", message.msg_window, "statuscolumn", "%!v:lua.__ui_statuscolumn()");
-
-	utils.set("w", message.msg_window, "wrap", true);
-	utils.set("w", message.msg_window, "linebreak", true);
-	utils.set("w", message.msg_window, "breakindent", true);
-
+	vim.api.nvim_win_set_config(message.data.window, window_opts);
 	utils.redraw({
 		flush = true,
 		statuscolumn = true,
 
-		win = message.msg_window
+		win = message.data.window
 	}, {
-		--[[
-			BUG: Visual artifacts are shown if the statuscolumn size is updated repeatedly.
-			Solution: Update only when the decoration size changes.
-		]]
-		ignore = last_decor_size ~= decor_size
+		ignore = false,
 	});
 
 	---|fE
 end
-
---- Loads history in a window.
----@param entries ( ui.message.fragment[] )[]
-message.__history = function (entries)
-	---|fS
-
-	local function get_msg_radio ()
-		local types = _G.__ui_history_types or {
-			normal = true,
-			hidden = false,
-			list = false,
-			confirm = false,
-		};
-
-		local items = {
-			normal = " [N]ormal ",
-			hidden = " [H]idden ",
-			list = " [L]ist ",
-			confirm = " [C]onfirm "
-		};
-
-		local keys = vim.tbl_keys(items);
-		table.sort(keys);
-
-		local line, exts = "Filters: ", {};
-		table.insert(exts, { 0, #line, "@comment" });
-
-		for k, key in ipairs(keys) do
-			local enabled = types[key];
-			local item = items[key];
-
-			local before = #line;
-			line = line .. item .. (k ~= #keys and " " or "");
-
-			if enabled == true then
-				table.insert(exts, { before, before + #item, "UICmdlineDefaultIcon" })
-			else
-				table.insert(exts, { before, before + #item, "UICmdlineSearchDownIcon" })
-			end
-		end
-
-		return line, exts;
-	end
-
-	---@type ui.message.source
-	vim.g.__ui_history_pref = vim.g.__ui_history_pref or spec.config.message.history_preference or "vim";
-
-	_G.__ui_history_types = _G.__ui_history_types or spec.config.message.history_types or {
-		normal = true,
-		hidden = false,
-		list = false,
-		confirm = false,
-	};
-
-	vim.g.__ui_history = true;
-
-	message.__prepare();
-	message.history_decorations = {};
-
-	---|fS "feat: Keymaps"
-
-	vim.api.nvim_buf_set_keymap(message.history_buffer, "n", "u", "", {
-		desc = "[u]pdates message history.",
-		callback =  function ()
-			if vim.g.__ui_history_pref == "vim" then
-				vim.cmd("messages");
-			else
-				message.__history(entries);
-			end
-		end,
-	});
-	vim.api.nvim_buf_set_keymap(message.history_buffer, "n", "t", "", {
-		desc = "[t]oggles between `vim` and `ui.nvim`'s message history.",
-		callback = function ()
-			vim.g.__ui_history_pref = vim.g.__ui_history_pref == "vim" and "ui" or "vim";
-			message.__history(entries);
-		end
-	});
-
-	vim.api.nvim_buf_set_keymap(message.history_buffer, "n", "q", "", {
-		desc = "[q]uits message window.",
-		callback = function ()
-			---|fS
-
-			-- Instead of closing the window, we hide it.
-			--
-			-- Only floating windows can be hidden so we
-			-- turn it into a floating window.
-			vim.api.nvim_set_current_win(
-				utils.last_win()
-			);
-			log.assert(
-				"ui/message.lua → history_quit",
-				pcall(vim.api.nvim_win_close, message.history_window, true)
-			);
-
-			---|fE
-		end
-	});
-
-	vim.api.nvim_buf_set_keymap(message.history_buffer, "n", "N", "", {
-		desc = "Toggles [N]ormal msssags visiblity.",
-		callback = function ()
-			if vim.g.__ui_history_pref == "vim" then
-				return;
-			end
-
-			_G.__ui_history_types.normal = not _G.__ui_history_types.normal;
-			message.__history(entries);
-		end
-	});
-
-	vim.api.nvim_buf_set_keymap(message.history_buffer, "n", "H", "", {
-		desc = "Toggles [H]idden msssags visiblity.",
-		callback = function ()
-			if vim.g.__ui_history_pref == "vim" then
-				return;
-			end
-
-			_G.__ui_history_types.hidden = not _G.__ui_history_types.hidden;
-			message.__history(entries);
-		end
-	});
-
-	vim.api.nvim_buf_set_keymap(message.history_buffer, "n", "L", "", {
-		desc = "Toggles [L]ist msssags visiblity.",
-		callback = function ()
-			if vim.g.__ui_history_pref == "vim" then
-				return;
-			end
-
-			_G.__ui_history_types.list = not _G.__ui_history_types.list;
-			message.__history(entries);
-		end
-	});
-
-	vim.api.nvim_buf_set_keymap(message.history_buffer, "n", "C", "", {
-		desc = "Toggles [C]onfirm msssags visiblity.",
-		callback = function ()
-			if vim.g.__ui_history_pref == "vim" then
-				return;
-			end
-
-			_G.__ui_history_types.confirm = not _G.__ui_history_types.confirm;
-			message.__history(entries);
-		end
-	});
-
-	---|fE
-
-	---@type string[], ( ui.message.hl_fragment[] )[]
-	local lines, exts = {}, {};
-
-	if vim.g.__ui_history_pref == "vim" then
-		table.insert(lines, " History:");
-		table.insert(exts, {
-			{ 0, #" ", "DiagnosticOk" },
-			{ #" ", #lines[1], "@comment" },
-		});
-	else
-		local l, x = get_msg_radio();
-
-		table.insert(lines, "󰊌 History:");
-		table.insert(lines, l);
-
-		table.insert(exts, {
-			{ 0, #"󰊌 ", "DiagnosticHint" },
-			{ #"󰊌 ", #lines[1], "@comment" },
-		});
-		table.insert(exts, x);
-	end
-
-	--- Equalizes line & extmark count.
-	---@param _lines string[]
-	---@param _exts ( ui.message.hl_fragment[] )[]
-	local function lines_exts_equal (_lines, _exts)
-		if #_lines < #_exts then
-			for _ = 1, #_exts - #_lines do
-				table.insert(lines, "");
-			end
-		elseif #_lines > #_exts then
-			for _ = 1, #_lines - #_exts do
-				table.insert(exts, {});
-			end
-		end
-	end
-
-	---|fS "code: Create lines & extmarks for messages"
-
-	if vim.g.__ui_history_pref == "vim" and entries then
-		-- Show raw history from Vim.
-		for _, entry in ipairs(entries) do
-			local _lines, _exts = utils.process_content(entry[2]);
-
-			lines = vim.list_extend(lines, _lines);
-			exts = vim.list_extend(exts, _exts);
-
-			lines_exts_equal(lines, exts);
-		end
-	else
-		-- Show history from `ui.nvim`.
-
-		---@type integer[] List of message IDs.
-		local keys = vim.tbl_keys(message.history);
-		table.sort(keys);
-
-		for _, key in ipairs(keys) do
-			local value = message.history[key];
-
-			if _G.__ui_history_types[value.type or "normal"] ~= true then
-				-- Ignore messages if their level is lower
-				-- then the preferred message level
-				goto ignore_message;
-			end
-
-			local m_lines, m_exts = utils.process_content(value.content);
-			local processor;
-
-			if not value.type or value.type == "normal" then
-				-- Regular message.
-				processor = spec.get_msg_style(value, m_lines, m_exts) or {};
-			elseif value.type == "hidden" then
-				-- Regular message's whose `history = false`.
-				processor = spec.get_msg_style(value, m_lines, m_exts) or {};
-			elseif value.type == "list" then
-				-- List message.
-				processor = spec.get_listmsg_style(value, m_lines, m_exts) or {};
-			elseif value.type == "confirm" then
-				-- Confirm message.
-				processor = spec.get_confirm_style(value, lines, exts) or {};
-			end
-
-			if processor.modifier then
-				m_lines = processor.modifier.lines or m_lines;
-				m_exts = processor.modifier.extmarks or m_exts;
-			end
-
-			if processor.history_decorations then
-				table.insert(message.history_decorations, vim.tbl_extend("force", processor.history_decorations, {
-					from = #lines,
-					to = #lines + (#m_lines - 1)
-				}));
-			elseif processor.decorations then
-				table.insert(message.history_decorations, vim.tbl_extend("force", processor.decorations, {
-					from = #lines,
-					to = #lines + (#m_lines - 1)
-				}));
-			end
-
-			lines = vim.list_extend(lines, m_lines)
-			exts = vim.list_extend(exts, m_exts)
-
-			lines_exts_equal(lines, exts);
-
-			::ignore_message::
-		end
-	end
-
-	---|fE
-
-	vim.bo[message.history_buffer].modifiable = true;
-
-	vim.api.nvim_buf_clear_namespace(message.history_buffer, message.namespace, 0, -1);
-	vim.api.nvim_buf_set_lines(message.history_buffer, 0, -1, false, lines);
-
-	---|fS "doc: Add keymap hints"
-
-	vim.api.nvim_buf_set_extmark(message.history_buffer, message.namespace, 0, 0, {
-		virt_text_pos = "right_align",
-		virt_text = {
-			{ " u ", "UIHistoryKeymap" },
-			{ " Update ", "UIHistoryDesc" },
-			{ " " },
-			{ " t ", "UIHistoryKeymap" },
-			{ " Toggle source ", "UIHistoryDesc" },
-			{ " " },
-			{ " q ", "UIHistoryKeymap" },
-			{ " Quit ", "UIHistoryDesc" },
-		},
-
-		hl_mode = "combine"
-	});
-
-	---|fE
-
-	-- Highlight lines of the buffer.
-	for l, line in ipairs(exts) do
-		for _, ext in ipairs(line) do
-			vim.api.nvim_buf_set_extmark(message.history_buffer, message.namespace, l - 1, ext[1], {
-				end_col = ext[2],
-				hl_group = ext[3]
-			});
-		end
-	end
-
-	-- Highlight lines with decorations.
-	for _, entry in ipairs(message.history_decorations) do
-		if entry.line_hl_group then
-			vim.api.nvim_buf_set_extmark(message.history_buffer, message.namespace, entry.from, 0, {
-				end_row = entry.to,
-				line_hl_group = entry.line_hl_group
-			});
-		end
-	end
-
-	vim.bo[message.history_buffer].modifiable = false;
-
-	local window_config = vim.tbl_extend("force", {
-		split = "below",
-		win = -1, -- creates top-level split
-		height = 10,
-
-		hide = false
-	}, spec.config.message.history_winconfig or {});
-
-	if message.history_window and vim.api.nvim_win_is_valid(message.history_window) then
-		pcall(vim.api.nvim_win_set_config, message.history_window, window_config);
-	else
-		message.history_window = vim.api.nvim_open_win(message.history_buffer, true, window_config);
-		vim.api.nvim_win_set_var(message.history_window, "ui_window", true);
-	end
-
-	vim.api.nvim_set_current_win(message.history_window);
-
-	utils.set("w", message.history_window, "number", true);
-	utils.set("w", message.history_window, "relativenumber", true);
-	utils.set("w", message.history_window, "numberwidth", 1);
-	utils.set("w", message.history_window, "statuscolumn", "%!v:lua.__ui_statuscolumn()");
-
-	utils.set("w", message.history_window, "wrap", true);
-	utils.set("w", message.history_window, "linebreak", true);
-
-	utils.redraw({
-		flush = true,
-
-		win = message.history_window,
-		statuscolumn = true,
-	});
-
-	vim.g.__ui_history = false;
-
-	---|fE
-end
-
-------------------------------------------------------------------------------
-
-message.__showcmd = function (content)
-	---|fS
-
-	content = content or vim.g.__ui_showcmd or {};
-
-	message.__prepare();
-	vim.g.__ui_showcmd = content;
-
-	local window_config = vim.tbl_extend("keep", spec.config.message.showcmd_winconfig or {}, {
-		relative = "editor",
-
-		row = vim.o.lines - (vim.o.cmdheight + message.__get_cmdline_offset() + 2) ,
-		col = 0,
-
-		width = 10,
-		height = 1,
-
-		border = "none",
-
-		zindex = 80,
-		hide = false
-	});
-
-	local text, extmarks = utils.process_content(content);
-
-	if #text == 0 or text[1] == "" then
-		-- Close the window if there is no text.
-		vim.g.__ui_showcmd = {};
-		window_config.hide = true;
-
-		pcall(vim.api.nvim_win_set_config, message.show_window, window_config);
-		return;
-	elseif spec.config.message.showcmd.modifier then
-		local modifier = utils.eval(spec.config.message.showcmd.modifier, content, text, extmarks);
-
-		if type(modifier) == "table" then
-			text = modifier.lines or text;
-			extmarks = modifier.extmarks or extmarks;
-		end
-	end
-
-	--- Change window width.
-	window_config.width = math.min(
-		vim.fn.strdisplaywidth(text[1]),
-		spec.config.message.showcmd.max_width or 0
-	);
-
-	vim.api.nvim_buf_clear_namespace(message.show_buffer, message.namespace, 0, -1);
-	vim.api.nvim_buf_set_lines(message.show_buffer, 0, -1, false, text);
-
-	for l, line in ipairs(extmarks) do
-		for _, ext in ipairs(line) do
-			if ext[3] == "" then
-				goto continue;
-			end
-
-			vim.api.nvim_buf_set_extmark(message.show_buffer, message.namespace, l - 1, ext[1], {
-				end_col = ext[2],
-				hl_group = ext[3]
-			});
-
-		    ::continue::
-		end
-	end
-
-	if message.show_window and vim.api.nvim_win_is_valid(message.show_window) then
-		vim.api.nvim_win_set_config(message.show_window, window_config);
-	else
-		message.show_window = utils.open_win(message.show_buffer, false, window_config);
-		vim.api.nvim_win_set_var(message.show_window, "ui_window", true);
-
-		--- Always horizontally center the cursor.
-		--- We can't dynamically set this without bombing users with
-		--- `OptionSet` events.
-		utils.set("w", message.show_window, "sidescrolloff", 999);
-	end
-
-	-- Use display width instead of byte length as there are
-	-- multi-byte characters.
-	-- If all else fails, `pcall()` should save us.
-	pcall(vim.api.nvim_win_set_cursor, message.show_window, {
-		1, math.floor(window_config.width / 2)
-	});
-
-	-- `Showcmd` messages should always be updated!
-	vim.api.nvim__redraw({
-		flush = true,
-		win = message.show_window
-	});
-
-	---|fE
-end
-
-------------------------------------------------------------------------------
-
----@param kind ui.message.kind
----@param content ui.message.fragment[]
----@param replace_last boolean
----@param add_to_history boolean
-message.msg_show = function (kind, content, replace_last, add_to_history)
-	---|fS
-
-	local _replace_last = replace_last;
-
-	if spec.config.message.respect_replace_last == false then
-		_replace_last = false;
-	end
-
-	if kind == "confirm" then
-		-- Confirm messages need to be
-		-- handled first.
-
-		log.assert(
-			"ui/message.lua → __confirm",
-			pcall(message.__confirm, {
-				type = "confirm",
-
-				kind = kind,
-				content = content,
-			})
-		);
-	elseif message.ui_attached == false then
-		-- Cache messages if the UI hasn't been attached
-		-- to yet.
-		message.cache(kind, content, _replace_last, add_to_history);
-	elseif kind == "search_count" then
-		message.__replace(kind, content, add_to_history);
-	elseif kind == "return_prompt" then
-		--- Hit `<ESC>` on hit-enter prompts.
-		--- or else we get stuck.
-		vim.api.nvim_feedkeys(vim.api.nvim_replace_termcodes("<ESC>", true, false, true), "n", false);
-	elseif _replace_last and vim.tbl_isempty(message.visible) == false then
-		message.__replace(kind, content, add_to_history);
-	else
-		message.__add(kind, content, add_to_history)
-	end
-
-	---|fE
-end
-
----@param entries ( ui.message.fragment[] )[]
-message.msg_history_show = function (entries)
-	---|fS
-
-	-- Escape hit-enter from opening messages.
-	vim.api.nvim_feedkeys(vim.api.nvim_replace_termcodes("<CR>", true, false, true), "n", false);
-
-	log.assert(
-		"ui/message.lua → history_show",
-		pcall(message.__history, entries)
-	);
-
-	---|fE
-end
-
--- message.msg_showmode = function (content)
--- 	table.insert(log.entries, vim.inspect(content))
--- end
-
-message.msg_showcmd = function (content)
-	message.__showcmd(content);
-end
-
-message.msg_clear = function ()
-	---|fS
-
-	if not vim.g.__confirm_keys or #vim.g.__confirm_keys == 0 then
-		return;
-	end
-
-	for k, v in pairs(message.visible) do
-		v.timer:stop();
-		message.__remove(k);
-	end
-
-	message.__render();
-
-	---|fE
-end
-
-------------------------------------------------------------------------------
-
-message.on_attach = function ()
-	---|fS
-
-	if spec.config.message.wrap_notify then
-		_G.__vim_notify = vim.notify;
-		_G.__vim_notify_once = vim.notify_once;
-
-		---@diagnostic disable-next-line: duplicate-set-field
-		vim.notify = function (msg, level, opts)
-			---|fS "refactor: Custom vim.notify"
-
-			msg = tostring(msg);
-			level = level or vim.log.levels.INFO;
-			opts = opts or {};
-
-			---@type ui.message.fragment[]
-			local chunks = {
-				{
-					0,
-					msg,
-					level == vim.log.levels.WARN and vim.fn.hlID("WarningMsg") or (level == vim.log.levels.ERROR and vim.fn.hlID("ErrorMsg") or 0)
-				}
-			};
-
-			if type(opts.title) == "string" then
-				table.insert(chunks, 1, {
-					0,
-					string.format(" %s ", opts.title),
-					vim.fn.hlID("UIMessageDefault")
-				});
-				table.insert(chunks, 2 ,{
-					0, ": ", vim.fn.hlID("@comment")
-				});
-			end
-
-			message.msg_show("", chunks, false, true)
-
-			---|fE
-		end
-
-		---@type string[]
-		local showed = {};
-
-		---@diagnostic disable-next-line: duplicate-set-field
-		vim.notify_once = function (msg, level, opts)
-			---|fS "refactor: Custom vim.notify_once"
-
-			if vim.list_contains(showed, msg) then
-				return;
-			else
-				table.insert(showed, msg);
-				vim.notify(msg, level, opts);
-			end
-
-			---|fE
-		end
-	end
-
-	---|fE
-end
-
-message.on_detach = function ()
-	---|fS
-
-	if spec.config.message.wrap_notify then
-		vim.notify = _G.__vim_notify;
-		vim.notify_once = _G.__vim_notify_once;
-	end
-
-	---|fE
-end
-
-------------------------------------------------------------------------------
 
 --- Handles message events.
 ---@param event string
 ---@param ... any
-message.handle = function (event, ...)
+message.handle = function(event, ...)
 	---|fS
 
 	log.level_inc();
@@ -1550,28 +1003,20 @@ message.handle = function (event, ...)
 	---|fE
 end
 
-message.setup = function ()
+message.setup = function()
 	---|fS
 
 	vim.api.nvim_create_autocmd("VimResized", {
-		callback = function ()
-			message.__list_resize();
-
-			if vim.g.__ui_showcmd then
-				message.__showcmd(vim.g.__ui_showcmd);
-			end
-
-			message.__render();
+		callback = function()
+			message.showcmd_resize();
+			message.render();
 		end
 	});
 
 	vim.api.nvim_create_autocmd("TabLeave", {
-		callback = function ()
-			pcall(vim.api.nvim_win_close, message.msg_window, true);
-			pcall(vim.api.nvim_win_close, message.show_window, true);
-
-			message.msg_window = nil;
-			message.show_window = nil;
+		callback = function()
+			pcall(vim.api.nvim_win_close, message.data.window, true);
+			pcall(vim.api.nvim_win_close, message.data.showcmd_window, true);
 		end
 	});
 
@@ -1579,8 +1024,8 @@ message.setup = function ()
 		"VimEnter",
 		"TabEnter"
 	}, {
-		callback = function ()
-			message.__render();
+		callback = function()
+			message.render();
 		end
 	});
 

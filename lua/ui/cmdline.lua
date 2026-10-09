@@ -310,7 +310,7 @@ cmdline.__render = function ()
 	local lines, extmarks, _ = cmdline.__lines();
 
 	local H = #lines;
-	vim.g.__ui_cmd_height = H;
+	vim.g.ui_cmd_height = H;
 
 	local win_config = {
 		---|fS
@@ -406,12 +406,12 @@ cmdline.__render = function ()
 		if spec.config.message.enable and package.loaded["ui.message"] then
 			log.assert(
 				"ui/cmdline.lua → message_refresh",
-				pcall(package.loaded["ui.message"].__render)
+				pcall(package.loaded["ui.message"].render)
 			);
 
 			log.assert(
 				"ui/cmdline.lua → showcmd_refresh",
-				pcall(package.loaded["ui.message"].__showcmd)
+				pcall(package.loaded["ui.message"].showcmd_resize)
 			);
 		end
 
@@ -540,7 +540,7 @@ cmdline.cmdline_hide = function ()
 
 	-- Reset exported height.
 	-- Also reset state.
-	vim.g.__ui_cmd_height = 0;
+	vim.g.ui_cmd_height = 0;
 	cmdline.old_state = {}; ---@diagnostic disable-line
 
 	local function close_callback ()
@@ -558,7 +558,7 @@ cmdline.cmdline_hide = function ()
 		if spec.config.message.enable and package.loaded["ui.message"] then
 			log.assert(
 				"ui/cmdline.lua",
-				pcall(package.loaded["ui.message"].__render)
+				pcall(package.loaded["ui.message"].render)
 			);
 		end
 
@@ -663,7 +663,7 @@ cmdline.setup = function ()
 		callback = function ()
 			-- Only redraw if the cmdline
 			-- window is visible.
-			if vim.g.__ui_cmd_height and vim.g.__ui_cmd_height > 0 then
+			if vim.g.ui_cmd_height and vim.g.ui_cmd_height > 0 then
 				log.assert(
 					"ui/cmdline.lua",
 					pcall(cmdline.__render)
