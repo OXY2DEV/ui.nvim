@@ -798,6 +798,7 @@ message.set_buf_win = function(buf, win)
 
 		utils.set("w", message.data[win], "foldmethod", "manual");
 		utils.set("w", message.data[win], "numberwidth", 1);
+		utils.set("w", message.data[win], "winhl", "Normal:Normal");
 	end
 
 	---|fE
