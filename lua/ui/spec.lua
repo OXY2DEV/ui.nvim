@@ -1470,27 +1470,6 @@ spec.default = {
 
 				---|fE
 			},
-
-			hi = {
-				---|fS
-
-				condition = function(_, lines)
-					local is_hl = utils.is_hl_line(lines[2] or "");
-					return lines[1] == "" and is_hl;
-				end,
-
-				modifier = function(_, lines, exts)
-					local _lines = vim.deepcopy(lines);
-					local _exts = vim.deepcopy(exts);
-
-					table.remove(_lines, 1);
-					table.remove(_exts, 1);
-
-					return { lines = _lines, extmarks = _exts };
-				end
-
-				---|fE
-			},
 		},
 
 		confirm_styles = {
