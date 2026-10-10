@@ -1,5 +1,16 @@
 # Changelog
 
+## [1.4.2](https://github.com/OXY2DEV/ui.nvim/compare/v1.4.1...v1.4.2) (2026-10-09)
+
+
+### Bug Fixes
+
+* Fixed incorrect message type ([df2da1f](https://github.com/OXY2DEV/ui.nvim/commit/df2da1f46a8c68630d7e70e620e993e78ded6790))
+* Fixed write message conditions ([f2508af](https://github.com/OXY2DEV/ui.nvim/commit/f2508af935feb70374aa39de687b1dc4fff427c8))
+* Message windows now use `Normal` as background ([abde68f](https://github.com/OXY2DEV/ui.nvim/commit/abde68f7cbf1f1fbbea973e8bf02427a425fcda9))
+* **messages:** Right align icons ([3462383](https://github.com/OXY2DEV/ui.nvim/commit/3462383a4d0a3f92ee35694d0c3c8bbb4faf7285))
+* **messages:** Set correct `numberwidth` & other statuscolumn options ([3462383](https://github.com/OXY2DEV/ui.nvim/commit/3462383a4d0a3f92ee35694d0c3c8bbb4faf7285))
+
 ## [1.4.1](https://github.com/OXY2DEV/ui.nvim/compare/v1.4.0...v1.4.1) (2025-12-07)
 
 
